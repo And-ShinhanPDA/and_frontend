@@ -123,7 +123,7 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="alert-additional"
+        name="(alert-additional)/alert-additional"
         options={{
           title: "알림 설정",
           tabBarLabel: ({ focused }) => (
