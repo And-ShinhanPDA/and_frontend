@@ -49,7 +49,7 @@ export default function LoginScreen() {
         </Typography>
         <Pressable onPress={() => router.replace("/signUp")}>
           <Typography weight="400" size={14} style={styles.link}>
-            회원가입
+            회원가입2
           </Typography>
         </Pressable>
       </View>

@@ -42,7 +42,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="alert-additional"
+        name="(alert-additional)/alert-additional"
         options={{
           title: "추가",
           tabBarIcon: ({ color }) => (
