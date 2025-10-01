@@ -1,128 +1,103 @@
-import { Ionicons } from "@expo/vector-icons";
-import { Redirect, Tabs } from "expo-router";
-import React from "react";
-import { Pressable } from "react-native";
-
-import { HapticTab } from "@/components/haptic-tab";
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import { PrimaryButton } from "@/components/ui/PrimaryButton";
+import { AuthTextInput } from "@/components/ui/TextInput";
 import { Typography } from "@/components/ui/Typography";
-import { Colors } from "@/constants/theme";
 import { useAuth } from "@/contexts/AuthContext";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { SignUpFormValues, SignUpPayload } from "@/types/auth";
+import { validateSignUp } from "@/utils/validators";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const { isReady, isLoggedIn } = useAuth();
+export default function SignUpScreen() {
+  const router = useRouter();
+  const { signUp } = useAuth();
 
-  if (!isLoggedIn) {
-    return <Redirect href={"/login"} />;
-  }
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const onSubmit = async () => {
+    const values: SignUpFormValues = { name, email, password, confirmPassword };
+    const error = validateSignUp(values);
+
+    if (error) {
+      Alert.alert("입력 오류", error);
+      return;
+    }
+
+    const payload: SignUpPayload = { name, email, password };
+    await signUp(payload);
+
+    router.replace("/login");
+  };
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        tabBarButton: HapticTab,
-        headerTitleAlign: "left",
+    <View style={styles.container}>
+      <Typography weight="700" size={24} style={styles.title}>
+        회원가입
+      </Typography>
 
-        headerTitle: ({ children }) => (
-          <Typography weight="600" size={18}>
-            {children}
+      <AuthTextInput
+        label="이름"
+        icon="person"
+        value={name}
+        onChangeText={setName}
+        placeholder="이름을 입력하세요"
+      />
+
+      <AuthTextInput
+        label="이메일"
+        icon="email"
+        value={email}
+        onChangeText={setEmail}
+        placeholder="이메일을 입력하세요"
+      />
+
+      <AuthTextInput
+        label="비밀번호"
+        icon="lock"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        placeholder="비밀번호를 입력하세요"
+        isPassword
+      />
+
+      <AuthTextInput
+        label="비밀번호 확인"
+        icon="lock"
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        secureTextEntry
+        placeholder="비밀번호를 다시 입력하세요"
+        isPassword
+      />
+
+      <PrimaryButton title="회원가입" onPress={onSubmit} />
+
+      <View style={styles.footer}>
+        <Typography weight="400" size={14}>
+          이미 회원이신가요?
+        </Typography>
+        <Pressable onPress={() => router.replace("/login")}>
+          <Typography weight="400" size={14} style={styles.link}>
+            로그인
           </Typography>
-        ),
-
-        headerRight: () => (
-          <Pressable onPress={() => console.log("마이페이지 이동")}>
-            <Ionicons name="person-circle-outline" size={28} color="black" />
-          </Pressable>
-        ),
-
-        tabBarLabel: ({ focused, children }) => (
-          <Typography weight={focused ? "600" : "400"} size={12}>
-            {children}
-          </Typography>
-        ),
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "홈",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="alert-manage/alert-manage"
-        options={{
-          title: "내 알림",
-          tabBarLabel: ({ focused }) => (
-            <Typography weight={focused ? "600" : "400"} size={12}>
-              알림
-            </Typography>
-          ),
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="paperplane.fill" color={color} />
-          ),
-
-          headerRight: () => (
-            <>
-              <Pressable
-                onPress={() => console.log("프리셋 버튼")}
-                style={{ marginRight: 12 }}
-              >
-                <Typography weight="600" size={14} style={{ color: "green" }}>
-                  프리셋
-                </Typography>
-              </Pressable>
-              <Pressable onPress={() => console.log("마이페이지 이동")}>
-                <Ionicons
-                  name="person-circle-outline"
-                  size={28}
-                  color="black"
-                />
-              </Pressable>
-            </>
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="alert-additional"
-        options={{
-          title: "알림 설정",
-          tabBarLabel: ({ focused }) => (
-            <Typography weight={focused ? "600" : "400"} size={12}>
-              추가
-            </Typography>
-          ),
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="plus.circle.fill" color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="chart"
-        options={{
-          title: "증권",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="chart.bar.fill" color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="alert-history"
-        options={{
-          title: "기록",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="clock.fill" color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+        </Pressable>
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: "center", padding: 30, gap: 20 },
+  title: { marginBottom: 10 },
+  footer: {
+    marginTop: 10,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+  },
+  link: { color: "#5ECA4D", marginLeft: 4 },
+});
