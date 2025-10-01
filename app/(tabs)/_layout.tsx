@@ -14,7 +14,7 @@ export default function TabLayout() {
   const { isReady, isLoggedIn } = useAuth();
 
   if (!isLoggedIn) {
-    return <Redirect href={"/login"} />;
+    return <Redirect href={"/login"}></Redirect>;
   }
 
   return (
