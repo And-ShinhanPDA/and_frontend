@@ -1,5 +1,4 @@
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
-import { Typography } from "@/components/ui/Typography";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -66,23 +65,26 @@ export default function AlertAdditional() {
   };
 
   const renderItem = ({ item }: any) => (
-    <TouchableOpacity style={styles.item}>
+    <TouchableOpacity
+      style={styles.item}
+      onPress={() =>
+        router.push({
+          pathname: "/alert-additional/[companyId]",
+          params: { companyId: item.id, name: item.name },
+        })
+      }
+    >
       {typeof item.logo === "string" ? (
         <Image source={{ uri: item.logo }} style={styles.logo} />
       ) : (
-        <item.logo width={48} height={48} /> // SVG는 이렇게 렌더링
+        <item.logo width={48} height={48} />
       )}
-
       <Text style={styles.name}>{item.name}</Text>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <Typography weight="700" size={24} style={styles.title}>
-        기업 알림
-      </Typography>
-
       {/* 검색 바 */}
       <TextInput
         style={styles.searchBar}
