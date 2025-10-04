@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Animated,
@@ -11,50 +12,72 @@ import {
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
 
-import ShinhanLogo from "@/assets/images/companies/logo_12_신한금융그룹.svg";
-import { router } from "expo-router";
-
-type Company = {
+// TODO: types로 빼기
+type AlertCondition = {
   id: string;
   name: string;
-  Logo: React.FC<{ width?: number; height?: number }>;
-  alerts: number;
   enabled: boolean;
+  tags: string[];
 };
 
-export default function AlertManage() {
+export default function AlertCondition() {
   const [search, setSearch] = useState("");
   const [fadeAnimations, setFadeAnimations] = useState<
     Record<string, Animated.Value>
   >({});
   const [deleteWidth, setDeleteWidth] = useState(80); // 삭제버튼 실제 폭 측정용 상태값
 
-  const [companies, setCompanies] = useState<Company[]>([
-    { id: "1", name: "신한지주", Logo: ShinhanLogo, alerts: 3, enabled: false },
-    { id: "2", name: "구글", Logo: ShinhanLogo, alerts: 3, enabled: true },
-    { id: "3", name: "삼성전자", Logo: ShinhanLogo, alerts: 3, enabled: true },
-    { id: "4", name: "네이버", Logo: ShinhanLogo, alerts: 3, enabled: true },
+  // TODO: API 연결
+  const [alerts, setAlerts] = useState<AlertCondition[]>([
+    {
+      id: "1",
+      name: "SMA량 거래량 조건",
+
+      enabled: false,
+      tags: ["SMA", "거래량", "52주", "볼린저밴드"],
+    },
+    {
+      id: "2",
+      name: "가격 설정 조건",
+
+      enabled: true,
+      tags: ["가격", "RSI", "52주", "SMA"],
+    },
+    {
+      id: "3",
+      name: "SMA 조건",
+
+      enabled: true,
+      tags: ["SMA", "거래량", "52주", "볼린저밴드"],
+    },
+    {
+      id: "4",
+      name: "볼린저 밴드 조건",
+
+      enabled: true,
+      tags: ["후행", "RSI", "52주", "SMA"],
+    },
   ]);
 
   // 초기 애니메이션 설정
   useEffect(() => {
     const anims: Record<string, Animated.Value> = {};
-    companies.forEach((company) => {
-      anims[company.id] = new Animated.Value(1);
+    alerts.forEach((alert) => {
+      anims[alert.id] = new Animated.Value(1);
     });
     setFadeAnimations(anims);
   }, []);
 
   // 토글 스위치
   const toggleSwitch = (id: string) => {
-    setCompanies((prev) =>
+    setAlerts((prev) =>
       prev.map((c) => (c.id === id ? { ...c, enabled: !c.enabled } : c))
     );
   };
 
   // 삭제 기능
   const deleteCompany = (id: string) => {
-    setCompanies((prev) => prev.filter((c) => c.id !== id));
+    setAlerts((prev) => prev.filter((c) => c.id !== id));
   };
 
   // 왼쪽 스와이프 시 fade out
@@ -88,15 +111,14 @@ export default function AlertManage() {
         />
         <TextInput
           style={styles.searchBar}
-          placeholder="기업을 검색해보세요"
+          placeholder="조건을 검색해보세요"
           value={search}
           onChangeText={setSearch}
         />
       </View>
 
-      {/* 리스트 */}
       <SwipeListView
-        data={companies.filter((c) =>
+        data={alerts.filter((c) =>
           c.name.toLowerCase().includes(search.toLowerCase())
         )}
         showsVerticalScrollIndicator={false}
@@ -106,7 +128,7 @@ export default function AlertManage() {
         rightOpenValue={-deleteWidth}
         renderItem={({ item, index }) => {
           const fadeAnim = fadeAnimations[item.id] || new Animated.Value(1);
-          const filtered = companies.filter((c) =>
+          const filtered = alerts.filter((c) =>
             c.name.toLowerCase().includes(search.toLowerCase())
           );
           const isLast = index === filtered.length - 1;
@@ -118,12 +140,16 @@ export default function AlertManage() {
                 isLast && { borderBottomWidth: 1, borderColor: "#F5F6F8" },
               ]}
             >
-              <item.Logo width={44} height={44} />
               <View style={styles.itemText}>
                 <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.subText}>
-                  현재 설정 알림: {item.alerts}개
-                </Text>
+
+                <View style={styles.tagContainer}>
+                  {item.tags.map((tag, index) => (
+                    <View key={index} style={styles.tag}>
+                      <Text style={styles.tagText}>{tag}</Text>
+                    </View>
+                  ))}
+                </View>
               </View>
 
               <Animated.View
@@ -168,7 +194,7 @@ export default function AlertManage() {
         onPress={() => router.push("/(tabs)/(alert-manage)/alert-condition")}
       >
         <Image
-          source={require("@/assets/images/alert/company_alert.png")}
+          source={require("@/assets/images/alert/condition_alert.png")}
           style={styles.plusIcon}
         />
       </TouchableOpacity>
@@ -198,14 +224,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     paddingHorizontal: 28,
   },
-  itemText: { flex: 1, marginLeft: 14 },
+  itemText: { flex: 1 },
   name: { fontSize: 15, fontWeight: "600", fontFamily: "Pretendard" },
-  subText: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 3,
-    fontFamily: "Pretendard",
-  },
   hiddenContainer: {
     flex: 1,
     flexDirection: "row",
@@ -250,5 +270,23 @@ const styles = StyleSheet.create({
     height: 15,
     resizeMode: "contain",
     marginBottom: 2,
+  },
+  tagContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 4,
+  },
+  tag: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginRight: 6,
+    marginTop: 4,
+  },
+  tagText: {
+    fontSize: 11,
+    fontFamily: "Pretendard",
   },
 });
