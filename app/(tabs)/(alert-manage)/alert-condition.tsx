@@ -12,10 +12,12 @@ import {
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
 
+// TODO: types로 빼기
 type AlertCondition = {
   id: string;
   name: string;
   enabled: boolean;
+  tags: string[];
 };
 
 export default function AlertCondition() {
@@ -25,32 +27,57 @@ export default function AlertCondition() {
   >({});
   const [deleteWidth, setDeleteWidth] = useState(80); // 삭제버튼 실제 폭 측정용 상태값
 
-  const [companies, setCompanies] = useState<AlertCondition[]>([
-    { id: "1", name: "SMA랑 거래량 조건", enabled: false },
-    { id: "2", name: "가격 설정 조건", enabled: false },
-    { id: "3", name: "SMA 조건", enabled: false },
-    { id: "4", name: "볼린저 밴드 조건", enabled: false },
+  // TODO: API 연결
+  const [alerts, setAlerts] = useState<AlertCondition[]>([
+    {
+      id: "1",
+      name: "SMA량 거래량 조건",
+
+      enabled: false,
+      tags: ["SMA", "거래량", "52주", "볼린저밴드"],
+    },
+    {
+      id: "2",
+      name: "가격 설정 조건",
+
+      enabled: true,
+      tags: ["가격", "RSI", "52주", "SMA"],
+    },
+    {
+      id: "3",
+      name: "SMA 조건",
+
+      enabled: true,
+      tags: ["SMA", "거래량", "52주", "볼린저밴드"],
+    },
+    {
+      id: "4",
+      name: "볼린저 밴드 조건",
+
+      enabled: true,
+      tags: ["후행", "RSI", "52주", "SMA"],
+    },
   ]);
 
   // 초기 애니메이션 설정
   useEffect(() => {
     const anims: Record<string, Animated.Value> = {};
-    companies.forEach((company) => {
-      anims[company.id] = new Animated.Value(1);
+    alerts.forEach((alert) => {
+      anims[alert.id] = new Animated.Value(1);
     });
     setFadeAnimations(anims);
   }, []);
 
   // 토글 스위치
   const toggleSwitch = (id: string) => {
-    setCompanies((prev) =>
+    setAlerts((prev) =>
       prev.map((c) => (c.id === id ? { ...c, enabled: !c.enabled } : c))
     );
   };
 
   // 삭제 기능
   const deleteCompany = (id: string) => {
-    setCompanies((prev) => prev.filter((c) => c.id !== id));
+    setAlerts((prev) => prev.filter((c) => c.id !== id));
   };
 
   // 왼쪽 스와이프 시 fade out
@@ -91,7 +118,7 @@ export default function AlertCondition() {
       </View>
 
       <SwipeListView
-        data={companies.filter((c) =>
+        data={alerts.filter((c) =>
           c.name.toLowerCase().includes(search.toLowerCase())
         )}
         showsVerticalScrollIndicator={false}
@@ -101,7 +128,7 @@ export default function AlertCondition() {
         rightOpenValue={-deleteWidth}
         renderItem={({ item, index }) => {
           const fadeAnim = fadeAnimations[item.id] || new Animated.Value(1);
-          const filtered = companies.filter((c) =>
+          const filtered = alerts.filter((c) =>
             c.name.toLowerCase().includes(search.toLowerCase())
           );
           const isLast = index === filtered.length - 1;
@@ -115,6 +142,14 @@ export default function AlertCondition() {
             >
               <View style={styles.itemText}>
                 <Text style={styles.name}>{item.name}</Text>
+
+                <View style={styles.tagContainer}>
+                  {item.tags.map((tag, index) => (
+                    <View key={index} style={styles.tag}>
+                      <Text style={styles.tagText}>{tag}</Text>
+                    </View>
+                  ))}
+                </View>
               </View>
 
               <Animated.View
@@ -191,12 +226,6 @@ const styles = StyleSheet.create({
   },
   itemText: { flex: 1 },
   name: { fontSize: 15, fontWeight: "600", fontFamily: "Pretendard" },
-  subText: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 3,
-    fontFamily: "Pretendard",
-  },
   hiddenContainer: {
     flex: 1,
     flexDirection: "row",
@@ -241,5 +270,23 @@ const styles = StyleSheet.create({
     height: 15,
     resizeMode: "contain",
     marginBottom: 2,
+  },
+  tagContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 4,
+  },
+  tag: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginRight: 6,
+    marginTop: 4,
+  },
+  tagText: {
+    fontSize: 11,
+    fontFamily: "Pretendard",
   },
 });
