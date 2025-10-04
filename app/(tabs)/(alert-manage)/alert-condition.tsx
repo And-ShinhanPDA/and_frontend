@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Animated,
@@ -11,29 +12,24 @@ import {
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
 
-import ShinhanLogo from "@/assets/images/companies/logo_12_신한금융그룹.svg";
-import { router } from "expo-router";
-
-type Company = {
+type AlertCondition = {
   id: string;
   name: string;
-  Logo: React.FC<{ width?: number; height?: number }>;
-  alerts: number;
   enabled: boolean;
 };
 
-export default function AlertManage() {
+export default function AlertCondition() {
   const [search, setSearch] = useState("");
   const [fadeAnimations, setFadeAnimations] = useState<
     Record<string, Animated.Value>
   >({});
   const [deleteWidth, setDeleteWidth] = useState(80); // 삭제버튼 실제 폭 측정용 상태값
 
-  const [companies, setCompanies] = useState<Company[]>([
-    { id: "1", name: "신한지주", Logo: ShinhanLogo, alerts: 3, enabled: false },
-    { id: "2", name: "구글", Logo: ShinhanLogo, alerts: 3, enabled: true },
-    { id: "3", name: "삼성전자", Logo: ShinhanLogo, alerts: 3, enabled: true },
-    { id: "4", name: "네이버", Logo: ShinhanLogo, alerts: 3, enabled: true },
+  const [companies, setCompanies] = useState<AlertCondition[]>([
+    { id: "1", name: "SMA랑 거래량 조건", enabled: false },
+    { id: "2", name: "가격 설정 조건", enabled: false },
+    { id: "3", name: "SMA 조건", enabled: false },
+    { id: "4", name: "볼린저 밴드 조건", enabled: false },
   ]);
 
   // 초기 애니메이션 설정
@@ -88,13 +84,12 @@ export default function AlertManage() {
         />
         <TextInput
           style={styles.searchBar}
-          placeholder="기업을 검색해보세요"
+          placeholder="조건을 검색해보세요"
           value={search}
           onChangeText={setSearch}
         />
       </View>
 
-      {/* 리스트 */}
       <SwipeListView
         data={companies.filter((c) =>
           c.name.toLowerCase().includes(search.toLowerCase())
@@ -118,12 +113,8 @@ export default function AlertManage() {
                 isLast && { borderBottomWidth: 1, borderColor: "#F5F6F8" },
               ]}
             >
-              <item.Logo width={44} height={44} />
               <View style={styles.itemText}>
                 <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.subText}>
-                  현재 설정 알림: {item.alerts}개
-                </Text>
               </View>
 
               <Animated.View
@@ -168,7 +159,7 @@ export default function AlertManage() {
         onPress={() => router.push("/(tabs)/(alert-manage)/alert-condition")}
       >
         <Image
-          source={require("@/assets/images/alert/company_alert.png")}
+          source={require("@/assets/images/alert/condition_alert.png")}
           style={styles.plusIcon}
         />
       </TouchableOpacity>
@@ -198,7 +189,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     paddingHorizontal: 28,
   },
-  itemText: { flex: 1, marginLeft: 14 },
+  itemText: { flex: 1 },
   name: { fontSize: 15, fontWeight: "600", fontFamily: "Pretendard" },
   subText: {
     fontSize: 12,
