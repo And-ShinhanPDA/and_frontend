@@ -1,5 +1,4 @@
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
-import { Typography } from "@/components/ui/Typography";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -70,7 +69,7 @@ export default function AlertAdditional() {
       {typeof item.logo === "string" ? (
         <Image source={{ uri: item.logo }} style={styles.logo} />
       ) : (
-        <item.logo width={48} height={48} /> // SVG는 이렇게 렌더링
+        <item.logo width={48} height={48} />
       )}
 
       <Text style={styles.name}>{item.name}</Text>
@@ -79,10 +78,6 @@ export default function AlertAdditional() {
 
   return (
     <View style={styles.container}>
-      <Typography weight="700" size={24} style={styles.title}>
-        기업 알림
-      </Typography>
-
       {/* 검색 바 */}
       <TextInput
         style={styles.searchBar}
