@@ -16,15 +16,16 @@ export default function PriceTrailingRow({
 }: {
   onRemove: () => void;
   onReset: () => void;
-  onValueChange: (hasValue: boolean) => void;
+  onValueChange: (data: { sign: "+" | "-"; value: string }) => void;
+
   isSingleRow: boolean;
 }) {
   const [trailingValue, setTrailingValue] = useState("");
   const [sign, setSign] = useState<"+" | "-">("+");
 
   useEffect(() => {
-    onValueChange(trailingValue.trim() !== "");
-  }, [trailingValue]);
+    onValueChange({ sign, value: trailingValue });
+  }, [sign, trailingValue]);
 
   const handleRemove = () => {
     if (isSingleRow) {

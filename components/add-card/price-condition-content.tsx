@@ -14,126 +14,285 @@ import PriceLimitRow from "./price-limit-row";
 import PriceTrailingRow from "./price-trailing-row";
 import PriceTrailingValueRow from "./price-trailing-value-row";
 import PriceVariationRow from "./price-variation-row";
-export default function PriceConditionContent() {
+export default function PriceConditionContent({
+  onConfirm,
+}: {
+  onConfirm: (data: any) => void;
+}) {
+  const handleConfirmPress = () => {
+    console.log("!!!확인 버튼 클릭됨!!");
+
+    const filledRows = rows.filter((r) => r.filled);
+    console.log("!! 가격 제한 조건:");
+    filledRows.forEach((r) => console.log(`- ${r.value}원 ${r.comparison}`));
+
+    const filledChangeRows = priceChangeRows.filter((r) => r.filled);
+    console.log("!! 가격 변경 조건:");
+    filledChangeRows.forEach((r) => console.log(`- ${r.sign}${r.value}원`));
+
+    const filledVariationRows = variationRows.filter((r) => r.filled);
+    console.log("!! 변동률 조건:");
+    filledVariationRows.forEach((r) =>
+      console.log(`- ${r.sign}${r.value}% (${r.period})`)
+    );
+
+    const filledTrailingRows = trailingRows.filter((r) => r.filled);
+    console.log("!! 후행 가격(%) 조건:");
+    filledTrailingRows.forEach((r) => console.log(`- ${r.sign}${r.value}%`));
+
+    const filledTrailingValueRows = trailingValueRows.filter((r) => r.filled);
+    console.log("!! 후행 가격(원) 조건:");
+    filledTrailingValueRows.forEach((r) =>
+      console.log(`- ${r.sign}${r.value}원`)
+    );
+
+    onConfirm({
+      priceLimits: filledRows.map((r) => ({
+        value: r.value,
+        comparison: r.comparison,
+      })),
+      priceChanges: filledChangeRows.map((r) => ({
+        sign: r.sign,
+        value: r.value,
+      })),
+      variations: filledVariationRows.map((r) => ({
+        sign: r.sign,
+        value: r.value,
+        period: r.period,
+      })),
+      trailingPercents: filledTrailingRows.map((r) => ({
+        sign: r.sign,
+        value: r.value,
+      })),
+      trailingValues: filledTrailingValueRows.map((r) => ({
+        sign: r.sign,
+        value: r.value,
+      })),
+    });
+  };
+
   // 가격 제한 조건 설정에 대해 값/이상,이하/드롭다운 표시 독립적인 상태 관리
-  const [rows, setRows] = useState([{ id: 1, filled: false }]);
+  const [rows, setRows] = useState<
+    {
+      id: number;
+      filled: boolean;
+      value: string;
+      comparison: "이상" | "이하";
+    }[]
+  >([{ id: 1, filled: false, value: "", comparison: "이상" }]);
 
   const addRow = () =>
-    setRows((prev) => [...prev, { id: Date.now(), filled: false }]);
+    setRows((prev) => [
+      ...prev,
+      { id: Date.now(), filled: false, value: "", comparison: "이상" },
+    ]);
+
   const removeRow = (id: number) =>
     setRows((prev) => prev.filter((r) => r.id !== id));
-  const updateRowFilled = (id: number, hasValue: boolean) => {
+
+  const updateRowValue = (
+    id: number,
+    data: { amount: string; comparison: "이상" | "이하" }
+  ) => {
     setRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, filled: hasValue } : r))
+      prev.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              filled: data.amount.trim() !== "",
+              value: data.amount,
+              comparison: data.comparison,
+            }
+          : r
+      )
     );
   };
+
   const resetRow = (id: number) => {
-    // 행이 하나뿐일 때 리셋 시 -> default 상태로 유지
     setRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, filled: false } : r))
+      prev.map((r) =>
+        r.id === id ? { ...r, filled: false, value: "", comparison: "이상" } : r
+      )
     );
   };
 
   const hasFilled = rows.some((r) => r.filled);
 
-  const [priceLimitRows, setPriceLimitRows] = useState<
-    {
-      id: number;
-      value: string;
-      limitType: "이상" | "이하";
-      dropdownVisible: boolean;
-    }[]
-  >([{ id: 1, value: "", limitType: "이상", dropdownVisible: false }]);
-
   // 가격 변경 조건에 설정에 대한 state 관리
-  const [priceChangeRows, setPriceChangeRows] = useState([
-    { id: 1, filled: false },
-  ]);
+  const [priceChangeRows, setPriceChangeRows] = useState<
+    { id: number; filled: boolean; sign: "+" | "-"; value: string }[]
+  >([{ id: 1, filled: false, sign: "+", value: "" }]);
 
   const addPriceChangeRow = () =>
-    setPriceChangeRows((prev) => [...prev, { id: Date.now(), filled: false }]);
+    setPriceChangeRows((prev) => [
+      ...prev,
+      { id: Date.now(), filled: false, sign: "+", value: "" },
+    ]);
 
   const removePriceChangeRow = (id: number) =>
     setPriceChangeRows((prev) => prev.filter((r) => r.id !== id));
 
   const resetPriceChangeRow = (id: number) =>
     setPriceChangeRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, filled: false } : r))
+      prev.map((r) =>
+        r.id === id ? { ...r, filled: false, sign: "+", value: "" } : r
+      )
     );
 
-  const updatePriceChangeFilled = (id: number, hasValue: boolean) =>
+  const updatePriceChangeValue = (
+    id: number,
+    data: { sign: "+" | "-"; amount: string }
+  ) => {
     setPriceChangeRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, filled: hasValue } : r))
+      prev.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              filled: data.amount.trim() !== "",
+              value: data.amount,
+              sign: data.sign,
+            }
+          : r
+      )
     );
+  };
 
   const hasPriceChangeFilled = priceChangeRows.some((r) => r.filled);
 
   // 변동률 조건에 설정에 대한 state 관리
-  const [variationRows, setVariationRows] = useState([
-    { id: 1, filled: false },
-  ]);
+  const [variationRows, setVariationRows] = useState<
+    {
+      id: number;
+      filled: boolean;
+      sign: "+" | "-";
+      value: string;
+      period: "1일기준" | "현재기준";
+    }[]
+  >([{ id: 1, filled: false, sign: "+", value: "", period: "1일기준" }]);
 
   const addVariationRow = () =>
-    setVariationRows((prev) => [...prev, { id: Date.now(), filled: false }]);
+    setVariationRows((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        filled: false,
+        sign: "+",
+        value: "",
+        period: "1일기준",
+      },
+    ]);
 
   const removeVariationRow = (id: number) =>
     setVariationRows((prev) => prev.filter((r) => r.id !== id));
 
-  const updateVariationFilled = (id: number, hasValue: boolean) =>
+  const updateVariationValue = (
+    id: number,
+    data: { sign: "+" | "-"; value: string; period: "1일기준" | "현재기준" }
+  ) => {
     setVariationRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, filled: hasValue } : r))
+      prev.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              filled: data.value.trim() !== "",
+              value: data.value,
+              sign: data.sign,
+              period: data.period,
+            }
+          : r
+      )
     );
+  };
 
   const resetVariationRow = (id: number) =>
     setVariationRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, filled: false } : r))
+      prev.map((r) =>
+        r.id === id
+          ? { ...r, filled: false, sign: "+", value: "", period: "1일기준" }
+          : r
+      )
     );
 
   const hasVariationFilled = variationRows.some((r) => r.filled);
 
   // 후행 가격 (%) 조건 설정에 대한 state 관리
-  const [trailingRows, setTrailingRows] = useState([{ id: 1, filled: false }]);
+  const [trailingRows, setTrailingRows] = useState<
+    { id: number; filled: boolean; sign: "+" | "-"; value: string }[]
+  >([{ id: 1, filled: false, sign: "+", value: "" }]);
 
   const addTrailingRow = () =>
-    setTrailingRows((prev) => [...prev, { id: Date.now(), filled: false }]);
+    setTrailingRows((prev) => [
+      ...prev,
+      { id: Date.now(), filled: false, sign: "+", value: "" },
+    ]);
 
   const removeTrailingRow = (id: number) =>
     setTrailingRows((prev) => prev.filter((r) => r.id !== id));
 
-  const updateTrailingFilled = (id: number, hasValue: boolean) =>
+  const updateTrailingValue = (
+    id: number,
+    data: { sign: "+" | "-"; value: string }
+  ) => {
     setTrailingRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, filled: hasValue } : r))
+      prev.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              filled: data.value.trim() !== "",
+              sign: data.sign,
+              value: data.value,
+            }
+          : r
+      )
     );
+  };
 
   const resetTrailingRow = (id: number) =>
     setTrailingRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, filled: false } : r))
+      prev.map((r) =>
+        r.id === id ? { ...r, filled: false, sign: "+", value: "" } : r
+      )
     );
 
   const hasTrailingFilled = trailingRows.some((r) => r.filled);
 
   // 후행 가격 (원) 조건 설정에 대한 state 관리
-  const [trailingValueRows, setTrailingValueRows] = useState([
-    { id: 1, filled: false },
-  ]);
+  const [trailingValueRows, setTrailingValueRows] = useState<
+    { id: number; filled: boolean; sign: "+" | "-"; value: string }[]
+  >([{ id: 1, filled: false, sign: "+", value: "" }]);
 
   const addTrailingValueRow = () =>
     setTrailingValueRows((prev) => [
       ...prev,
-      { id: Date.now(), filled: false },
+      { id: Date.now(), filled: false, sign: "+", value: "" },
     ]);
 
   const removeTrailingValueRow = (id: number) =>
     setTrailingValueRows((prev) => prev.filter((r) => r.id !== id));
 
-  const updateTrailingValueFilled = (id: number, hasValue: boolean) =>
+  const updateTrailingValueValue = (
+    id: number,
+    data: { sign: "+" | "-"; value: string }
+  ) => {
     setTrailingValueRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, filled: hasValue } : r))
+      prev.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              filled: data.value.trim() !== "",
+              sign: data.sign,
+              value: data.value,
+            }
+          : r
+      )
     );
+  };
 
   const resetTrailingValueRow = (id: number) =>
     setTrailingValueRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, filled: false } : r))
+      prev.map((r) =>
+        r.id === id ? { ...r, filled: false, sign: "+", value: "" } : r
+      )
     );
 
   const hasTrailingValueFilled = trailingValueRows.some((r) => r.filled);
@@ -159,7 +318,7 @@ export default function PriceConditionContent() {
                 key={r.id}
                 onRemove={() => removeRow(r.id)}
                 onReset={() => resetRow(r.id)}
-                onValueChange={(v) => updateRowFilled(r.id, v)}
+                onValueChange={(data) => updateRowValue(r.id, data)}
                 isSingleRow={rows.length === 1}
               />
             ))}
@@ -180,7 +339,7 @@ export default function PriceConditionContent() {
                 key={r.id}
                 onRemove={() => removePriceChangeRow(r.id)}
                 onReset={() => resetPriceChangeRow(r.id)}
-                onValueChange={(v) => updatePriceChangeFilled(r.id, v)}
+                onValueChange={(data) => updatePriceChangeValue(r.id, data)}
                 isSingleRow={priceChangeRows.length === 1}
               />
             ))}
@@ -203,7 +362,7 @@ export default function PriceConditionContent() {
                 key={r.id}
                 onRemove={() => removeVariationRow(r.id)}
                 onReset={() => resetVariationRow(r.id)}
-                onValueChange={(v) => updateVariationFilled(r.id, v)}
+                onValueChange={(data) => updateVariationValue(r.id, data)}
                 isSingleRow={variationRows.length === 1}
               />
             ))}
@@ -228,7 +387,7 @@ export default function PriceConditionContent() {
                 key={r.id}
                 onRemove={() => removeTrailingRow(r.id)}
                 onReset={() => resetTrailingRow(r.id)}
-                onValueChange={(v) => updateTrailingFilled(r.id, v)}
+                onValueChange={(data) => updateTrailingValue(r.id, data)}
                 isSingleRow={trailingRows.length === 1}
               />
             ))}
@@ -251,7 +410,7 @@ export default function PriceConditionContent() {
                 key={r.id}
                 onRemove={() => removeTrailingValueRow(r.id)}
                 onReset={() => resetTrailingValueRow(r.id)}
-                onValueChange={(v) => updateTrailingValueFilled(r.id, v)}
+                onValueChange={(data) => updateTrailingValueValue(r.id, data)}
                 isSingleRow={trailingValueRows.length === 1}
               />
             ))}
@@ -270,7 +429,10 @@ export default function PriceConditionContent() {
             <TouchableOpacity style={styles.resetButton}>
               <Text style={styles.resetText}>초기화</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.confirmButton}>
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={handleConfirmPress}
+            >
               <Text style={styles.confirmText}>확인</Text>
             </TouchableOpacity>
           </View>

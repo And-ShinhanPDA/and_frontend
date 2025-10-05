@@ -16,15 +16,15 @@ export default function PriceChangeRow({
 }: {
   onRemove: () => void;
   onReset: () => void;
-  onValueChange: (hasValue: boolean) => void;
+  onValueChange: (data: { sign: "+" | "-"; amount: string }) => void;
   isSingleRow: boolean;
 }) {
   const [sign, setSign] = useState<"+" | "-">("+");
   const [amount, setAmount] = useState("");
 
   useEffect(() => {
-    onValueChange(amount.trim() !== "");
-  }, [amount]);
+    onValueChange({ sign, amount });
+  }, [sign, amount]);
 
   const handleRemove = () => {
     if (isSingleRow) {

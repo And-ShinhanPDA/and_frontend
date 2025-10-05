@@ -16,15 +16,16 @@ export default function PriceTrailingValueRow({
 }: {
   onRemove: () => void;
   onReset: () => void;
-  onValueChange: (hasValue: boolean) => void;
+  onValueChange: (data: { sign: "+" | "-"; value: string }) => void;
+
   isSingleRow: boolean;
 }) {
   const [sign, setSign] = useState<"+" | "-">("+");
   const [value, setValue] = useState("");
 
   useEffect(() => {
-    onValueChange(value.trim() !== "");
-  }, [value]);
+    onValueChange({ sign, value });
+  }, [sign, value]);
 
   const handleRemove = () => {
     if (isSingleRow) {
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
   },
-  plus: { color: "#2CB463" },
+  plus: { color: "#4CC439" },
   minus: { color: "#FF3B30" },
   inputWrapper: { flex: 1, position: "relative" },
   inputWithUnit: {

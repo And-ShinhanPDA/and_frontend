@@ -18,7 +18,10 @@ export default function PriceLimitRow({
 }: {
   onRemove: () => void;
   onReset: () => void;
-  onValueChange: (hasValue: boolean) => void;
+  onValueChange: (value: {
+    amount: string;
+    comparison: "이상" | "이하";
+  }) => void;
   isSingleRow: boolean;
 }) {
   const [amount, setAmount] = useState("");
@@ -26,12 +29,11 @@ export default function PriceLimitRow({
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
   useEffect(() => {
-    onValueChange(amount.trim() !== "");
-  }, [amount]);
+    onValueChange({ amount, comparison });
+  }, [amount, comparison]);
 
   const handleRemove = () => {
     if (isSingleRow) {
-      // 행이 1개 남았다면 행 삭제가 아닌 default 값으로 초기화
       setAmount("");
       setComparison("이상");
       onReset();

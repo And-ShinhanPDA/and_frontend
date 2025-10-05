@@ -17,7 +17,12 @@ export default function PriceVariationRow({
 }: {
   onRemove: () => void;
   onReset: () => void;
-  onValueChange: (hasValue: boolean) => void;
+  onValueChange: (data: {
+    sign: "+" | "-";
+    value: string;
+    period: "1일기준" | "현재기준";
+  }) => void;
+
   isSingleRow: boolean;
 }) {
   const [variation, setVariation] = useState("");
@@ -26,8 +31,8 @@ export default function PriceVariationRow({
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
   useEffect(() => {
-    onValueChange(variation.trim() !== "");
-  }, [variation]);
+    onValueChange({ sign, value: variation, period });
+  }, [sign, variation, period]);
 
   const handleRemove = () => {
     if (isSingleRow) {
