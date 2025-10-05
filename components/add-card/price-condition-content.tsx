@@ -9,6 +9,7 @@ import {
 import ConditionPlus from "../../assets/images/condition-plus.svg";
 import PriceChangeRow from "./price-change-row";
 import PriceLimitRow from "./price-limit-row";
+import PriceVariationRow from "./price-variation-row";
 export default function PriceConditionContent() {
   // 가격 제한 조건 설정에 대해 값/이상,이하/드롭다운 표시 독립적인 상태 관리
   const [rows, setRows] = useState([{ id: 1, filled: false }]);
@@ -41,7 +42,6 @@ export default function PriceConditionContent() {
   >([{ id: 1, value: "", limitType: "이상", dropdownVisible: false }]);
 
   // 가격 변경 조건에 설정에 대한 state 관리
-  // 가격 변경 조건 상태
   const [priceChangeRows, setPriceChangeRows] = useState([
     { id: 1, filled: false },
   ]);
@@ -63,6 +63,31 @@ export default function PriceConditionContent() {
     );
 
   const hasPriceChangeFilled = priceChangeRows.some((r) => r.filled);
+
+  // 변동률 조건에 설정에 대한 state 관리
+  const [variationRows, setVariationRows] = useState([
+    { id: 1, filled: false },
+  ]);
+
+  const addVariationRow = () =>
+    setVariationRows((prev) => [...prev, { id: Date.now(), filled: false }]);
+
+  const removeVariationRow = (id: number) =>
+    setVariationRows((prev) => prev.filter((r) => r.id !== id));
+
+  const updateVariationFilled = (id: number, hasValue: boolean) =>
+    setVariationRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, filled: hasValue } : r))
+    );
+
+  const resetVariationRow = (id: number) =>
+    setVariationRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, filled: false } : r))
+    );
+
+  const hasVariationFilled = variationRows.some((r) => r.filled);
+
+  //   --------------------
 
   const addPriceLimitRow = () => {
     setPriceLimitRows((prev) => [
@@ -194,15 +219,20 @@ export default function PriceConditionContent() {
       {/* 변동률 */}
       <View style={styles.section}>
         <Text style={styles.label}>변동률(%)</Text>
-        <View style={styles.row}>
-          {renderInputRow("+, - 부호를 포함하여 입력해주세요", "%")}
-          <TouchableOpacity style={styles.optionButton}>
-            <Text style={styles.optionText}>1일</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.addButton}>
+        {variationRows.map((r) => (
+          <PriceVariationRow
+            key={r.id}
+            onRemove={() => removeVariationRow(r.id)}
+            onReset={() => resetVariationRow(r.id)}
+            onValueChange={(v) => updateVariationFilled(r.id, v)}
+            isSingleRow={variationRows.length === 1}
+          />
+        ))}
+        {hasVariationFilled && (
+          <TouchableOpacity style={styles.addButton} onPress={addVariationRow}>
             <ConditionPlus width={20} height={20} />
           </TouchableOpacity>
-        </View>
+        )}
       </View>
 
       {/* 후행 */}
