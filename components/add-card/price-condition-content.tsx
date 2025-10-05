@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Keyboard,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import ConditionPlus from "../../assets/images/condition-plus.svg";
 import PriceChangeRow from "./price-change-row";
 import PriceLimitRow from "./price-limit-row";
@@ -131,134 +139,151 @@ export default function PriceConditionContent() {
   const hasTrailingValueFilled = trailingValueRows.some((r) => r.filled);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.sectionTitle}>가격</Text>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <KeyboardAwareScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        extraScrollHeight={120} // 입력창 위로 여유공간
+        enableOnAndroid={true}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.container}>
+          <Text style={styles.sectionTitle}>가격</Text>
 
-      {/* 가격 제한 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>가격 제한</Text>
+          {/* 가격 제한 */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>가격 제한</Text>
 
-        {rows.map((r, index) => (
-          <PriceLimitRow
-            key={r.id}
-            onRemove={() => removeRow(r.id)}
-            onReset={() => resetRow(r.id)}
-            onValueChange={(v) => updateRowFilled(r.id, v)}
-            isSingleRow={rows.length === 1}
-          />
-        ))}
+            {rows.map((r, index) => (
+              <PriceLimitRow
+                key={r.id}
+                onRemove={() => removeRow(r.id)}
+                onReset={() => resetRow(r.id)}
+                onValueChange={(v) => updateRowFilled(r.id, v)}
+                isSingleRow={rows.length === 1}
+              />
+            ))}
 
-        {hasFilled && (
-          <TouchableOpacity style={styles.addButton} onPress={addRow}>
-            <ConditionPlus width={20} height={20} />
-          </TouchableOpacity>
-        )}
-      </View>
+            {hasFilled && (
+              <TouchableOpacity style={styles.addButton} onPress={addRow}>
+                <ConditionPlus width={20} height={20} />
+              </TouchableOpacity>
+            )}
+          </View>
 
-      {/* 가격 변경 */}
-      <View style={styles.section}>
-        <Text style={styles.label}>가격 변경</Text>
+          {/* 가격 변경 */}
+          <View style={styles.section}>
+            <Text style={styles.label}>가격 변경</Text>
 
-        {priceChangeRows.map((r) => (
-          <PriceChangeRow
-            key={r.id}
-            onRemove={() => removePriceChangeRow(r.id)}
-            onReset={() => resetPriceChangeRow(r.id)}
-            onValueChange={(v) => updatePriceChangeFilled(r.id, v)}
-            isSingleRow={priceChangeRows.length === 1}
-          />
-        ))}
+            {priceChangeRows.map((r) => (
+              <PriceChangeRow
+                key={r.id}
+                onRemove={() => removePriceChangeRow(r.id)}
+                onReset={() => resetPriceChangeRow(r.id)}
+                onValueChange={(v) => updatePriceChangeFilled(r.id, v)}
+                isSingleRow={priceChangeRows.length === 1}
+              />
+            ))}
 
-        {hasPriceChangeFilled && (
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={addPriceChangeRow}
-          >
-            <ConditionPlus width={20} height={20} />
-          </TouchableOpacity>
-        )}
-      </View>
+            {hasPriceChangeFilled && (
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={addPriceChangeRow}
+              >
+                <ConditionPlus width={20} height={20} />
+              </TouchableOpacity>
+            )}
+          </View>
 
-      {/* 변동률 */}
-      <View style={styles.section}>
-        <Text style={styles.label}>변동률(%)</Text>
-        {variationRows.map((r) => (
-          <PriceVariationRow
-            key={r.id}
-            onRemove={() => removeVariationRow(r.id)}
-            onReset={() => resetVariationRow(r.id)}
-            onValueChange={(v) => updateVariationFilled(r.id, v)}
-            isSingleRow={variationRows.length === 1}
-          />
-        ))}
-        {hasVariationFilled && (
-          <TouchableOpacity style={styles.addButton} onPress={addVariationRow}>
-            <ConditionPlus width={20} height={20} />
-          </TouchableOpacity>
-        )}
-      </View>
+          {/* 변동률 */}
+          <View style={styles.section}>
+            <Text style={styles.label}>변동률(%)</Text>
+            {variationRows.map((r) => (
+              <PriceVariationRow
+                key={r.id}
+                onRemove={() => removeVariationRow(r.id)}
+                onReset={() => resetVariationRow(r.id)}
+                onValueChange={(v) => updateVariationFilled(r.id, v)}
+                isSingleRow={variationRows.length === 1}
+              />
+            ))}
+            {hasVariationFilled && (
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={addVariationRow}
+              >
+                <ConditionPlus width={20} height={20} />
+              </TouchableOpacity>
+            )}
+          </View>
 
-      {/* 후행 */}
-      <Text style={styles.subSectionTitle}>후행</Text>
+          {/* 후행 */}
+          <Text style={styles.subSectionTitle}>후행</Text>
 
-      <View style={styles.section}>
-        <Text style={styles.label}>추적 가격(%)</Text>
+          <View style={styles.section}>
+            <Text style={styles.label}>추적 가격(%)</Text>
 
-        {trailingRows.map((r) => (
-          <PriceTrailingRow
-            key={r.id}
-            onRemove={() => removeTrailingRow(r.id)}
-            onReset={() => resetTrailingRow(r.id)}
-            onValueChange={(v) => updateTrailingFilled(r.id, v)}
-            isSingleRow={trailingRows.length === 1}
-          />
-        ))}
+            {trailingRows.map((r) => (
+              <PriceTrailingRow
+                key={r.id}
+                onRemove={() => removeTrailingRow(r.id)}
+                onReset={() => resetTrailingRow(r.id)}
+                onValueChange={(v) => updateTrailingFilled(r.id, v)}
+                isSingleRow={trailingRows.length === 1}
+              />
+            ))}
 
-        {hasTrailingFilled && (
-          <TouchableOpacity style={styles.addButton} onPress={addTrailingRow}>
-            <ConditionPlus width={20} height={20} />
-          </TouchableOpacity>
-        )}
-      </View>
+            {hasTrailingFilled && (
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={addTrailingRow}
+              >
+                <ConditionPlus width={20} height={20} />
+              </TouchableOpacity>
+            )}
+          </View>
 
-      <View style={styles.section}>
-        <Text style={styles.label}>추적 가격(원)</Text>
+          <View style={styles.section}>
+            <Text style={styles.label}>추적 가격(원)</Text>
 
-        {trailingValueRows.map((r) => (
-          <PriceTrailingValueRow
-            key={r.id}
-            onRemove={() => removeTrailingValueRow(r.id)}
-            onReset={() => resetTrailingValueRow(r.id)}
-            onValueChange={(v) => updateTrailingValueFilled(r.id, v)}
-            isSingleRow={trailingValueRows.length === 1}
-          />
-        ))}
+            {trailingValueRows.map((r) => (
+              <PriceTrailingValueRow
+                key={r.id}
+                onRemove={() => removeTrailingValueRow(r.id)}
+                onReset={() => resetTrailingValueRow(r.id)}
+                onValueChange={(v) => updateTrailingValueFilled(r.id, v)}
+                isSingleRow={trailingValueRows.length === 1}
+              />
+            ))}
 
-        {hasTrailingValueFilled && (
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={addTrailingValueRow}
-          >
-            <ConditionPlus width={20} height={20} />
-          </TouchableOpacity>
-        )}
-      </View>
+            {hasTrailingValueFilled && (
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={addTrailingValueRow}
+              >
+                <ConditionPlus width={20} height={20} />
+              </TouchableOpacity>
+            )}
+          </View>
 
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.resetButton}>
-          <Text style={styles.resetText}>초기화</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.confirmButton}>
-          <Text style={styles.confirmText}>확인</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+          <View style={styles.footer}>
+            <TouchableOpacity style={styles.resetButton}>
+              <Text style={styles.resetText}>초기화</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.confirmButton}>
+              <Text style={styles.confirmText}>확인</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAwareScrollView>
+    </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 80 },
   container: { paddingBottom: 24 },
-
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",
@@ -355,7 +380,7 @@ const styles = StyleSheet.create({
   },
   dropdownItem: { paddingVertical: 8, alignItems: "center" },
   dropdownText: { fontSize: 13, color: "#333" },
-  dropdownTextSelected: { color: "#2CB463", fontWeight: "700" },
+  dropdownTextSelected: { color: "#4CC439", fontWeight: "700" },
   selectedText: {
     color: "#4CC439",
     fontWeight: "600",

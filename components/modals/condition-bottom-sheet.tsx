@@ -1,4 +1,4 @@
-// 조건 설정을 위한 기본 모달 디자인
+// 조건 설정을 위한 기본 모달 디자인 정의
 import React, { useEffect, useRef } from "react";
 import {
   Animated,
@@ -21,7 +21,7 @@ export default function ConditionBottomSheet({
   visible,
   onClose,
   children,
-  minHeight = 350,
+  minHeight = 650,
 }: ConditionBottomSheetProps) {
   const slideAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
