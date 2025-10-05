@@ -1,4 +1,5 @@
 import CurrentStatusCard from "@/components/add-card/current-status";
+import PriceConditionCard from "@/components/add-card/price-condition";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -39,7 +40,6 @@ export default function CompanyAlertDetail() {
 
         <Text style={styles.title}>{name}</Text>
       </View>
-
       <ScrollView
         style={styles.tabBar}
         horizontal
@@ -51,7 +51,6 @@ export default function CompanyAlertDetail() {
           </TouchableOpacity>
         ))}
       </ScrollView>
-
       <CurrentStatusCard
         time="11:38 기준"
         currentPrice={50000}
@@ -65,13 +64,13 @@ export default function CompanyAlertDetail() {
         movingAverage={50}
       />
       <View style={styles.divider} />
-
       <TextInput
         style={styles.titleInput}
         placeholder="이 조건을 대표할 수 있는 한 줄 제목"
         placeholderTextColor="#A4A4A4"
       />
       <View style={styles.divider} />
+      <PriceConditionCard />
 
       <PrimaryButton title="저장" onPress={() => console.log("조건 저장")} />
     </ScrollView>
