@@ -1,14 +1,10 @@
 import React, { useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ConditionPlus from "../../assets/images/condition-plus.svg";
 import PriceChangeRow from "./price-change-row";
 import PriceLimitRow from "./price-limit-row";
+import PriceTrailingRow from "./price-trailing-row";
+import PriceTrailingValueRow from "./price-trailing-value-row";
 import PriceVariationRow from "./price-variation-row";
 export default function PriceConditionContent() {
   // 가격 제한 조건 설정에 대해 값/이상,이하/드롭다운 표시 독립적인 상태 관리
@@ -87,85 +83,52 @@ export default function PriceConditionContent() {
 
   const hasVariationFilled = variationRows.some((r) => r.filled);
 
-  //   --------------------
+  // 후행 가격 (%) 조건 설정에 대한 state 관리
+  const [trailingRows, setTrailingRows] = useState([{ id: 1, filled: false }]);
 
-  const addPriceLimitRow = () => {
-    setPriceLimitRows((prev) => [
+  const addTrailingRow = () =>
+    setTrailingRows((prev) => [...prev, { id: Date.now(), filled: false }]);
+
+  const removeTrailingRow = (id: number) =>
+    setTrailingRows((prev) => prev.filter((r) => r.id !== id));
+
+  const updateTrailingFilled = (id: number, hasValue: boolean) =>
+    setTrailingRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, filled: hasValue } : r))
+    );
+
+  const resetTrailingRow = (id: number) =>
+    setTrailingRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, filled: false } : r))
+    );
+
+  const hasTrailingFilled = trailingRows.some((r) => r.filled);
+
+  // 후행 가격 (원) 조건 설정에 대한 state 관리
+  const [trailingValueRows, setTrailingValueRows] = useState([
+    { id: 1, filled: false },
+  ]);
+
+  const addTrailingValueRow = () =>
+    setTrailingValueRows((prev) => [
       ...prev,
-      { id: Date.now(), value: "", limitType: "이상", dropdownVisible: false },
+      { id: Date.now(), filled: false },
     ]);
-  };
 
-  const updatePriceLimitValue = (id: number, text: string) => {
-    setPriceLimitRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, value: text } : r))
+  const removeTrailingValueRow = (id: number) =>
+    setTrailingValueRows((prev) => prev.filter((r) => r.id !== id));
+
+  const updateTrailingValueFilled = (id: number, hasValue: boolean) =>
+    setTrailingValueRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, filled: hasValue } : r))
     );
-  };
 
-  const toggleDropdown = (id: number) => {
-    setPriceLimitRows((prev) =>
-      prev.map(
-        (r) =>
-          r.id === id
-            ? { ...r, dropdownVisible: !r.dropdownVisible }
-            : { ...r, dropdownVisible: false } // 다른 행은 닫기
-      )
+  const resetTrailingValueRow = (id: number) =>
+    setTrailingValueRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, filled: false } : r))
     );
-  };
 
-  const selectLimitType = (id: number, type: "이상" | "이하") => {
-    setPriceLimitRows((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, limitType: type, dropdownVisible: false } : r
-      )
-    );
-  };
-
-  const closeAllDropdowns = () => {
-    setPriceLimitRows((prev) =>
-      prev.map((r) => ({ ...r, dropdownVisible: false }))
-    );
-  };
-
-  const anyDropdownOpen = priceLimitRows.some((r) => r.dropdownVisible);
-
-  const renderInputWithUnit = (
-    placeholder: string,
-    unit: string,
-    value?: string,
-    onChange?: (t: string) => void
-  ) => (
-    <View style={styles.inputWrapper}>
-      <TextInput
-        style={styles.inputWithUnit}
-        placeholder={placeholder}
-        keyboardType="numeric"
-        value={value}
-        onChangeText={onChange}
-        placeholderTextColor="#A4A4A4"
-      />
-      <Text style={styles.unitInside}>{unit}</Text>
-    </View>
-  );
-
-  const renderInputRow = (
-    placeholder: string,
-    unit: string,
-    value?: string,
-    onChange?: (text: string) => void
-  ) => (
-    <View style={styles.inputWrapper}>
-      <TextInput
-        style={styles.inputWithUnit}
-        placeholder={placeholder}
-        keyboardType="numeric"
-        placeholderTextColor="#A4A4A4"
-        value={value}
-        onChangeText={onChange}
-      />
-      <Text style={styles.unitInside}>{unit}</Text>
-    </View>
-  );
+  const hasTrailingValueFilled = trailingValueRows.some((r) => r.filled);
 
   return (
     <View style={styles.container}>
@@ -240,28 +203,45 @@ export default function PriceConditionContent() {
 
       <View style={styles.section}>
         <Text style={styles.label}>추적 가격(%)</Text>
-        <View style={styles.row}>
-          {renderInputRow("+, - 부호를 포함하여 입력해주세요", "%")}
-          <TouchableOpacity style={styles.optionButton}>
-            <Text style={styles.optionText}>1일</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.addButton}>
+
+        {trailingRows.map((r) => (
+          <PriceTrailingRow
+            key={r.id}
+            onRemove={() => removeTrailingRow(r.id)}
+            onReset={() => resetTrailingRow(r.id)}
+            onValueChange={(v) => updateTrailingFilled(r.id, v)}
+            isSingleRow={trailingRows.length === 1}
+          />
+        ))}
+
+        {hasTrailingFilled && (
+          <TouchableOpacity style={styles.addButton} onPress={addTrailingRow}>
             <ConditionPlus width={20} height={20} />
           </TouchableOpacity>
-        </View>
+        )}
       </View>
 
       <View style={styles.section}>
         <Text style={styles.label}>추적 가격(원)</Text>
-        <View style={styles.row}>
-          {renderInputRow("+, - 부호를 포함하여 입력해주세요", "원")}
-          <TouchableOpacity style={styles.optionButton}>
-            <Text style={styles.optionText}>1일</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.addButton}>
+
+        {trailingValueRows.map((r) => (
+          <PriceTrailingValueRow
+            key={r.id}
+            onRemove={() => removeTrailingValueRow(r.id)}
+            onReset={() => resetTrailingValueRow(r.id)}
+            onValueChange={(v) => updateTrailingValueFilled(r.id, v)}
+            isSingleRow={trailingValueRows.length === 1}
+          />
+        ))}
+
+        {hasTrailingValueFilled && (
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={addTrailingValueRow}
+          >
             <ConditionPlus width={20} height={20} />
           </TouchableOpacity>
-        </View>
+        )}
       </View>
 
       <View style={styles.footer}>
@@ -278,6 +258,7 @@ export default function PriceConditionContent() {
 
 const styles = StyleSheet.create({
   container: { paddingBottom: 24 },
+
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",
