@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import AddIcon from "../../assets/images/add.svg";
-import MinusIcon from "../../assets/images/minus.svg";
+import ChevronDown from "../../assets/images/ChevronDown.svg";
 
 interface CurrentStatusCardProps {
   time: string;
@@ -39,15 +38,18 @@ export default function CurrentStatusCard({
         </View>
 
         <TouchableOpacity onPress={() => setExpanded(!expanded)}>
-          {expanded ? (
-            <MinusIcon width={20} height={20} />
-          ) : (
-            <AddIcon width={20} height={20} />
-          )}
+          <View
+            style={[
+              styles.iconWrapper,
+              expanded && { transform: [{ rotate: "180deg" }] },
+            ]}
+          >
+            <ChevronDown width={18} height={18} />
+          </View>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.divider} />
+      {expanded && <View style={styles.divider} />}
 
       {expanded && (
         <View style={styles.content}>
@@ -141,6 +143,10 @@ const styles = StyleSheet.create({
   subText: {
     fontSize: 13,
     color: "#777",
+  },
+  iconWrapper: {
+    justifyContent: "center",
+    alignItems: "center",
   },
   divider: {
     height: 1,

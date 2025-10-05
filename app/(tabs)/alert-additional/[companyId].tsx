@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -63,6 +64,14 @@ export default function CompanyAlertDetail() {
         rsi={50}
         movingAverage={50}
       />
+      <View style={styles.divider} />
+
+      <TextInput
+        style={styles.titleInput}
+        placeholder="이 조건을 대표할 수 있는 한 줄 제목"
+        placeholderTextColor="#A4A4A4"
+      />
+      <View style={styles.divider} />
 
       <PrimaryButton title="저장" onPress={() => console.log("조건 저장")} />
     </ScrollView>
@@ -97,6 +106,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     color: "#333",
+  },
+  divider: {
+    height: 7,
+    backgroundColor: "#F5F6F8",
+    marginVertical: 11,
+    marginHorizontal: -16,
+  },
+  titleInput: {
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    fontSize: 15,
+    color: "#333",
+    backgroundColor: "#fff",
+    marginTop: 11,
+    marginBottom: 8,
   },
 
   icon: { width: 16, height: 16 },
