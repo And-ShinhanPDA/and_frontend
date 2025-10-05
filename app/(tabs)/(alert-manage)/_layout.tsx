@@ -5,7 +5,6 @@ export default function AlertManageLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="alert-manage" />
-      <Stack.Screen name="alert-condition" />
     </Stack>
   );
 }
