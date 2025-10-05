@@ -1,4 +1,4 @@
-import InfoCard from "@/components/ui/info-card";
+import CurrentStatusCard from "@/components/add-card/current-status";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -51,7 +51,18 @@ export default function CompanyAlertDetail() {
         ))}
       </ScrollView>
 
-      <InfoCard />
+      <CurrentStatusCard
+        time="11:38 기준"
+        currentPrice={50000}
+        openPrice={50000}
+        high52w={55000}
+        low52w={45000}
+        volume={50}
+        bollingerUpper={50000}
+        bollingerLower={50000}
+        rsi={50}
+        movingAverage={50}
+      />
 
       <PrimaryButton title="저장" onPress={() => console.log("조건 저장")} />
     </ScrollView>
@@ -62,8 +73,9 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 75,
+    marginTop: 55,
     justifyContent: "center",
+    marginBottom: 22,
   },
   iconWrapper: {
     position: "absolute",
