@@ -7,6 +7,7 @@ import {
   View,
 } from "react-native";
 import ConditionPlus from "../../assets/images/condition-plus.svg";
+import PriceChangeRow from "./price-change-row";
 import PriceLimitRow from "./price-limit-row";
 export default function PriceConditionContent() {
   // 가격 제한 조건 설정에 대해 값/이상,이하/드롭다운 표시 독립적인 상태 관리
@@ -38,6 +39,30 @@ export default function PriceConditionContent() {
       dropdownVisible: boolean;
     }[]
   >([{ id: 1, value: "", limitType: "이상", dropdownVisible: false }]);
+
+  // 가격 변경 조건에 설정에 대한 state 관리
+  // 가격 변경 조건 상태
+  const [priceChangeRows, setPriceChangeRows] = useState([
+    { id: 1, filled: false },
+  ]);
+
+  const addPriceChangeRow = () =>
+    setPriceChangeRows((prev) => [...prev, { id: Date.now(), filled: false }]);
+
+  const removePriceChangeRow = (id: number) =>
+    setPriceChangeRows((prev) => prev.filter((r) => r.id !== id));
+
+  const resetPriceChangeRow = (id: number) =>
+    setPriceChangeRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, filled: false } : r))
+    );
+
+  const updatePriceChangeFilled = (id: number, hasValue: boolean) =>
+    setPriceChangeRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, filled: hasValue } : r))
+    );
+
+  const hasPriceChangeFilled = priceChangeRows.some((r) => r.filled);
 
   const addPriceLimitRow = () => {
     setPriceLimitRows((prev) => [
@@ -145,15 +170,25 @@ export default function PriceConditionContent() {
       {/* 가격 변경 */}
       <View style={styles.section}>
         <Text style={styles.label}>가격 변경</Text>
-        <View style={styles.row}>
-          {renderInputRow("+, - 부호를 포함하여 입력해주세요", "원")}
-          <TouchableOpacity style={styles.optionButton}>
-            <Text style={styles.optionText}>1일</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.addButton}>
+
+        {priceChangeRows.map((r) => (
+          <PriceChangeRow
+            key={r.id}
+            onRemove={() => removePriceChangeRow(r.id)}
+            onReset={() => resetPriceChangeRow(r.id)}
+            onValueChange={(v) => updatePriceChangeFilled(r.id, v)}
+            isSingleRow={priceChangeRows.length === 1}
+          />
+        ))}
+
+        {hasPriceChangeFilled && (
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={addPriceChangeRow}
+          >
             <ConditionPlus width={20} height={20} />
           </TouchableOpacity>
-        </View>
+        )}
       </View>
 
       {/* 변동률 */}

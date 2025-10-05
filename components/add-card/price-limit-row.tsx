@@ -63,7 +63,7 @@ export default function PriceLimitRow({
         </TouchableOpacity>
 
         {dropdownVisible && (
-          <View style={styles.dropdownMenu}>
+          <View style={[styles.dropdownMenu, { width: 72 }]}>
             {["이상", "이하"].map((opt) => (
               <TouchableOpacity
                 key={opt}
@@ -73,7 +73,14 @@ export default function PriceLimitRow({
                   setDropdownVisible(false);
                 }}
               >
-                <Text style={styles.dropdownText}>{opt}</Text>
+                <Text
+                  style={[
+                    styles.dropdownText,
+                    comparison === opt && styles.dropdownTextSelected,
+                  ]}
+                >
+                  {opt}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -101,19 +108,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E5E5",
     borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     paddingRight: 30,
-    fontSize: 14,
+    fontSize: 12,
   },
   unitInside: {
     position: "absolute",
     right: 10,
     top: "50%",
-    transform: [{ translateY: -8 }],
+    transform: [{ translateY: -6 }],
     fontSize: 13,
     color: "#555",
   },
+
   dropdownWrapper: { position: "relative", marginLeft: 8 },
   dropdownButton: {
     flexDirection: "row",
@@ -121,21 +129,45 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E5E5",
     borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    width: 72,
   },
+
   dropdownMenu: {
     position: "absolute",
-    top: 36,
+    top: 44, // 버튼 바로 아래
     right: 0,
+    width: "100%", // 버튼과 동일한 폭으로 맞춤
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#E5E5E5",
-    borderRadius: 6,
-    zIndex: 10,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3,
+    elevation: 2,
+    zIndex: 20,
+    overflow: "hidden",
   },
-  dropdownItem: { paddingHorizontal: 12, paddingVertical: 8 },
-  dropdownText: { fontSize: 13, color: "#333" },
-  optionText: { fontSize: 13, color: "#333", marginRight: 4 },
+
+  dropdownItem: {
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
+  },
+
+  dropdownText: {
+    fontSize: 13,
+    color: "#333",
+  },
+  dropdownTextSelected: {
+    color: "#2CB463",
+    fontWeight: "600",
+  },
+
+  optionText: { fontSize: 13, color: "#333", marginRight: 8 },
   removeButton: { marginLeft: 8 },
 });
