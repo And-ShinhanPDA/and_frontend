@@ -61,7 +61,7 @@ export default function SMATargetRow({
           style={styles.inputWithUnit}
           value={value}
           onChangeText={setValue}
-          placeholder="목표가 입력"
+          placeholder="목표가를 입력해주세요"
           keyboardType="numeric"
         />
         <Text style={styles.unitInside}>원</Text>

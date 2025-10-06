@@ -132,6 +132,9 @@ export default function RSIConditionContent({
           {/* RSI 과매수 / 과매도 여부 */}
           <View style={styles.section}>
             <Text style={styles.label}>RSI 과매수 | 과매도 여부</Text>
+            <Text style={styles.subText}>
+              과매수 (≥ 70 이상) / 과매도 (&lt; 30 미만)
+            </Text>
             {stateRows.map((r) => (
               <RSIOverboughtOversoldRow
                 key={r.id}
@@ -177,6 +180,11 @@ const styles = StyleSheet.create({
   },
   section: { marginBottom: 14 },
   label: { fontSize: 14, fontWeight: "500", marginBottom: 6 },
+  subText: {
+    fontSize: 12,
+    color: "#777",
+    marginBottom: 8,
+  },
   addButton: {
     marginLeft: 8,
     alignItems: "center",
