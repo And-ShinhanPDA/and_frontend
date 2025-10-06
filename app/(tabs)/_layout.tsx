@@ -39,7 +39,7 @@ export default function TabLayout() {
 
         headerTitleContainerStyle: {
           left: 0,
-          paddingLeft: 5,
+          paddingLeft: 10,
         },
 
         headerRightContainerStyle: {
@@ -74,9 +74,9 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="alert-manage/alert-manage"
+        name="(alert-manage)"
         options={{
-          title: "내 알림",
+          title: "기업 알림",
           tabBarLabel: ({ focused }) => (
             <Typography weight={focused ? "600" : "400"} size={12}>
               알림
