@@ -75,6 +75,7 @@ export default function CompanyAlertDetail() {
       <PriceConditionCard />
       <Week52ConditionCard />
       <VolumeConditionCard />
+
       <PrimaryButton title="저장" onPress={() => console.log("조건 저장")} />
     </ScrollView>
   );
