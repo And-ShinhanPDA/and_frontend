@@ -1,10 +1,10 @@
+import BollingerBandCondition from "@/components/add-card/bollingerband-condition";
 import CurrentStatusCard from "@/components/add-card/current-status";
 import PriceConditionCard from "@/components/add-card/price-condition";
 import RSIConditionCard from "@/components/add-card/rsi-condition";
 import SMAConditionCard from "@/components/add-card/sma-condition";
 import VolumeConditionCard from "@/components/add-card/volume-condition";
 import Week52ConditionCard from "@/components/add-card/week52-condition";
-import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -79,7 +79,22 @@ export default function CompanyAlertDetail() {
       <VolumeConditionCard />
       <SMAConditionCard />
       <RSIConditionCard />
-      <PrimaryButton title="저장" onPress={() => console.log("조건 저장")} />
+      <BollingerBandCondition />
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.presetButton}
+          onPress={() => console.log("프리셋 선택")}
+        >
+          <Text style={styles.presetText}>프리셋</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={() => console.log("조건 저장")}
+        >
+          <Text style={styles.saveText}>저장</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -131,7 +146,32 @@ const styles = StyleSheet.create({
     marginTop: 11,
     marginBottom: 8,
   },
-
+  footer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 24,
+    marginBottom: 40,
+  },
+  presetButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+    borderRadius: 10,
+    paddingVertical: 13,
+    alignItems: "center",
+    marginRight: 8,
+    backgroundColor: "#F7F7F7",
+  },
+  presetText: { fontSize: 15, color: "#333", fontWeight: "500" },
+  saveButton: {
+    flex: 1,
+    backgroundColor: "#4CC439",
+    borderRadius: 10,
+    paddingVertical: 13,
+    alignItems: "center",
+    marginLeft: 8,
+  },
+  saveText: { fontSize: 15, color: "#fff", fontWeight: "600" },
   icon: { width: 16, height: 16 },
   card: {
     backgroundColor: "#f5f5f5",
