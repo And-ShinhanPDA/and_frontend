@@ -5,6 +5,8 @@ import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
 import SMAConditionCard from "@/components/add-card/sma/sma-condition";
 import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
 import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
+import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
+import PresetSelect from "@/components/preset/preset-select";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -19,7 +21,7 @@ import Arrow from "../../../assets/images/arrow.svg";
 export default function CompanyAlertDetail() {
   const { name } = useLocalSearchParams();
   const router = useRouter();
-
+  const [isPresetOpen, setIsPresetOpen] = useState(false);
   const tabs = [
     "제목",
     "가격",
@@ -80,10 +82,11 @@ export default function CompanyAlertDetail() {
       <SMAConditionCard />
       <RSIConditionCard />
       <BollingerBandCondition />
+      {/* 하단 버튼 */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.presetButton}
-          onPress={() => console.log("프리셋 선택")}
+          onPress={() => setIsPresetOpen(true)}
         >
           <Text style={styles.presetText}>프리셋</Text>
         </TouchableOpacity>
@@ -95,6 +98,14 @@ export default function CompanyAlertDetail() {
           <Text style={styles.saveText}>저장</Text>
         </TouchableOpacity>
       </View>
+
+      <ConditionBottomSheet
+        visible={isPresetOpen}
+        onClose={() => setIsPresetOpen(false)}
+        ratio={0.8}
+      >
+        <PresetSelect onClose={() => setIsPresetOpen(false)} />
+      </ConditionBottomSheet>
     </ScrollView>
   );
 }
@@ -163,6 +174,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#F7F7F7",
   },
   presetText: { fontSize: 15, color: "#333", fontWeight: "500" },
+  overlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    justifyContent: "flex-end",
+  },
+
   saveButton: {
     flex: 1,
     backgroundColor: "#4CC439",

@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import ConditionMinus from "../../assets/images/condition-minus.svg";
-import ConditionPlus from "../../assets/images/condition-plus.svg";
+import ConditionMinus from "../../../assets/images/condition-minus.svg";
+import ConditionPlus from "../../../assets/images/condition-plus.svg";
 
 export default function RSIOverboughtOversoldRow({
   id,

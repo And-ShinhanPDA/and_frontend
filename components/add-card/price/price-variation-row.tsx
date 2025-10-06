@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import ChevronDown from "../../assets/images/ChevronDown.svg";
-import ConditionMinus from "../../assets/images/condition-minus.svg";
+import ChevronDown from "../../../assets/images/ChevronDown.svg";
+import ConditionMinus from "../../../assets/images/condition-minus.svg";
 
 export default function PriceVariationRow({
   onRemove,

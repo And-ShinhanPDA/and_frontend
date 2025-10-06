@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import ChevronDown from "../../assets/images/ChevronDown.svg";
-import ConditionMinus from "../../assets/images/condition-minus.svg";
-import ConditionPlus from "../../assets/images/condition-plus.svg";
+import ChevronDown from "../../../assets/images/ChevronDown.svg";
+import ConditionMinus from "../../../assets/images/condition-minus.svg";
+import ConditionPlus from "../../../assets/images/condition-plus.svg";
 
 export default function Week52HighLowRow({
   onRemove,

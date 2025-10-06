@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import ConditionPlus from "../../assets/images/condition-plus.svg";
+import ConditionPlus from "../../../assets/images/condition-plus.svg";
 import VolumeCurrentRow from "./volume-current-row";
 import VolumeRecentRow from "./volume-recent-row";
 import VolumeSpikeRow from "./volume-spike-row";

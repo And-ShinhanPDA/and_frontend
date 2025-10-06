@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import ChevronDown from "../../assets/images/ChevronDown.svg";
-import ConditionMinus from "../../assets/images/condition-minus.svg";
+import ChevronDown from "../../../assets/images/ChevronDown.svg";
+import ConditionMinus from "../../../assets/images/condition-minus.svg";
 
 type Period = "5일" | "10일" | "20일" | "30일" | "50일" | "100일" | "200일";
 

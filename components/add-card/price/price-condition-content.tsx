@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import ConditionPlus from "../../assets/images/condition-plus.svg";
+import ConditionPlus from "../../../assets/images/condition-plus.svg";
 import PriceChangeRow from "./price-change-row";
 import PriceLimitRow from "./price-limit-row";
 import PriceTrailingRow from "./price-trailing-row";

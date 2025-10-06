@@ -9,8 +9,8 @@ import {
   UIManager,
   View,
 } from "react-native";
-import AddIcon from "../../assets/images/add.svg";
-import EditIcon from "../../assets/images/edit.svg";
+import AddIcon from "../../../assets/images/add.svg";
+import EditIcon from "../../../assets/images/edit.svg";
 import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
 import VolumeConditionContent from "./volume-condition-content";
 

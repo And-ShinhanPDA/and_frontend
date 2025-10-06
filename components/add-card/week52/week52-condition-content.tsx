@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import ConditionPlus from "../../assets/images/condition-plus.svg";
+import ConditionPlus from "../../../assets/images/condition-plus.svg";
 import Week52HighLowRow from "./week52-highlow-row";
 import Week52ProximityRow from "./week52-proximity-row";
 

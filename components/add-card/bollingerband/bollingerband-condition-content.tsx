@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import ConditionPlus from "../../assets/images/condition-plus.svg";
+import ConditionPlus from "../../../assets/images/condition-plus.svg";
 import BollingerBandSignalRow from "./bollingerband-singal-row";
 
 export default function BollingerBandConditionContent({

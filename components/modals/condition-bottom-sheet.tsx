@@ -93,7 +93,6 @@ export default function ConditionBottomSheet({
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        {" "}
         <View style={styles.overlay}>
           <TouchableOpacity style={styles.dimmed} onPress={onClose} />
           <Animated.View

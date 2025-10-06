@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import ConditionPlus from "../../assets/images/condition-plus.svg";
+import ConditionPlus from "../../../assets/images/condition-plus.svg";
 import SMATargetRow from "./sma-target-row";
-
 type Period = "5일" | "10일" | "20일" | "30일" | "50일" | "100일" | "200일";
 
 export default function SMAConditionContent({

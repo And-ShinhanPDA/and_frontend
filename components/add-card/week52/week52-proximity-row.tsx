@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import ConditionMinus from "../../assets/images/condition-minus.svg";
+import ConditionMinus from "../../../assets/images/condition-minus.svg";
 
 export default function Week52ProximityRow({
   onRemove,
