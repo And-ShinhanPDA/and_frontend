@@ -148,7 +148,11 @@ export default function PriceConditionCard() {
         </View>
       </Pressable>
 
-      <ConditionBottomSheet visible={isOpen} onClose={() => setIsOpen(false)}>
+      <ConditionBottomSheet
+        visible={isOpen}
+        onClose={() => setIsOpen(false)}
+        ratio={0.75}
+      >
         <PriceConditionContent onConfirm={handleConfirm} />
       </ConditionBottomSheet>
     </>

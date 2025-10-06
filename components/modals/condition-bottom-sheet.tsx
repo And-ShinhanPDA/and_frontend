@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from "react";
 import {
   Animated,
+  Dimensions,
   Easing,
   Modal,
   PanResponder,
@@ -14,18 +15,22 @@ interface ConditionBottomSheetProps {
   visible: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  minHeight?: number;
+  height?: number | string;
+  ratio?: number;
 }
 
 export default function ConditionBottomSheet({
   visible,
   onClose,
   children,
-  minHeight = 650,
+  height,
+  ratio,
 }: ConditionBottomSheetProps) {
   const slideAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
-
+  const screenHeight = Dimensions.get("window").height;
+  const sheetHeight =
+    typeof height === "number" ? height : ratio ? screenHeight * ratio : 700;
   useEffect(() => {
     if (visible) {
       Animated.timing(slideAnim, {
@@ -85,7 +90,7 @@ export default function ConditionBottomSheet({
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.dimmed} onPress={onClose} />
         <Animated.View
-          style={[styles.bottomSheet, { minHeight }, slideUp]}
+          style={[styles.bottomSheet, { minHeight: sheetHeight }, slideUp]}
           {...panResponder.panHandlers}
         >
           <View style={styles.handleBar} />

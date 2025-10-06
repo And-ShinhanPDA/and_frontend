@@ -100,7 +100,11 @@ export default function Week52ConditionCard() {
         </View>
       </Pressable>
 
-      <ConditionBottomSheet visible={isOpen} onClose={() => setIsOpen(false)}>
+      <ConditionBottomSheet
+        visible={isOpen}
+        onClose={() => setIsOpen(false)}
+        ratio={0.4}
+      >
         <Week52ConditionContent onConfirm={handleConfirm} />
       </ConditionBottomSheet>
     </>
