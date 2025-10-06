@@ -1,5 +1,6 @@
 import CurrentStatusCard from "@/components/add-card/current-status";
 import PriceConditionCard from "@/components/add-card/price-condition";
+import VolumeConditionCard from "@/components/add-card/volume-condition";
 import Week52ConditionCard from "@/components/add-card/week52-condition";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -73,7 +74,7 @@ export default function CompanyAlertDetail() {
       <View style={styles.divider} />
       <PriceConditionCard />
       <Week52ConditionCard />
-
+      <VolumeConditionCard />
       <PrimaryButton title="저장" onPress={() => console.log("조건 저장")} />
     </ScrollView>
   );
