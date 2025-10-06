@@ -1,10 +1,10 @@
-import BollingerBandCondition from "@/components/add-card/bollingerband-condition";
+import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
 import CurrentStatusCard from "@/components/add-card/current-status";
-import PriceConditionCard from "@/components/add-card/price-condition";
-import RSIConditionCard from "@/components/add-card/rsi-condition";
-import SMAConditionCard from "@/components/add-card/sma-condition";
-import VolumeConditionCard from "@/components/add-card/volume-condition";
-import Week52ConditionCard from "@/components/add-card/week52-condition";
+import PriceConditionCard from "@/components/add-card/price/price-condition";
+import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
+import SMAConditionCard from "@/components/add-card/sma/sma-condition";
+import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
+import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {

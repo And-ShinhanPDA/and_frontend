@@ -11,7 +11,6 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import ConditionPlus from "../../assets/images/condition-plus.svg";
 import RSIOverboughtOversoldRow from "./rsi-over-sold-row";
 import RSITargetRow from "./rsi-target-row";
-
 export default function RSIConditionContent({
   onConfirm,
 }: {

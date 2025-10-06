@@ -11,8 +11,8 @@ import {
 } from "react-native";
 import AddIcon from "../../assets/images/add.svg";
 import EditIcon from "../../assets/images/edit.svg";
-import ConditionBottomSheet from "../modals/condition-bottom-sheet";
-import VolumeConditionContent from "./volume-condition-content";
+import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
+import Week52ConditionContent from "./week52-condition-content";
 
 if (
   Platform.OS === "android" &&
@@ -21,16 +21,18 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function VolumeConditionCard() {
+export default function Week52ConditionCard() {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [conditionData, setConditionData] = useState<any>(null);
   const [expanded, setExpanded] = useState(false);
 
   const handleConfirm = (data: any) => {
+    console.log("52주 조건 입력:", data);
     setConditionData(data);
     setHasCondition(true);
     setIsOpen(false);
+
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
   };
@@ -45,7 +47,7 @@ export default function VolumeConditionCard() {
       <Pressable onPress={hasCondition ? toggleExpand : undefined}>
         <View style={styles.card}>
           <View style={styles.header}>
-            <Text style={styles.title}>거래량</Text>
+            <Text style={styles.title}>52주</Text>
             <TouchableOpacity onPress={() => setIsOpen(true)}>
               {hasCondition ? (
                 <EditIcon width={18} height={18} />
@@ -59,38 +61,37 @@ export default function VolumeConditionCard() {
             <>
               <View style={styles.divider} />
 
-              {/* 현재 거래량 대비 */}
-              {conditionData.currentVolume?.length > 0 && (
+              {/* 최고가/최저가 여부 */}
+              {conditionData.highLow?.some((item: any) => item.checked) && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>현재 거래량 대비</Text>
-                  {conditionData.currentVolume.map((item: any, idx: number) => (
-                    <Text key={idx} style={styles.value}>
-                      {item.value}% {item.compare}
-                    </Text>
-                  ))}
+                  <Text style={styles.sectionTitle}>
+                    최근 52주 기준 최고가 | 최저가 여부
+                  </Text>
+
+                  {conditionData.highLow
+                    .filter((item: any) => item.checked)
+                    .map((item: any, idx: number) => (
+                      <View key={idx} style={styles.row}>
+                        <Text style={styles.label}>{item.type}</Text>
+                      </View>
+                    ))}
                 </View>
               )}
 
-              {/* 최신 거래량 대비 */}
-              {conditionData.recentVolume?.length > 0 && (
+              {/* 최고가/최저가 근접 여부 */}
+              {conditionData.proximity?.length > 0 && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>최신 거래량 대비</Text>
-                  {conditionData.recentVolume.map((item: any, idx: number) => (
-                    <Text key={idx} style={styles.value}>
-                      {item.value}% {item.compare}
-                    </Text>
-                  ))}
-                </View>
-              )}
-
-              {/* 급증 감소 여부 */}
-              {conditionData.spikes?.length > 0 && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>거래량 급증·감소 여부</Text>
-                  {conditionData.spikes.map((item: any, idx: number) => (
-                    <Text key={idx} style={styles.value}>
-                      {item.type}
-                    </Text>
+                  <Text style={styles.sectionTitle}>
+                    최근 52주 기준 최고가 | 최저가 근접 여부
+                  </Text>
+                  {conditionData.proximity.map((item: any, idx: number) => (
+                    <View key={idx} style={styles.row}>
+                      <Text style={styles.label}>{item.type}</Text>
+                      <Text style={styles.value}>
+                        {item.sign}
+                        {item.value}%
+                      </Text>
+                    </View>
                   ))}
                 </View>
               )}
@@ -104,7 +105,7 @@ export default function VolumeConditionCard() {
         onClose={() => setIsOpen(false)}
         ratio={0.4}
       >
-        <VolumeConditionContent onConfirm={handleConfirm} />
+        <Week52ConditionContent onConfirm={handleConfirm} />
       </ConditionBottomSheet>
     </>
   );
@@ -126,8 +127,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: { fontSize: 16, fontWeight: "600" },
-  divider: { height: 1, backgroundColor: "#EAEAEA", marginVertical: 8 },
+  divider: {
+    height: 1,
+    backgroundColor: "#EAEAEA",
+    marginTop: 8,
+    marginBottom: 6,
+    marginHorizontal: -12,
+  },
   section: { marginBottom: 8 },
   sectionTitle: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
-  value: { fontSize: 13, color: "#333", marginLeft: 4 },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  label: { fontSize: 13, color: "#333" },
+  value: { fontSize: 13, color: "#000", fontWeight: "500" },
 });

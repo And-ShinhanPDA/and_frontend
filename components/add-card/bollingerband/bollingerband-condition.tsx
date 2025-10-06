@@ -11,8 +11,8 @@ import {
 } from "react-native";
 import AddIcon from "../../assets/images/add.svg";
 import EditIcon from "../../assets/images/edit.svg";
-import ConditionBottomSheet from "../modals/condition-bottom-sheet";
-import SMAConditionContent from "./sma-condition-content";
+import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
+import BollingerBandConditionContent from "./bollingerband-condition-content";
 
 if (
   Platform.OS === "android" &&
@@ -21,13 +21,14 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function SMAConditionCard() {
+export default function BollingerBandConditionCard() {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [conditionData, setConditionData] = useState<any>(null);
   const [expanded, setExpanded] = useState(false);
 
   const handleConfirm = (data: any) => {
+    // data: { signals: { type: "강세" | "하락" }[] }
     setConditionData(data);
     setHasCondition(true);
     setIsOpen(false);
@@ -46,7 +47,7 @@ export default function SMAConditionCard() {
       <Pressable onPress={hasCondition ? toggleExpand : undefined}>
         <View style={styles.card}>
           <View style={styles.header}>
-            <Text style={styles.title}>SMA</Text>
+            <Text style={styles.title}>볼린저 밴드</Text>
             <TouchableOpacity onPress={() => setIsOpen(true)}>
               {hasCondition ? (
                 <EditIcon width={18} height={18} />
@@ -60,14 +61,14 @@ export default function SMAConditionCard() {
             <>
               <View style={styles.divider} />
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>SMA 목표 가격 도달 여부</Text>
-                {conditionData.targets && conditionData.targets.length > 0 ? (
-                  conditionData.targets.map((t: any, idx: number) => (
+                <Text style={styles.sectionTitle}>
+                  볼린저 밴드 강세 | 하락 경고
+                </Text>
+                {conditionData.signals && conditionData.signals.length > 0 ? (
+                  conditionData.signals.map((s: any, idx: number) => (
                     <View key={idx} style={styles.row}>
-                      <Text style={styles.label}>{t.period}</Text>
-                      <Text style={styles.value}>
-                        {t.value ? `${t.value}원` : "미입력"}
-                      </Text>
+                      <Text style={styles.label}>신호</Text>
+                      <Text style={styles.value}>{s.type}</Text>
                     </View>
                   ))
                 ) : (
@@ -84,9 +85,9 @@ export default function SMAConditionCard() {
       <ConditionBottomSheet
         visible={isOpen}
         onClose={() => setIsOpen(false)}
-        ratio={0.6}
+        ratio={0.56}
       >
-        <SMAConditionContent onConfirm={handleConfirm} />
+        <BollingerBandConditionContent onConfirm={handleConfirm} />
       </ConditionBottomSheet>
     </>
   );

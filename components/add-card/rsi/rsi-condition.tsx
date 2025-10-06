@@ -11,8 +11,8 @@ import {
 } from "react-native";
 import AddIcon from "../../assets/images/add.svg";
 import EditIcon from "../../assets/images/edit.svg";
-import ConditionBottomSheet from "../modals/condition-bottom-sheet";
-import Week52ConditionContent from "./week52-condition-content";
+import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
+import RSIConditionContent from "./rsi-condition-content";
 
 if (
   Platform.OS === "android" &&
@@ -21,14 +21,13 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function Week52ConditionCard() {
+export default function RSIConditionCard() {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [conditionData, setConditionData] = useState<any>(null);
   const [expanded, setExpanded] = useState(false);
 
   const handleConfirm = (data: any) => {
-    console.log("52주 조건 입력:", data);
     setConditionData(data);
     setHasCondition(true);
     setIsOpen(false);
@@ -47,7 +46,7 @@ export default function Week52ConditionCard() {
       <Pressable onPress={hasCondition ? toggleExpand : undefined}>
         <View style={styles.card}>
           <View style={styles.header}>
-            <Text style={styles.title}>52주</Text>
+            <Text style={styles.title}>RSI</Text>
             <TouchableOpacity onPress={() => setIsOpen(true)}>
               {hasCondition ? (
                 <EditIcon width={18} height={18} />
@@ -61,36 +60,31 @@ export default function Week52ConditionCard() {
             <>
               <View style={styles.divider} />
 
-              {/* 최고가/최저가 여부 */}
-              {conditionData.highLow?.some((item: any) => item.checked) && (
+              {/* RSI 목표 지수 도달 시 경고 */}
+              {conditionData.rsiTargets?.length > 0 && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>
-                    최근 52주 기준 최고가 | 최저가 여부
+                    RSI 목표 지수 도달시 경고
                   </Text>
-
-                  {conditionData.highLow
-                    .filter((item: any) => item.checked)
-                    .map((item: any, idx: number) => (
-                      <View key={idx} style={styles.row}>
-                        <Text style={styles.label}>{item.type}</Text>
-                      </View>
-                    ))}
+                  {conditionData.rsiTargets.map((item: any, idx: number) => (
+                    <View key={idx} style={styles.row}>
+                      <Text style={styles.label}>
+                        RSI {item.comparison} {item.value}
+                      </Text>
+                    </View>
+                  ))}
                 </View>
               )}
 
-              {/* 최고가/최저가 근접 여부 */}
-              {conditionData.proximity?.length > 0 && (
+              {/* RSI 과매수 | 과매도 여부 */}
+              {conditionData.rsiStates?.length > 0 && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>
-                    최근 52주 기준 최고가 | 최저가 근접 여부
+                    RSI 과매수 / 과매도 여부
                   </Text>
-                  {conditionData.proximity.map((item: any, idx: number) => (
+                  {conditionData.rsiStates.map((item: any, idx: number) => (
                     <View key={idx} style={styles.row}>
-                      <Text style={styles.label}>{item.type}</Text>
-                      <Text style={styles.value}>
-                        {item.sign}
-                        {item.value}%
-                      </Text>
+                      <Text style={styles.label}>{item.state}</Text>
                     </View>
                   ))}
                 </View>
@@ -103,9 +97,9 @@ export default function Week52ConditionCard() {
       <ConditionBottomSheet
         visible={isOpen}
         onClose={() => setIsOpen(false)}
-        ratio={0.4}
+        ratio={0.55}
       >
-        <Week52ConditionContent onConfirm={handleConfirm} />
+        <RSIConditionContent onConfirm={handleConfirm} />
       </ConditionBottomSheet>
     </>
   );
@@ -126,7 +120,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  title: { fontSize: 16, fontWeight: "600" },
+  title: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
   divider: {
     height: 1,
     backgroundColor: "#EAEAEA",
@@ -143,5 +140,4 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   label: { fontSize: 13, color: "#333" },
-  value: { fontSize: 13, color: "#000", fontWeight: "500" },
 });

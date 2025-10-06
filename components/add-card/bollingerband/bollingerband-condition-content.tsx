@@ -9,14 +9,13 @@ import {
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import ConditionPlus from "../../assets/images/condition-plus.svg";
-
 import BollingerBandSignalRow from "./bollingerband-singal-row";
+
 export default function BollingerBandConditionContent({
   onConfirm,
 }: {
   onConfirm: (data: any) => void;
 }) {
-  // 신호 리스트: 강세/하락 토글
   const [rows, setRows] = useState<{ id: number; type?: "강세" | "하락" }[]>(
     []
   );
@@ -67,7 +66,6 @@ export default function BollingerBandConditionContent({
             />
           ))}
 
-          {/* 최대 2개 */}
           {rows.length < 2 && (
             <TouchableOpacity style={styles.addButton} onPress={addRow}>
               <ConditionPlus width={20} height={20} />

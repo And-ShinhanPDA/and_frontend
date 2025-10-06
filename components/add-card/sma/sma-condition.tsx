@@ -11,8 +11,8 @@ import {
 } from "react-native";
 import AddIcon from "../../assets/images/add.svg";
 import EditIcon from "../../assets/images/edit.svg";
-import ConditionBottomSheet from "../modals/condition-bottom-sheet";
-import RSIConditionContent from "./rsi-condition-content";
+import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
+import SMAConditionContent from "./sma-condition-content";
 
 if (
   Platform.OS === "android" &&
@@ -21,7 +21,7 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function RSIConditionCard() {
+export default function SMAConditionCard() {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [conditionData, setConditionData] = useState<any>(null);
@@ -46,7 +46,7 @@ export default function RSIConditionCard() {
       <Pressable onPress={hasCondition ? toggleExpand : undefined}>
         <View style={styles.card}>
           <View style={styles.header}>
-            <Text style={styles.title}>RSI</Text>
+            <Text style={styles.title}>SMA</Text>
             <TouchableOpacity onPress={() => setIsOpen(true)}>
               {hasCondition ? (
                 <EditIcon width={18} height={18} />
@@ -56,39 +56,26 @@ export default function RSIConditionCard() {
             </TouchableOpacity>
           </View>
 
-          {expanded && conditionData && (
+          {expanded && hasCondition && conditionData && (
             <>
               <View style={styles.divider} />
-
-              {/* RSI 목표 지수 도달 시 경고 */}
-              {conditionData.rsiTargets?.length > 0 && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
-                    RSI 목표 지수 도달시 경고
-                  </Text>
-                  {conditionData.rsiTargets.map((item: any, idx: number) => (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>SMA 목표 가격 도달 여부</Text>
+                {conditionData.targets && conditionData.targets.length > 0 ? (
+                  conditionData.targets.map((t: any, idx: number) => (
                     <View key={idx} style={styles.row}>
-                      <Text style={styles.label}>
-                        RSI {item.comparison} {item.value}
+                      <Text style={styles.label}>{t.period}</Text>
+                      <Text style={styles.value}>
+                        {t.value ? `${t.value}원` : "미입력"}
                       </Text>
                     </View>
-                  ))}
-                </View>
-              )}
-
-              {/* RSI 과매수 | 과매도 여부 */}
-              {conditionData.rsiStates?.length > 0 && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
-                    RSI 과매수 / 과매도 여부
+                  ))
+                ) : (
+                  <Text style={styles.emptyText}>
+                    조건이 설정되지 않았습니다.
                   </Text>
-                  {conditionData.rsiStates.map((item: any, idx: number) => (
-                    <View key={idx} style={styles.row}>
-                      <Text style={styles.label}>{item.state}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
+                )}
+              </View>
             </>
           )}
         </View>
@@ -97,9 +84,9 @@ export default function RSIConditionCard() {
       <ConditionBottomSheet
         visible={isOpen}
         onClose={() => setIsOpen(false)}
-        ratio={0.55}
+        ratio={0.6}
       >
-        <RSIConditionContent onConfirm={handleConfirm} />
+        <SMAConditionContent onConfirm={handleConfirm} />
       </ConditionBottomSheet>
     </>
   );
@@ -120,10 +107,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  title: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  title: { fontSize: 16, fontWeight: "600" },
   divider: {
     height: 1,
     backgroundColor: "#EAEAEA",
@@ -136,8 +120,9 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
     marginBottom: 4,
   },
   label: { fontSize: 13, color: "#333" },
+  value: { fontSize: 13, fontWeight: "500" },
+  emptyText: { fontSize: 13, color: "#888", marginTop: 2 },
 });

@@ -11,8 +11,8 @@ import {
 } from "react-native";
 import AddIcon from "../../assets/images/add.svg";
 import EditIcon from "../../assets/images/edit.svg";
-import ConditionBottomSheet from "../modals/condition-bottom-sheet";
-import BollingerBandConditionContent from "./bollingerband-condition-content";
+import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
+import VolumeConditionContent from "./volume-condition-content";
 
 if (
   Platform.OS === "android" &&
@@ -21,18 +21,16 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function BollingerBandConditionCard() {
+export default function VolumeConditionCard() {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [conditionData, setConditionData] = useState<any>(null);
   const [expanded, setExpanded] = useState(false);
 
   const handleConfirm = (data: any) => {
-    // data: { signals: { type: "강세" | "하락" }[] }
     setConditionData(data);
     setHasCondition(true);
     setIsOpen(false);
-
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
   };
@@ -47,7 +45,7 @@ export default function BollingerBandConditionCard() {
       <Pressable onPress={hasCondition ? toggleExpand : undefined}>
         <View style={styles.card}>
           <View style={styles.header}>
-            <Text style={styles.title}>볼린저 밴드</Text>
+            <Text style={styles.title}>거래량</Text>
             <TouchableOpacity onPress={() => setIsOpen(true)}>
               {hasCondition ? (
                 <EditIcon width={18} height={18} />
@@ -57,26 +55,45 @@ export default function BollingerBandConditionCard() {
             </TouchableOpacity>
           </View>
 
-          {expanded && hasCondition && conditionData && (
+          {expanded && conditionData && (
             <>
               <View style={styles.divider} />
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>
-                  볼린저 밴드 강세 | 하락 경고
-                </Text>
-                {conditionData.signals && conditionData.signals.length > 0 ? (
-                  conditionData.signals.map((s: any, idx: number) => (
-                    <View key={idx} style={styles.row}>
-                      <Text style={styles.label}>신호</Text>
-                      <Text style={styles.value}>{s.type}</Text>
-                    </View>
-                  ))
-                ) : (
-                  <Text style={styles.emptyText}>
-                    조건이 설정되지 않았습니다.
-                  </Text>
-                )}
-              </View>
+
+              {/* 현재 거래량 대비 */}
+              {conditionData.currentVolume?.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>현재 거래량 대비</Text>
+                  {conditionData.currentVolume.map((item: any, idx: number) => (
+                    <Text key={idx} style={styles.value}>
+                      {item.value}% {item.compare}
+                    </Text>
+                  ))}
+                </View>
+              )}
+
+              {/* 최신 거래량 대비 */}
+              {conditionData.recentVolume?.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>최신 거래량 대비</Text>
+                  {conditionData.recentVolume.map((item: any, idx: number) => (
+                    <Text key={idx} style={styles.value}>
+                      {item.value}% {item.compare}
+                    </Text>
+                  ))}
+                </View>
+              )}
+
+              {/* 급증 감소 여부 */}
+              {conditionData.spikes?.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>거래량 급증·감소 여부</Text>
+                  {conditionData.spikes.map((item: any, idx: number) => (
+                    <Text key={idx} style={styles.value}>
+                      {item.type}
+                    </Text>
+                  ))}
+                </View>
+              )}
             </>
           )}
         </View>
@@ -85,9 +102,9 @@ export default function BollingerBandConditionCard() {
       <ConditionBottomSheet
         visible={isOpen}
         onClose={() => setIsOpen(false)}
-        ratio={0.56}
+        ratio={0.4}
       >
-        <BollingerBandConditionContent onConfirm={handleConfirm} />
+        <VolumeConditionContent onConfirm={handleConfirm} />
       </ConditionBottomSheet>
     </>
   );
@@ -109,21 +126,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: { fontSize: 16, fontWeight: "600" },
-  divider: {
-    height: 1,
-    backgroundColor: "#EAEAEA",
-    marginTop: 8,
-    marginBottom: 6,
-    marginHorizontal: -12,
-  },
+  divider: { height: 1, backgroundColor: "#EAEAEA", marginVertical: 8 },
   section: { marginBottom: 8 },
   sectionTitle: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
-  label: { fontSize: 13, color: "#333" },
-  value: { fontSize: 13, fontWeight: "500" },
-  emptyText: { fontSize: 13, color: "#888", marginTop: 2 },
+  value: { fontSize: 13, color: "#333", marginLeft: 4 },
 });

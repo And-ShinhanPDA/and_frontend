@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import AddIcon from "../../assets/images/add.svg";
 import EditIcon from "../../assets/images/edit.svg";
-import ConditionBottomSheet from "../modals/condition-bottom-sheet";
+import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
 import PriceConditionContent from "./price-condition-content";
 
 if (

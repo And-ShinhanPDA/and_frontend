@@ -48,14 +48,11 @@ export default function SMATargetRow({
   const [dropdownAbove, setDropdownAbove] = useState(false);
 
   useEffect(() => {
-    // 단순히 bottomSheet 내의 position 기준 계산 (보정)
-    // 실제로는 onLayout에서 y값 받아 계산 가능
     setDropdownAbove(false); // 기본값
   }, []);
 
   return (
     <View style={[styles.rowContainer, dropdownVisible && styles.rowRaised]}>
-      {/* 금액 */}
       <View style={styles.inputWrapper}>
         <TextInput
           style={styles.inputWithUnit}
@@ -80,7 +77,7 @@ export default function SMATargetRow({
           <View
             style={[
               styles.dropdownMenu,
-              // bottomSheet 안에서 하단에 너무 가까우면 위로 열리기
+
               {
                 top: dropdownAbove ? "auto" : 38,
                 bottom: dropdownAbove ? 38 : "auto",
@@ -112,7 +109,6 @@ export default function SMATargetRow({
         )}
       </View>
 
-      {/* 값이 있을 때만 제거 버튼 노출 */}
       {hasValue && (
         <TouchableOpacity style={styles.removeButton} onPress={handleRemove}>
           <ConditionMinus width={18} height={18} />
