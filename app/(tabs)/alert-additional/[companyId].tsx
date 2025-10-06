@@ -1,5 +1,6 @@
 import CurrentStatusCard from "@/components/add-card/current-status";
 import PriceConditionCard from "@/components/add-card/price-condition";
+import SMAConditionCard from "@/components/add-card/sma-condition";
 import VolumeConditionCard from "@/components/add-card/volume-condition";
 import Week52ConditionCard from "@/components/add-card/week52-condition";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
@@ -75,7 +76,7 @@ export default function CompanyAlertDetail() {
       <PriceConditionCard />
       <Week52ConditionCard />
       <VolumeConditionCard />
-
+      <SMAConditionCard />
       <PrimaryButton title="저장" onPress={() => console.log("조건 저장")} />
     </ScrollView>
   );

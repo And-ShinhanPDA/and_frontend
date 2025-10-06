@@ -4,8 +4,10 @@ import {
   Animated,
   Dimensions,
   Easing,
+  KeyboardAvoidingView,
   Modal,
   PanResponder,
+  Platform,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -87,16 +89,22 @@ export default function ConditionBottomSheet({
       animationType="none"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <TouchableOpacity style={styles.dimmed} onPress={onClose} />
-        <Animated.View
-          style={[styles.bottomSheet, { minHeight: sheetHeight }, slideUp]}
-          {...panResponder.panHandlers}
-        >
-          <View style={styles.handleBar} />
-          {children}
-        </Animated.View>
-      </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        {" "}
+        <View style={styles.overlay}>
+          <TouchableOpacity style={styles.dimmed} onPress={onClose} />
+          <Animated.View
+            style={[styles.bottomSheet, { minHeight: sheetHeight }, slideUp]}
+            {...panResponder.panHandlers}
+          >
+            <View style={styles.handleBar} />
+            {children}
+          </Animated.View>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
