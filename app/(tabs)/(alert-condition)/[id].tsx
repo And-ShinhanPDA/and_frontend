@@ -1,11 +1,13 @@
-import { router, useLocalSearchParams } from "expo-router";
-import React from "react";
+import { useLocalSearchParams } from "expo-router";
+import React, { useRef, useState } from "react";
 import {
   FlatList,
   Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -23,8 +25,13 @@ type Company = {
 
 export default function AlertConditionDetail() {
   const { name } = useLocalSearchParams<{ name: string }>();
+  const [scrollX, setScrollX] = useState(0);
+  const scrollRef = useRef<ScrollView | null>(null);
 
-  // TODO: API
+  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    setScrollX(e.nativeEvent.contentOffset.x);
+  };
+
   const companies: Company[] = [
     {
       id: "1",
@@ -66,54 +73,82 @@ export default function AlertConditionDetail() {
 
   return (
     <View style={styles.container}>
-      {/* 헤더 영역 */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backArrow}>‹</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{name || "조건 검색"}</Text>
-      </View>
+      <View style={styles.header}></View>
 
-      {/* 조건 태그 */}
+      {/* ✅ 제목/태그와 아이콘을 좌우 분리 */}
       <View style={styles.conditionBox}>
-        <Text style={styles.conditionTitle}>{name || "가격 설정 조건"}</Text>
-        <View style={styles.tagContainer}>
-          {["가격", "RSI", "52주", "SMA"].map((tag, idx) => (
-            <View key={idx} style={styles.tag}>
-              <Text style={styles.tagText}>{tag}</Text>
-            </View>
-          ))}
+        {/* 왼쪽: 제목 + 태그 */}
+        <View style={styles.conditionLeft}>
+          <Text style={styles.conditionTitle}>
+            {name || "제목 없는 조건 알림"}
+          </Text>
+          <View style={styles.tagContainer}>
+            {["가격", "RSI", "52주", "SMA"].map((tag, idx) => (
+              <View key={idx} style={styles.tag}>
+                <Text style={styles.tagText}>{tag}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* 오른쪽: 아이콘 중앙 정렬 */}
+        <View style={styles.conditionRight}>
+          <Image
+            source={require("@/assets/images/alert/company_search.png")}
+            style={{ width: 24, height: 24 }}
+          />
         </View>
       </View>
 
-      {/* 테이블 헤더 */}
-      <View style={styles.tableHeader}>
-        <Text style={[styles.headerText, { flex: 1.5 }]}>현재가</Text>
-        <Text style={[styles.headerText, { flex: 1.5 }]}>시가</Text>
-        <Text style={[styles.headerText, { flex: 1 }]}>거래량</Text>
-        <Text style={[styles.headerText, { flex: 1 }]}>SMA</Text>
+      {/* ✅ 테이블 헤더 */}
+      <View style={styles.tableRow}>
+        <View style={styles.fixedColumn}></View>
+
+        <ScrollView
+          horizontal
+          ref={scrollRef}
+          showsHorizontalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
+          <View style={styles.tableHeader}>
+            <Text style={styles.headerText}>현재가</Text>
+            <Text style={styles.headerText}>시가</Text>
+            <Text style={styles.headerText}>거래량</Text>
+            <Text style={styles.headerText}>SMA</Text>
+          </View>
+        </ScrollView>
       </View>
 
-      {/* 기업 리스트 */}
+      {/* ✅ 기업 리스트 */}
       <FlatList
         data={companies}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.companyRow}>
-            <Image source={item.logo} style={styles.logo} />
-            <View style={styles.companyInfo}>
-              <Text style={styles.companyName}>{item.name}</Text>
+          <View style={styles.tableRow}>
+            <View style={styles.fixedColumn}>
+              <item.logo width={48} height={48} style={styles.logo} />
             </View>
-            <View style={styles.companyData}>
-              <Text style={[styles.dataText, { flex: 1.5 }]}>
-                {item.currentPrice}
-              </Text>
-              <Text style={[styles.dataText, { flex: 1.5 }]}>
-                {item.openPrice}
-              </Text>
-              <Text style={[styles.dataText, { flex: 1 }]}>{item.volume}</Text>
-              <Text style={[styles.dataText, { flex: 1 }]}>{item.sma}</Text>
-            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              scrollEventThrottle={16}
+              contentOffset={{ x: scrollX, y: 0 }}
+              onScroll={(e) => {
+                scrollRef.current?.scrollTo({
+                  x: e.nativeEvent.contentOffset.x,
+                  animated: false,
+                });
+              }}
+            >
+              <View style={styles.dataRow}>
+                <Text style={styles.dataText}>{item.currentPrice}</Text>
+                <Text style={styles.dataText}>{item.openPrice}</Text>
+                <Text style={styles.dataText}>{item.volume}</Text>
+                <Text style={styles.dataText}>{item.sma}</Text>
+              </View>
+            </ScrollView>
           </View>
         )}
       />
@@ -123,42 +158,37 @@ export default function AlertConditionDetail() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 22,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  backArrow: {
-    fontSize: 28,
-    color: "#000",
-    marginRight: 8,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    fontFamily: "Pretendard",
-  },
+  header: { paddingTop: 20 },
+
+  /* ✅ 제목/태그 컨테이너 */
   conditionBox: {
+    flexDirection: "row", // 왼쪽-오른쪽 분리
+    justifyContent: "space-between",
+    alignItems: "center", // 수직 중앙
     borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 10,
+    borderColor: "#E6E6E6",
+    borderRadius: 6,
     marginHorizontal: 22,
-    marginBottom: 12,
+    marginBottom: 20,
     paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingHorizontal: 17,
   },
+  conditionLeft: {
+    flex: 1,
+  },
+  conditionRight: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 12,
+  },
+
   conditionTitle: {
     fontSize: 15,
     fontWeight: "600",
     marginBottom: 6,
     fontFamily: "Pretendard",
   },
-  tagContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
+  tagContainer: { flexDirection: "row", flexWrap: "wrap" },
   tag: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -166,48 +196,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     marginRight: 6,
-    marginBottom: 4,
   },
-  tagText: {
-    fontSize: 12,
-    fontFamily: "Pretendard",
-  },
-  tableHeader: {
+  tagText: { fontSize: 12, fontFamily: "Pretendard" },
+
+  /* ✅ 표 관련 */
+  tableRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderColor: "#F5F6F8",
     paddingHorizontal: 22,
     paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1F1F1",
   },
+  fixedColumn: {
+    width: 100,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tableHeader: { flexDirection: "row" },
   headerText: {
-    fontSize: 13,
+    width: 100,
+    fontSize: 15,
     fontWeight: "600",
     textAlign: "center",
     fontFamily: "Pretendard",
   },
-  companyRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 22,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderColor: "#F5F6F8",
-  },
-  logo: {
-    width: 34,
-    height: 34,
-    resizeMode: "contain",
-    marginRight: 10,
-  },
-  companyInfo: { flex: 1 },
-  companyName: { fontSize: 14, fontFamily: "Pretendard" },
-  companyData: {
-    flexDirection: "row",
-    flex: 4,
-    justifyContent: "space-between",
-  },
+  logo: { width: 30, height: 30, resizeMode: "contain" },
+  dataRow: { flexDirection: "row" },
   dataText: {
+    width: 100,
     fontSize: 13,
     textAlign: "center",
     fontFamily: "Pretendard",

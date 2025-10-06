@@ -39,7 +39,7 @@ export default function TabLayout() {
 
         headerTitleContainerStyle: {
           left: 0,
-          paddingLeft: 5,
+          paddingLeft: 10,
         },
 
         headerRightContainerStyle: {
