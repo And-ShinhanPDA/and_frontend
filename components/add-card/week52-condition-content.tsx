@@ -1,145 +1,177 @@
 import React, { useState } from "react";
 import {
-  Keyboard,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from "react-native";
-import ConditionMinus from "../../assets/images/condition-minus.svg";
 import ConditionPlus from "../../assets/images/condition-plus.svg";
 import Week52HighLowRow from "./week52-highlow-row";
+import Week52ProximityRow from "./week52-proximity-row";
 
 export default function Week52ConditionContent({ onConfirm }: any) {
-  const [highLow, setHighLow] = useState<{
-    type: "최고가" | "최저가";
-    checked: boolean;
-  }>({ type: "최고가", checked: false });
+  // 최고가/최저가 여부 조건 선택
+  const [highLowRows, setHighLowRows] = useState([
+    { id: 1, type: "최고가" as "최고가" | "최저가", checked: false },
+  ]);
 
-  const [rows, setRows] = useState([{ id: 1, sign: "+", value: "" }]);
+  // 최고/최저 행 추가 (최대 2개)
+  const addHighLowRow = () => {
+    if (highLowRows.length >= 2) return;
+    const nextType = highLowRows[0].type === "최고가" ? "최저가" : "최고가";
+    setHighLowRows((prev) => [
+      ...prev,
+      { id: Date.now(), type: nextType, checked: false },
+    ]);
+  };
 
-  const addRow = () =>
-    setRows((prev) => [...prev, { id: Date.now(), sign: "+", value: "" }]);
-  const removeRow = (id: number) =>
-    setRows((prev) => prev.filter((r) => r.id !== id));
+  const removeHighLowRow = (id: number) =>
+    setHighLowRows((prev) => prev.filter((r) => r.id !== id));
 
-  const toggleSign = (id: number) =>
-    setRows((prev) =>
+  const updateHighLowRow = (
+    id: number,
+    data: { type: "최고가" | "최저가"; checked: boolean }
+  ) =>
+    setHighLowRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, ...data } : r))
+    );
+
+  // 최고가/최저가 근접 여부 조건 선택
+  const [proximityRows, setProximityRows] = useState<
+    { id: number; type: "최고가" | "최저가"; sign: "+" | "-"; value: string }[]
+  >([{ id: 1, type: "최고가", sign: "+", value: "" }]);
+
+  const addProximityRow = () =>
+    setProximityRows((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        type: "최고가",
+        sign: "+",
+        value: "",
+      },
+    ]);
+
+  const removeProximityRow = (id: number) =>
+    setProximityRows((prev) => prev.filter((r) => r.id !== id));
+
+  const resetProximityRow = (id: number) =>
+    setProximityRows((prev) =>
       prev.map((r) =>
-        r.id === id ? { ...r, sign: r.sign === "+" ? "-" : "+" } : r
+        r.id === id ? { ...r, type: "최고가", sign: "+", value: "" } : r
       )
     );
 
+  const updateProximityValue = (
+    id: number,
+    data: { type: "최고가" | "최저가"; sign: "+" | "-"; value: string }
+  ) =>
+    setProximityRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, ...data } : r))
+    );
+
+  const hasFilled = proximityRows.some((r) => r.value.trim() !== "");
+
   const handleConfirm = () => {
+    const filteredHighLow = highLowRows.map((r) => ({
+      type: r.type,
+      checked: r.checked,
+    }));
+
+    const filteredProximity = proximityRows
+      .filter((r) => r.value.trim() !== "")
+      .map((r) => ({
+        type: r.type,
+        sign: r.sign,
+        value: r.value,
+      }));
+
     onConfirm({
-      ...highLow,
-      proximity: highLow.checked ? rows : [],
+      highLow: filteredHighLow,
+      proximity: filteredProximity,
     });
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.container}>
-        <Text style={styles.title}>최근 52주 기준 최고가 | 최저가 여부</Text>
+    <ScrollView style={styles.container}>
+      {/* 최고가/최저가 여부 */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>
+          최근 52주 기준 최고가 | 최저가 여부
+        </Text>
 
-        <Week52HighLowRow onValueChange={(data) => setHighLow(data)} />
+        {highLowRows.map((r) => (
+          <Week52HighLowRow
+            key={r.id}
+            onRemove={() => removeHighLowRow(r.id)}
+            onAdd={addHighLowRow}
+            onChange={(data) => updateHighLowRow(r.id, data)}
+            isSingleRow={highLowRows.length === 1}
+          />
+        ))}
 
-        {highLow.checked && (
-          <View style={styles.innerSection}>
-            <Text style={styles.subTitle}>근접 비율 설정</Text>
-
-            {rows.map((r) => (
-              <View key={r.id} style={styles.row}>
-                <TouchableOpacity
-                  style={[
-                    styles.signButton,
-                    r.sign === "+" ? styles.plusBorder : styles.minusBorder,
-                  ]}
-                  onPress={() => toggleSign(r.id)}
-                >
-                  <Text
-                    style={[
-                      styles.signText,
-                      r.sign === "+" ? styles.plusText : styles.minusText,
-                    ]}
-                  >
-                    {r.sign}
-                  </Text>
-                </TouchableOpacity>
-
-                <View style={styles.inputBox}>
-                  <Text style={styles.placeholder}>근접비율 (%)</Text>
-                </View>
-
-                {rows.length > 1 && (
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => removeRow(r.id)}
-                  >
-                    <ConditionMinus width={18} height={18} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            ))}
-
-            <TouchableOpacity style={styles.addButton} onPress={addRow}>
-              <ConditionPlus width={20} height={20} />
-            </TouchableOpacity>
-          </View>
+        {highLowRows.length < 2 && (
+          <TouchableOpacity style={styles.addButton} onPress={addHighLowRow}>
+            <ConditionPlus width={20} height={20} />
+          </TouchableOpacity>
         )}
-
-        <View style={styles.footer}>
-          <TouchableOpacity style={styles.reset}>
-            <Text style={styles.resetText}>초기화</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.confirm} onPress={handleConfirm}>
-            <Text style={styles.confirmText}>확인</Text>
-          </TouchableOpacity>
-        </View>
       </View>
-    </TouchableWithoutFeedback>
+
+      {/* 최고가/최저가 근접 여부 */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>
+          최근 52주 기준 최고가 | 최저가 근접 여부
+        </Text>
+
+        {proximityRows.map((r) => (
+          <Week52ProximityRow
+            key={r.id}
+            onRemove={() => removeProximityRow(r.id)}
+            onReset={() => resetProximityRow(r.id)}
+            onValueChange={(v: {
+              sign: "+" | "-";
+              value: string;
+              target?: string;
+            }) =>
+              updateProximityValue(r.id, {
+                type: (v.target as "최고가" | "최저가") ?? "최고가",
+                sign: v.sign,
+                value: v.value,
+              })
+            }
+            isSingleRow={proximityRows.length === 1}
+          />
+        ))}
+
+        {hasFilled && (
+          <TouchableOpacity style={styles.addButton} onPress={addProximityRow}>
+            <ConditionPlus width={20} height={20} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.reset}>
+          <Text style={styles.resetText}>초기화</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.confirm} onPress={handleConfirm}>
+          <Text style={styles.confirmText}>확인</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16 },
-  title: { fontSize: 15, fontWeight: "600", marginBottom: 12 },
-  subTitle: { fontSize: 14, fontWeight: "600", marginBottom: 6 },
-  innerSection: { marginTop: 10 },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  signButton: {
-    width: 34,
-    height: 34,
-    borderWidth: 1.3,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 8,
-  },
-  plusBorder: { borderColor: "#4CC439" },
-  minusBorder: { borderColor: "#FF3B30" },
-  signText: { fontSize: 16, fontWeight: "700" },
-  plusText: { color: "#4CC439" },
-  minusText: { color: "#FF3B30" },
-  inputBox: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-  },
-  placeholder: { color: "#A4A4A4", fontSize: 13 },
+  container: { paddingHorizontal: 16, paddingVertical: 10 },
+  section: { marginBottom: 20 },
+  sectionTitle: { fontSize: 15, fontWeight: "600", marginBottom: 10 },
   addButton: {
-    alignSelf: "flex-start",
-    marginLeft: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 6,
   },
-  removeButton: { marginLeft: 8 },
   footer: { flexDirection: "row", marginTop: 20 },
   reset: {
     flex: 1,
