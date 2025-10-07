@@ -165,7 +165,7 @@ export default function AlertManage() {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => router.push("/(tabs)/(alert-manage)/alert-condition")}
+        onPress={() => router.push("/alert-additional")}
       >
         <Image
           source={require("@/assets/images/alert/company_alert.png")}
