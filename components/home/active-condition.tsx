@@ -6,7 +6,7 @@ type Condition = {
   name: string;
   count: number;
 };
-
+// 추후 실제 데이터로 교체 필요
 const sampleConditions: Condition[] = [
   { id: 1, name: "알림1", count: 3 },
   { id: 2, name: "알림2", count: 4 },

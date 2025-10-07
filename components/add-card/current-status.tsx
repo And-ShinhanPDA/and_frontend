@@ -12,7 +12,7 @@ interface CurrentStatusCardProps {
   bollingerUpper: number;
   bollingerLower: number;
   rsi: number;
-  movingAverage: number;
+  sma: { [key: string]: number };
 }
 
 export default function CurrentStatusCard({
@@ -25,7 +25,7 @@ export default function CurrentStatusCard({
   bollingerUpper,
   bollingerLower,
   rsi,
-  movingAverage,
+  sma,
 }: CurrentStatusCardProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -104,11 +104,16 @@ export default function CurrentStatusCard({
             <Text style={styles.mainLabel}>RSI (14일 기준)</Text>
             <Text style={styles.value}>{rsi}</Text>
           </View>
-
           <View style={styles.row}>
             <Text style={styles.mainLabel}>이동평균선</Text>
-            {/* <Text style={styles.value}>{movingAverage}</Text> */}
-            {/* 이동평균선 값은 어떻게 표현할지 안나와있음 */}
+          </View>
+          <View style={styles.maGrid}>
+            {Object.entries(sma).map(([period, value]) => (
+              <View key={period} style={styles.maItem}>
+                <Text style={styles.subLabel}>{period}</Text>
+                <Text style={styles.value}>{value.toLocaleString()}원</Text>
+              </View>
+            ))}
           </View>
         </View>
       )}
@@ -184,5 +189,17 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 15,
     color: "#000",
+  },
+  maGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginTop: 4,
+  },
+  maItem: {
+    width: "47%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 4,
   },
 });
