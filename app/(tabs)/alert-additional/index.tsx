@@ -65,13 +65,20 @@ export default function AlertAdditional() {
   };
 
   const renderItem = ({ item }: any) => (
-    <TouchableOpacity style={styles.item}>
+    <TouchableOpacity
+      style={styles.item}
+      onPress={() =>
+        router.push({
+          pathname: "/alert-additional/[companyId]",
+          params: { companyId: item.id, name: item.name },
+        })
+      }
+    >
       {typeof item.logo === "string" ? (
         <Image source={{ uri: item.logo }} style={styles.logo} />
       ) : (
         <item.logo width={48} height={48} />
       )}
-
       <Text style={styles.name}>{item.name}</Text>
     </TouchableOpacity>
   );

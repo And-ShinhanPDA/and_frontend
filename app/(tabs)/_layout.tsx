@@ -67,6 +67,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "홈",
+          headerShown: false,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="house.fill" color={color} />
           ),
@@ -123,17 +124,25 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="(alert-additional)/alert-additional"
+        name="alert-additional/index"
         options={{
           title: "알림 설정",
-          tabBarLabel: ({ focused }) => (
-            <Typography weight={focused ? "600" : "400"} size={12}>
-              추가
-            </Typography>
-          ),
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="plus.circle.fill" color={color} />
-          ),
+          href: null,
+          // tabBarLabel: ({ focused }) => (
+          //   <Typography weight={focused ? "600" : "400"} size={12}>
+          //     추가
+          //   </Typography>
+          // ),
+          // tabBarIcon: ({ color }) => (
+          //   <IconSymbol size={28} name="plus.circle.fill" color={color} />
+          // ),
+        }}
+      />
+      <Tabs.Screen
+        name="alert-additional/[companyId]"
+        options={{
+          href: null,
+          headerShown: false,
         }}
       />
 
