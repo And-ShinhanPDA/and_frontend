@@ -7,76 +7,76 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Benjamin from "../../assets/images/preset/benjamin.svg";
+import Charlie from "../../assets/images/preset/charlie.svg";
+import GoldenCross from "../../assets/images/preset/goldencross.svg";
+import Jesse from "../../assets/images/preset/jesse.svg";
+import Mark from "../../assets/images/preset/mark.svg";
+import Peter from "../../assets/images/preset/peter.svg";
 import Warren from "../../assets/images/preset/warren.svg";
-
 const presets = {
   내: [
     {
-      id: 1,
+      id: 9,
       name: "워렌 버핏",
       desc: "사용 지표: 50일 이동평균선 (SMA), 거래량",
-      image: Warren,
-    },
-    {
-      id: 2,
-      name: "벤저민 그레이엄",
-      desc: "사용 지표: 50일 이동평균선 (SMA), 거래량",
-      image: Warren,
-    },
-    {
-      id: 3,
-      name: "찰리 멍거",
-      desc: "사용 지표: 50일 이동평균선 (SMA), 200일 이동평균선 (SMA)",
-      image: Warren,
-    },
-    {
-      id: 4,
-      name: "피터 린치",
-      desc: "사용 지표: 50일 이동평균선 (SMA), 거래량",
-      image: Warren,
-    },
-    {
-      id: 5,
-      name: "마크 미너비니",
-      desc: "사용 지표: 50일 이동평균선 (SMA), 200일 이동평균선 (SMA), 거래량",
-      image: Warren,
-    },
-    {
-      id: 6,
-      name: "윌리엄 오닐",
-      desc: "사용 지표: 20일 이동평균선 (SMA), 거래량",
       image: Warren,
     },
   ],
   유명인: [
     {
+      id: 1,
+      name: "워렌 버핏",
+      desc: "사용 지표: 50일 이동평균선 (SMA), 200일 이동평균선 (SMA), 거래량",
+      image: Warren,
+    },
+    {
+      id: 2,
+      name: "벤저민 그레이엄",
+      desc: "사용 지표: 50일 이동평균선 (SMA), 200일 이동평균선 (SMA), 거래량",
+      image: Benjamin,
+    },
+    {
       id: 3,
       name: "찰리 멍거",
       desc: "사용 지표: 50일 이동평균선 (SMA), 200일 이동평균선 (SMA)",
-      image: Warren,
+      image: Charlie,
     },
     {
       id: 4,
       name: "피터 린치",
       desc: "사용 지표: 50일 이동평균선 (SMA), 거래량",
-      image: Warren,
+      image: Peter,
     },
   ],
   추천: [
     {
       id: 5,
       name: "추세추종 (골든 크로스)",
-      desc: "사용 지표: 50일 이동평균선 (SMA)",
-      image: Warren,
+      desc: "사용 지표: 50일 이동평균선 (SMA), 200일 이동평균선 (SMA), 거래량",
+      image: GoldenCross,
     },
     {
       id: 6,
-      name: "추세추종 (데드 크로스)",
-      desc: "사용 지표: 50일 이동평균선 (SMA)",
-      image: Warren,
+      name: "제시 리버모어",
+      desc: "사용 지표: 50일 이동평균선 (SMA), 200일 이동평균선 (SMA), 거래량",
+      image: Jesse,
+    },
+    {
+      id: 7,
+      name: "마크 미너비니",
+      desc: "사용 지표: 50일 이동평균선 (SMA), 거래량",
+      image: Mark,
+    },
+    {
+      id: 8,
+      name: "피터 린치",
+      desc: "사용 지표: 50일 이동평균선 (SMA), 거래량",
+      image: Peter,
     },
   ],
 };
+
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 40 * 2 - 14) / 2;
 
@@ -190,11 +190,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 40,
-    marginBottom: 10,
+    marginTop: 20,
+    marginBottom: 30,
   },
   name: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
     color: "#111",
     textAlign: "center",
