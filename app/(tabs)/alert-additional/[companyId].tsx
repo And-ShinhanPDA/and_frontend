@@ -67,7 +67,15 @@ export default function CompanyAlertDetail() {
         bollingerUpper={50000}
         bollingerLower={50000}
         rsi={50}
-        movingAverage={50}
+        sma={{
+          "5일": 50000,
+          "10일": 50100,
+          "20일": 50200,
+          "30일": 50300,
+          "50일": 50400,
+          "100일": 50500,
+          "200일": 50600,
+        }}
       />
       <View style={styles.divider} />
       <TextInput
