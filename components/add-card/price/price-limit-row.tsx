@@ -1,14 +1,8 @@
-// 가격 제한 조건 설정
 import React, { useEffect, useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import ChevronDown from "../../../assets/images/ChevronDown.svg";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import ConditionMinus from "../../../assets/images/condition-minus.svg";
+import ComparisonDropdown from "../../condition/comparision-dropdown";
+import ConditionInput from "../../condition/condition-input";
 
 export default function PriceLimitRow({
   onRemove,
@@ -26,7 +20,6 @@ export default function PriceLimitRow({
 }) {
   const [amount, setAmount] = useState("");
   const [comparison, setComparison] = useState<"이상" | "이하">("이상");
-  const [dropdownVisible, setDropdownVisible] = useState(false);
 
   useEffect(() => {
     onValueChange({ amount, comparison });
@@ -44,52 +37,15 @@ export default function PriceLimitRow({
 
   return (
     <View style={styles.rowContainer}>
-      <View style={styles.inputWrapper}>
-        <TextInput
-          style={styles.inputWithUnit}
-          value={amount}
-          onChangeText={setAmount}
-          placeholder="금액을 입력해주세요"
-          keyboardType="numeric"
-        />
-        <Text style={styles.unitInside}>원</Text>
-      </View>
+      <ConditionInput
+        value={amount}
+        placeholder="금액을 입력해주세요"
+        unit="원"
+        onChange={setAmount}
+      />
 
-      <View style={styles.dropdownWrapper}>
-        <TouchableOpacity
-          style={styles.dropdownButton}
-          onPress={() => setDropdownVisible(!dropdownVisible)}
-        >
-          <Text style={styles.optionText}>{comparison}</Text>
-          <ChevronDown width={12} height={12} />
-        </TouchableOpacity>
+      <ComparisonDropdown value={comparison} onChange={setComparison} />
 
-        {dropdownVisible && (
-          <View style={[styles.dropdownMenu, { width: 72 }]}>
-            {["이상", "이하"].map((opt) => (
-              <TouchableOpacity
-                key={opt}
-                style={styles.dropdownItem}
-                onPress={() => {
-                  setComparison(opt as "이상" | "이하");
-                  setDropdownVisible(false);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.dropdownText,
-                    comparison === opt && styles.dropdownTextSelected,
-                  ]}
-                >
-                  {opt}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </View>
-
-      {/* 사용자가 값을 입력할 경우 행 삭제 가능 */}
       {amount.trim() !== "" && (
         <TouchableOpacity style={styles.removeButton} onPress={handleRemove}>
           <ConditionMinus width={18} height={18} />
@@ -105,71 +61,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
-  inputWrapper: { flex: 1, position: "relative" },
-  inputWithUnit: {
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    paddingRight: 30,
-    fontSize: 12,
-  },
-  unitInside: {
-    position: "absolute",
-    right: 10,
-    top: "50%",
-    transform: [{ translateY: -6 }],
-    fontSize: 13,
-    color: "#555",
-  },
-
-  dropdownWrapper: { position: "relative", marginLeft: 8 },
-  dropdownButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    width: 72,
-  },
-
-  dropdownMenu: {
-    position: "absolute",
-    top: 44, // 버튼 바로 아래
-    right: 0,
-    width: "100%", // 버튼과 동일한 폭으로 맞춤
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 3,
-    elevation: 2,
-    zIndex: 20,
-    overflow: "hidden",
-  },
-
-  dropdownItem: {
-    paddingVertical: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#fff",
-  },
-
-  dropdownText: {
-    fontSize: 13,
-    color: "#333",
-  },
-  dropdownTextSelected: {
-    color: "#2CB463",
-    fontWeight: "600",
-  },
-
-  optionText: { fontSize: 13, color: "#333", marginRight: 8 },
   removeButton: { marginLeft: 8 },
 });
