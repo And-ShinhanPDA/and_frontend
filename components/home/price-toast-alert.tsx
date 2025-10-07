@@ -7,6 +7,7 @@ import Hynix from "../../assets/images/companies/logo_2_하이닉스.svg";
 import Naver from "../../assets/images/companies/logo_7_네이버.svg";
 import Mypage from "../../assets/images/mypage.svg";
 
+// 추후 실제 데이터로 교체 필요
 const alerts = [
   {
     id: 1,
@@ -38,13 +39,12 @@ export default function PriceAlertToast() {
   const router = useRouter();
   const [index, setIndex] = useState(0);
 
-  // ✅ opacity + translateY 조합
+  // 위로 올라가며 fade-out
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const translateY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const interval = setInterval(() => {
-      // 위로 사라지며 fade-out
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 0,
@@ -57,10 +57,8 @@ export default function PriceAlertToast() {
           useNativeDriver: true,
         }),
       ]).start(() => {
-        // 다음 메시지로 전환
         setIndex((prev) => (prev + 1) % alerts.length);
 
-        // 위치 초기화 + fade-in
         translateY.setValue(10);
         Animated.parallel([
           Animated.timing(fadeAnim, {
@@ -85,7 +83,6 @@ export default function PriceAlertToast() {
 
   return (
     <View style={styles.container}>
-      {/* ✅ 애니메이션은 토스트 내용에만 적용 */}
       <Animated.View
         style={[
           styles.left,
@@ -99,7 +96,6 @@ export default function PriceAlertToast() {
         <Text style={styles.text}>{current.message}</Text>
       </Animated.View>
 
-      {/* ✅ 마이페이지 버튼은 고정 */}
       <Pressable
         onPress={() => router.push("/mypage")}
         style={styles.mypageBtn}
