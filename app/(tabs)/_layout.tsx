@@ -64,23 +64,12 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
-        options={{
-          title: "홈",
-          headerShown: false,
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
         name="(alert-manage)"
         options={{
           title: "기업 알림",
           tabBarLabel: ({ focused }) => (
             <Typography weight={focused ? "600" : "400"} size={12}>
-              알림
+              기업 알림
             </Typography>
           ),
           tabBarIcon: ({ color }) => (
@@ -119,6 +108,32 @@ export default function TabLayout() {
                 />
               </Pressable>
             </>
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="(alert-condition)"
+        options={{
+          title: "조건 검색",
+          tabBarLabel: ({ focused }) => (
+            <Typography weight={focused ? "600" : "400"} size={12}>
+              조건 검색
+            </Typography>
+          ),
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="clock.fill" color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "홈",
+          headerShown: false,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="house.fill" color={color} />
           ),
         }}
       />
