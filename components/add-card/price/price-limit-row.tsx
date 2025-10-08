@@ -1,9 +1,8 @@
+import ConditionDropdown from "@/components/condition/condition-dropdown";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import ConditionMinus from "../../../assets/images/condition-minus.svg";
-import ComparisonDropdown from "../../condition/comparision-dropdown";
 import ConditionInput from "../../condition/condition-input";
-
 export default function PriceLimitRow({
   onRemove,
   onReset,
@@ -44,8 +43,11 @@ export default function PriceLimitRow({
         onChange={setAmount}
       />
 
-      <ComparisonDropdown value={comparison} onChange={setComparison} />
-
+      <ConditionDropdown
+        value={comparison}
+        options={["이상", "이하"]}
+        onChange={setComparison}
+      />
       {amount.trim() !== "" && (
         <TouchableOpacity style={styles.removeButton} onPress={handleRemove}>
           <ConditionMinus width={18} height={18} />

@@ -2,19 +2,24 @@ import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ChevronDown from "../../assets/images/ChevronDown.svg";
 
-interface ComparisonDropdownProps {
-  value: "이상" | "이하";
-  onChange: (val: "이상" | "이하") => void;
+interface ConditionDropdownProps<T extends string> {
+  value: T;
+  options: T[]; // 옵션 목록 ("이상", "이하") / ("1일기준", "현재기준") 등
+  width?: number;
+  onChange: (val: T) => void;
 }
-// 이상, 이하 드롭다운 컴포넌트
-export default function ComparisonDropdown({
+
+// 드롭다운 컴포넌트
+export default function ConditionDropdown<T extends string>({
   value,
+  options,
+  width = 72,
   onChange,
-}: ComparisonDropdownProps) {
+}: ConditionDropdownProps<T>) {
   const [open, setOpen] = useState(false);
 
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, { width }]}>
       <TouchableOpacity
         style={styles.dropdownButton}
         onPress={() => setOpen((prev) => !prev)}
@@ -24,13 +29,13 @@ export default function ComparisonDropdown({
       </TouchableOpacity>
 
       {open && (
-        <View style={styles.dropdownMenu}>
-          {["이상", "이하"].map((opt) => (
+        <View style={[styles.dropdownMenu, { width }]}>
+          {options.map((opt) => (
             <TouchableOpacity
               key={opt}
               style={styles.dropdownItem}
               onPress={() => {
-                onChange(opt as "이상" | "이하");
+                onChange(opt);
                 setOpen(false);
               }}
             >
@@ -60,14 +65,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    width: 72,
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
   },
   optionText: { fontSize: 13, color: "#333", marginRight: 8 },
   dropdownMenu: {
     position: "absolute",
     top: 44,
     right: 0,
-    width: 72,
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#E5E5E5",
@@ -84,7 +89,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#fff",
   },
   dropdownText: { fontSize: 13, color: "#333" },
   dropdownTextSelected: { color: "#2CB463", fontWeight: "600" },
