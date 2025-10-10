@@ -21,7 +21,7 @@ const weekday = (sec?: number) =>
     ? ["일", "월", "화", "수", "목", "금", "토"][new Date(sec * 1000).getDay()]
     : "-";
 
-const genCandles = (period: Period, count: number, base = 48000): Candle[] => {
+const genCandles = (period: Period, count: number, base = 79200): Candle[] => {
   const out: Candle[] = [];
   const step =
     period === "5m"
@@ -46,6 +46,8 @@ const genCandles = (period: Period, count: number, base = 48000): Candle[] => {
 };
 
 export default function ChartScreen() {
+  const companyName = "삼성전자";
+
   const [period, setPeriod] = useState<Period>("1D");
   const [smaOn, setSmaOn] = useState({
     sma5: true,
@@ -57,8 +59,18 @@ export default function ChartScreen() {
   const [smaVals, setSmaVals] = useState<any>({});
   const [headerAlert, setHeaderAlert] = useState<string | null>(null);
 
-  const data = useMemo(() => genCandles(period, 180, 48000), [period]);
+  const data = useMemo(() => genCandles(period, 180, 79200), [period]);
   const webRef = useRef<WebView>(null);
+
+  const last = data[data.length - 1];
+  const prev = data[data.length - 2];
+  const currPrice = ohlc?.close ?? last?.close;
+  const prevClose = prev?.close ?? last?.open;
+  const diff = (currPrice ?? 0) - (prevClose ?? 0);
+  const diffPct = prevClose
+    ? (((currPrice ?? 0) - prevClose) / prevClose) * 100
+    : 0;
+  const isUp = diff >= 0;
 
   useEffect(() => {
     webRef.current?.postMessage(
@@ -73,11 +85,11 @@ export default function ChartScreen() {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-      html, body { margin: 0; padding: 0; height: 100%; background-color: #0e0e0e; }
+      html, body, #wrap { margin: 0; padding: 0; height: 100%; width: 100%; background: #ffffff; overflow: hidden; }
       #wrap { position: absolute; inset: 0; display: flex; flex-direction: column; }
-      #main { flex: 8; }
-      #vol { flex: 1.5; }
-      #rsi { flex: 1.5; }
+      #main { flex: 11; }
+      #vol  { flex: 2.2; }
+      #rsi  { flex: 2.2; }
     </style>
   </head>
   <body>
@@ -103,6 +115,7 @@ export default function ChartScreen() {
 
         const calcRSI=(rows,period=14)=>{
           const out=[],len=rows.length;
+          if(len<=period+1) return out;
           let gains=0,losses=0;
           for(let i=1;i<=period;i++){
             const d=rows[i].close-rows[i-1].close;
@@ -137,100 +150,116 @@ export default function ChartScreen() {
         let chart,volChart,rsiChart,candle,s5,s20,s60,s120,upper,lower,vol,rsi;
         let markers=[],s5Arr=[],s20Arr=[],s60Arr=[],s120Arr=[];
         const smaAt=(arr,t)=>arr.find(x=>x.time===t)?.value;
-        const markerTextAt=(t)=>{
-          const m=markers.find(x=>x.time===t);
-          if(!m)return null;
-          return m.text==='GC'?'SMA5가 SMA20을 상향돌파 (골든크로스)':'SMA5가 SMA20을 하향돌파 (데드크로스)';
+
+        /* === 차트 완전 동기화 === */
+        const syncCharts = (masterChart, slaves) => {
+          const apply = (range, method) => {
+            if (!range) return;
+            slaves.forEach((c) => c.timeScale()[method](range));
+          };
+          masterChart.timeScale().subscribeVisibleLogicalRangeChange((range) =>
+            apply(range, "setVisibleLogicalRange")
+          );
+          masterChart.timeScale().subscribeVisibleTimeRangeChange((range) =>
+            apply(range, "setVisibleRange")
+          );
+          slaves.forEach((chart) => {
+            chart.timeScale().subscribeVisibleLogicalRangeChange((range) =>
+              apply(range, "setVisibleLogicalRange")
+            );
+            chart.timeScale().subscribeVisibleTimeRangeChange((range) =>
+              apply(range, "setVisibleRange")
+            );
+          });
         };
 
-        const syncCharts = (masterChart, slaves) => {
-  const sync = (range, method) => {
-    if (!range) return;
-    slaves.forEach((c) => c.timeScale()[method](range));
-  };
-
-  masterChart.timeScale().subscribeVisibleTimeRangeChange((range) =>
-    sync(range, "setVisibleRange")
-  );
-  masterChart.timeScale().subscribeVisibleLogicalRangeChange((range) =>
-    sync(range, "setVisibleLogicalRange")
-  );
-};
-
-
+        const resizeAll = () => {
+          if(!chart||!volChart||!rsiChart) return;
+          const main = document.getElementById('main');
+          const volD = document.getElementById('vol');
+          const rsiD = document.getElementById('rsi');
+          chart.resize(main.clientWidth, main.clientHeight);
+          volChart.resize(volD.clientWidth, volD.clientHeight);
+          rsiChart.resize(rsiD.clientWidth, rsiD.clientHeight);
+        };
 
         const applyAll=({period,data,smaOn})=>{
           if(!window.LightweightCharts)return;
           if(!chart){
             chart=LightweightCharts.createChart(document.getElementById('main'),{
-              layout:{background:{color:'#0e0e0e'},textColor:'#d1d4dc'},
-              grid:{vertLines:{color:'#1e1e1e'},horzLines:{color:'#1e1e1e'}},
+              layout:{background:{color:'#ffffff'},textColor:'#333'},
+              grid:{vertLines:{color:'#f3f3f3'},horzLines:{color:'#f3f3f3'}},
               crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
             });
             candle=chart.addCandlestickSeries({
-              upColor:'#26a69a',downColor:'#ef5350',
-              borderUpColor:'#26a69a',borderDownColor:'#ef5350',
-              wickUpColor:'#26a69a',wickDownColor:'#ef5350'
+              upColor:'#4CC439', downColor:'#EF5350',
+              borderUpColor:'#4CC439', borderDownColor:'#EF5350',
+              wickUpColor:'#4CC439', wickDownColor:'#EF5350'
             });
-            s5=chart.addLineSeries({color:'#00D5C0',lineWidth:2});
-            s20=chart.addLineSeries({color:'#FF9E00',lineWidth:2});
-            s60=chart.addLineSeries({color:'#6A5ACD',lineWidth:2});
-            s120=chart.addLineSeries({color:'#9E9E9E',lineWidth:2});
-            upper=chart.addLineSeries({color:'rgba(255,255,255,0.3)',lineWidth:1});
-            lower=chart.addLineSeries({color:'rgba(255,255,255,0.3)',lineWidth:1});
+            s5=chart.addLineSeries({color:'#9EE493',lineWidth:2});
+            s20=chart.addLineSeries({color:'#6ACE5A',lineWidth:2});
+            s60=chart.addLineSeries({color:'#4CC439',lineWidth:2});
+            s120=chart.addLineSeries({color:'#A9A9A9',lineWidth:2});
+            upper=chart.addLineSeries({color:'rgba(0,0,0,0.25)',lineWidth:1});
+            lower=chart.addLineSeries({color:'rgba(0,0,0,0.25)',lineWidth:1});
 
             volChart=LightweightCharts.createChart(document.getElementById('vol'),{
-              layout:{background:{color:'#0e0e0e'},textColor:'#d1d4dc'},
-              grid:{vertLines:{color:'#1e1e1e'},horzLines:{color:'#1e1e1e'}},
+              layout:{background:{color:'#ffffff'},textColor:'#333'},
+              grid:{vertLines:{color:'#f7f7f7'},horzLines:{color:'#f7f7f7'}},
               timeScale:{visible:false},
             });
             vol=volChart.addHistogramSeries({priceFormat:{type:'volume'}});
 
             rsiChart=LightweightCharts.createChart(document.getElementById('rsi'),{
-              layout:{background:{color:'#0e0e0e'},textColor:'#d1d4dc'},
-              grid:{vertLines:{color:'#1e1e1e'},horzLines:{color:'#1e1e1e'}},
+              layout:{background:{color:'#ffffff'},textColor:'#333'},
+              grid:{vertLines:{color:'#f7f7f7'},horzLines:{color:'#f7f7f7'}},
               timeScale:{visible:false},
             });
             rsi=rsiChart.addLineSeries({color:'#e75480',lineWidth:2});
             const t0=data[0].time,tN=data[data.length-1].time;
-            const line=(v,c)=>rsiChart.addLineSeries({color:c,lineWidth:1,priceLineVisible:false}).setData([{time:t0,value:v},{time:tN,value:v}]);
-            line(30,'#00B0F0'); line(70,'#E8395F');
+            const addHline=(v,c)=>rsiChart.addLineSeries({color:c,lineWidth:1,priceLineVisible:false}).setData([{time:t0,value:v},{time:tN,value:v}]);
+            addHline(30,'#00B0F0'); addHline(70,'#E8395F');
 
-            // === 동기화 추가 ===
             syncCharts(chart, [volChart, rsiChart]);
-
-
-            chart.subscribeCrosshairMove(param=>{
-              if(!param.time)return;
-              const c=param.seriesData.get(candle);
-              if(!c)return;
-              const t=param.time;
-              send({type:'crosshair',payload:{
-                candle:c,
-                sma:{sma5:smaAt(s5Arr,t),sma20:smaAt(s20Arr,t),sma60:smaAt(s60Arr,t),sma120:smaAt(s120Arr,t)},
-                alert:markerTextAt(t)
-              }});
-            });
+            new ResizeObserver(resizeAll).observe(document.getElementById('wrap'));
           }
 
           candle.setData(data);
           s5Arr=calcSMA(data,5); s20Arr=calcSMA(data,20); s60Arr=calcSMA(data,60); s120Arr=calcSMA(data,120);
           s5.setData(s5Arr); s20.setData(s20Arr); s60.setData(s60Arr); s120.setData(s120Arr);
           const {up,low}=calcBoll(data); upper.setData(up); lower.setData(low);
-          vol.setData(data.map(d=>({time:d.time,value:d.volume,color:d.close>=d.open?'#26a69a':'#ef5350'})));
+          vol.setData(data.map(d=>({time:d.time,value:d.volume,color:d.close>=d.open?'#4CC439':'#EF5350'})));
           rsi.setData(calcRSI(data));
 
           markers=[];
           for(let i=1;i<data.length;i++){
             const a1=s5Arr[i-1].value,b1=s20Arr[i-1].value,a2=s5Arr[i].value,b2=s20Arr[i].value;
-            if(a1<b1&&a2>b2)markers.push({time:data[i].time,position:'aboveBar',color:'#FFD700',shape:'arrowUp',text:'GC'});
-            if(a1>b1&&a2<b2)markers.push({time:data[i].time,position:'belowBar',color:'#00BFFF',shape:'arrowDown',text:'DC'});
+            if(a1<b1&&a2>b2)markers.push({time:data[i].time,position:'aboveBar',color:'#FFD700',shape:'circle'});
+            if(a1>b1&&a2<b2)markers.push({time:data[i].time,position:'belowBar',color:'#007BFF',shape:'circle'});
           }
           candle.setMarkers(markers);
-          s5.applyOptions({visible:smaOn.sma5});
-          s20.applyOptions({visible:smaOn.sma20});
-          s60.applyOptions({visible:smaOn.sma60});
-          s120.applyOptions({visible:smaOn.sma120});
+
+          /* === Crosshair 이동 시 알림 표시 === */
+          const alertAt = (t) => {
+            const m = markers.find(x => x.time === t);
+            if (!m) return null;
+            if (m.color === '#FFD700') return 'SMA5가 SMA20 상향 돌파 (골든크로스)';
+            if (m.color === '#007BFF') return 'SMA5가 SMA20 하향 돌파 (데드크로스)';
+            return null;
+          };
+
+          chart.subscribeCrosshairMove(param=>{
+            if(!param.time)return;
+            const c=param.seriesData.get(candle); if(!c)return;
+            const t=param.time;
+            send({type:'crosshair',payload:{
+              candle:c,
+              sma:{sma5:smaAt(s5Arr,t),sma20:smaAt(s20Arr,t),sma60:smaAt(s60Arr,t),sma120:smaAt(s120Arr,t)},
+              alert:alertAt(t)
+            }});
+          });
+
+          resizeAll();
         };
 
         load().then(()=>{
@@ -263,7 +292,22 @@ export default function ChartScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      {/* ===== 상단 기업 정보 ===== */}
+      <View style={styles.priceHeader}>
+        <Text style={styles.company}>{companyName}</Text>
+        <Text style={styles.price}>{fmt(currPrice)}원</Text>
+        <Text style={[styles.diff, { color: isUp ? "#4CC439" : "#EF5350" }]}>
+          {isUp ? "+" : ""}
+          {fmt(diff)}원 (
+          {isNaN(diffPct)
+            ? "-"
+            : `${diffPct >= 0 ? "+" : ""}${diffPct.toFixed(1)}%`}
+          )
+        </Text>
+      </View>
+
+      {/* 날짜, 시가/종가/고가/저가, SMA, 알림 */}
+      <View style={styles.metaHeader}>
         <Text style={styles.date}>
           {ymd(header?.time)} ({weekday(header?.time)})
         </Text>
@@ -284,10 +328,18 @@ export default function ChartScreen() {
           </Text>
         </View>
         <View style={[styles.row, { marginTop: 6 }]}>
-          <Text style={{ color: "#00D5C0" }}>5 {fmt(smaVals.sma5)}</Text>
-          <Text style={{ color: "#FF9E00" }}>20 {fmt(smaVals.sma20)}</Text>
-          <Text style={{ color: "#6A5ACD" }}>60 {fmt(smaVals.sma60)}</Text>
-          <Text style={{ color: "#9E9E9E" }}>120 {fmt(smaVals.sma120)}</Text>
+          <Text style={{ color: "#9EE493", fontWeight: "600" }}>
+            5 {fmt(smaVals.sma5)}
+          </Text>
+          <Text style={{ color: "#6ACE5A", fontWeight: "600" }}>
+            20 {fmt(smaVals.sma20)}
+          </Text>
+          <Text style={{ color: "#4CC439", fontWeight: "600" }}>
+            60 {fmt(smaVals.sma60)}
+          </Text>
+          <Text style={{ color: "#A9A9A9", fontWeight: "600" }}>
+            120 {fmt(smaVals.sma120)}
+          </Text>
         </View>
         {headerAlert && (
           <View style={styles.alertBox}>
@@ -297,32 +349,41 @@ export default function ChartScreen() {
         )}
       </View>
 
+      {/* SMA 토글 버튼: 화이트 톤 + 그린 포커스 */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.toggleBar}
       >
         {[
-          { key: "sma5", label: "5", color: "#00D5C0" },
-          { key: "sma20", label: "20", color: "#FF9E00" },
-          { key: "sma60", label: "60", color: "#6A5ACD" },
-          { key: "sma120", label: "120", color: "#9E9E9E" },
-        ].map(({ key, label, color }) => (
-          <Pressable
-            key={key}
-            onPress={() => toggle(key as keyof typeof smaOn)}
-            style={[
-              styles.chip,
-              smaOn[key as keyof typeof smaOn] ? styles.chipOn : styles.chipOff,
-              { borderColor: color },
-            ]}
-          >
-            <Text style={{ color }}>{label}</Text>
-          </Pressable>
-        ))}
+          { key: "sma5", label: "5", color: "#4CC439" },
+          { key: "sma20", label: "20", color: "#4CC439" },
+          { key: "sma60", label: "60", color: "#4CC439" },
+          { key: "sma120", label: "120", color: "#A9A9A9" },
+        ].map(({ key, label, color }) => {
+          const on = smaOn[key as keyof typeof smaOn];
+          return (
+            <Pressable
+              key={key}
+              onPress={() => toggle(key as keyof typeof smaOn)}
+              style={[
+                styles.chip,
+                on ? styles.chipOn : styles.chipOff,
+                { borderColor: on ? "#4CC439" : "#D9D9D9" },
+              ]}
+            >
+              <Text
+                style={{ color: on ? "#2C8A2C" : "#666", fontWeight: "700" }}
+              >
+                {label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </ScrollView>
 
-      <View style={{ flex: 1, minHeight: 350 }}>
+      {/* WebView: 감싸는 컨테이너로 높이 안정화 */}
+      <View style={{ flex: 1, minHeight: 300 }}>
         <WebView
           ref={webRef}
           originWhitelist={["*"]}
@@ -330,10 +391,11 @@ export default function ChartScreen() {
           javaScriptEnabled
           domStorageEnabled
           onMessage={onMessage}
-          style={{ flex: 1, backgroundColor: "#0e0e0e" }}
+          style={{ flex: 1, backgroundColor: "#ffffff" }}
         />
       </View>
 
+      {/* 기간 버튼 */}
       <View style={styles.periodBar}>
         {(["5m", "1D", "1W"] as Period[]).map((p) => (
           <Pressable
@@ -358,48 +420,70 @@ export default function ChartScreen() {
 
 /* ================== 스타일 ================== */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0e0e0e" },
-  header: {
-    paddingHorizontal: 14,
+  container: { flex: 1, backgroundColor: "#ffffff" },
+
+  priceHeader: {
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  company: { fontSize: 16, fontWeight: "800", color: "#333" },
+  price: { fontSize: 28, fontWeight: "900", color: "#111", marginTop: 2 },
+  diff: { fontSize: 14, fontWeight: "700", marginTop: 2 },
+
+  metaHeader: {
+    paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderColor: "#252525",
-    backgroundColor: "#0e0e0e",
+    borderColor: "#F0F0F0",
+    backgroundColor: "#ffffff",
   },
-  date: { color: "#cfcfcf", marginBottom: 4 },
+  date: { color: "#666", marginBottom: 4 },
   row: { flexDirection: "row", justifyContent: "space-between", marginTop: 2 },
-  kv: { color: "#ddd" },
-  bold: { fontWeight: "700", color: "#fff" },
-  ma: { fontWeight: "600" },
+  kv: { color: "#444" },
+  bold: { fontWeight: "800", color: "#111" },
+
   alertBox: {
     marginTop: 8,
     padding: 8,
-    borderRadius: 8,
-    backgroundColor: "#171717",
+    borderRadius: 10,
+    backgroundColor: "#F8FFF3",
     borderWidth: 1,
-    borderColor: "#FFD700",
+    borderColor: "#CFEFCC",
   },
-  alertTitle: { color: "#FFD700", fontWeight: "700", marginBottom: 4 },
-  alertText: { color: "#eee", fontSize: 12 },
-  toggleBar: { paddingHorizontal: 12, paddingVertical: 8, gap: 8 },
+  alertTitle: { color: "#2C8A2C", fontWeight: "800", marginBottom: 4 },
+  alertText: { color: "#2C2C2C", fontSize: 12 },
+
+  toggleBar: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+    backgroundColor: "#fff",
+  },
   chip: {
     borderWidth: 1,
     paddingVertical: 6,
-    paddingHorizontal: 6,
+    paddingHorizontal: 10,
     borderRadius: 12,
+    minWidth: 44,
+    alignItems: "center",
   },
-  chipOn: { backgroundColor: "#171717" },
-  chipOff: { backgroundColor: "transparent", opacity: 0.6 },
+  chipOn: { backgroundColor: "#E8F9E5" },
+  chipOff: { backgroundColor: "#FFFFFF" },
+
   periodBar: {
     flexDirection: "row",
     justifyContent: "space-evenly",
     paddingVertical: 8,
     borderTopWidth: 1,
-    borderTopColor: "#333",
-    backgroundColor: "#0f0f0f",
+    borderTopColor: "#F0F0F0",
+    backgroundColor: "#fff",
   },
   periodBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10 },
-  periodBtnActive: { backgroundColor: "#1e1e1e" },
-  periodText: { color: "#aaa", fontWeight: "600" },
-  periodTextActive: { color: "#fff" },
+  periodBtnActive: { backgroundColor: "#E8F9E5" },
+  periodText: { color: "#666", fontWeight: "700" },
+  periodTextActive: { color: "#2C8A2C" },
 });
