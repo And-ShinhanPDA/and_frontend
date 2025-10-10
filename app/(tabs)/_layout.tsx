@@ -162,9 +162,9 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="chart"
+        name="chart/index"
         options={{
-          title: "자동매매",
+          title: "차트",
           tabBarLabel: ({ focused }) => (
             <Typography weight={focused ? "600" : "400"} size={12}>
               차트
