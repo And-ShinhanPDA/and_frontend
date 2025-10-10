@@ -15,6 +15,20 @@ import {
 } from "react-native-gesture-handler";
 import Svg, { Circle, Line, Path, Polyline, Rect } from "react-native-svg";
 
+type Candle = {
+  x: number;
+  open: number;
+  close: number;
+  high: number;
+  low: number;
+  volume: number;
+  rsi_14: number;
+  alert: boolean;
+  sma5?: number;
+  sma20?: number;
+  upper?: number;
+  lower?: number;
+};
 const screenWidth = Dimensions.get("window").width;
 const CHART_HEIGHT = 240;
 const VOLUME_HEIGHT = 80;
@@ -23,7 +37,7 @@ const TOTAL_HEIGHT = CHART_HEIGHT + VOLUME_HEIGHT + RSI_HEIGHT + 80;
 
 // ===== 랜덤 데이터 생성기 =====
 const generateCandles = (count: number, basePrice = 50000) => {
-  const data = [];
+  const data: Candle[] = [];
   let price = basePrice;
   for (let i = 0; i < count; i++) {
     const change = (Math.random() - 0.5) * 1000;
@@ -96,9 +110,11 @@ export default function ChartDetail() {
   const chartWidth = data.length * (candleWidth + spacing);
 
   const getY = (v: number) => (maxY - v) * scaleY;
-  const makePath = (key: keyof (typeof data)[0]) =>
+  const makePath = (key: keyof Candle) =>
     data
-      .map((d, i) => `${i * (candleWidth + spacing)},${getY(d[key])}`)
+      .map(
+        (d, i) => `${i * (candleWidth + spacing)},${getY(Number(d[key]) || 0)}`
+      )
       .join(" L");
 
   const panRef = useRef(null);
@@ -236,7 +252,7 @@ export default function ChartDetail() {
                             onPress={() =>
                               setAlertInfo({
                                 x,
-                                msg: `📢 ${tab} ${d.x}봉 알림 발생`,
+                                msg: `${tab} ${d.x}봉 알림 발생`,
                                 value: d.close.toFixed(0),
                               })
                             }
