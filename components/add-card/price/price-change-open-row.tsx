@@ -1,12 +1,10 @@
-import ConditionDropdown from "@/components/condition/condition-dropdown";
 import ConditionInput from "@/components/condition/condition-input";
+import SignToggle from "@/components/condition/sign-toggle";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import ConditionMinus from "../../../assets/images/condition-minus.svg";
 
-type Comparison = "이상" | "이하";
-
-export default function RSITargetRow({
+export default function PriceChangeOpenRow({
   onRemove,
   onReset,
   onValueChange,
@@ -14,44 +12,41 @@ export default function RSITargetRow({
 }: {
   onRemove: () => void;
   onReset: () => void;
-  onValueChange: (data: { value: string; comparison: Comparison }) => void;
+  onValueChange: (data: { sign: "+" | "-"; amount: string }) => void;
   isSingleRow: boolean;
 }) {
-  const [value, setValue] = useState("");
-  const [comparison, setComparison] = useState<Comparison>("이상");
+  const [sign, setSign] = useState<"+" | "-">("+");
+  const [amount, setAmount] = useState("");
 
   useEffect(() => {
-    onValueChange({ value, comparison });
-  }, [value, comparison]);
+    onValueChange({ sign, amount });
+  }, [sign, amount]);
 
   const handleRemove = () => {
     if (isSingleRow) {
-      setValue("");
-      setComparison("이상");
+      setAmount("");
+      setSign("+");
       onReset();
     } else {
       onRemove();
     }
   };
 
-  const filled = value.trim() !== "";
-
   return (
     <View style={styles.rowContainer}>
+      <SignToggle
+        sign={sign}
+        onToggle={() => setSign(sign === "+" ? "-" : "+")}
+      />
+
       <ConditionInput
-        value={value}
-        placeholder="RSI 목표 값을 입력해주세요"
-        unit=""
-        onChange={setValue}
+        value={amount}
+        placeholder="금액을 입력해주세요"
+        unit="원"
+        onChange={setAmount}
       />
 
-      <ConditionDropdown
-        options={["이상", "이하"]}
-        value={comparison}
-        onChange={setComparison}
-      />
-
-      {filled && (
+      {amount.trim() !== "" && (
         <TouchableOpacity style={styles.removeButton} onPress={handleRemove}>
           <ConditionMinus width={18} height={18} />
         </TouchableOpacity>

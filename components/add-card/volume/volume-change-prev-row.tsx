@@ -1,12 +1,10 @@
-import ConditionDropdown from "@/components/condition/condition-dropdown";
 import ConditionInput from "@/components/condition/condition-input";
+import SignToggle from "@/components/condition/sign-toggle";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import ConditionMinus from "../../../assets/images/condition-minus.svg";
 
-type Comparison = "이상" | "이하";
-
-export default function RSITargetRow({
+export default function VolumeChangePrevRow({
   onRemove,
   onReset,
   onValueChange,
@@ -14,20 +12,20 @@ export default function RSITargetRow({
 }: {
   onRemove: () => void;
   onReset: () => void;
-  onValueChange: (data: { value: string; comparison: Comparison }) => void;
+  onValueChange: (data: { sign: "+" | "-"; value: string }) => void;
   isSingleRow: boolean;
 }) {
+  const [sign, setSign] = useState<"+" | "-">("+");
   const [value, setValue] = useState("");
-  const [comparison, setComparison] = useState<Comparison>("이상");
 
   useEffect(() => {
-    onValueChange({ value, comparison });
-  }, [value, comparison]);
+    onValueChange({ sign, value });
+  }, [sign, value]);
 
   const handleRemove = () => {
     if (isSingleRow) {
+      setSign("+");
       setValue("");
-      setComparison("이상");
       onReset();
     } else {
       onRemove();
@@ -38,17 +36,16 @@ export default function RSITargetRow({
 
   return (
     <View style={styles.rowContainer}>
-      <ConditionInput
-        value={value}
-        placeholder="RSI 목표 값을 입력해주세요"
-        unit=""
-        onChange={setValue}
+      <SignToggle
+        sign={sign}
+        onToggle={() => setSign(sign === "+" ? "-" : "+")}
       />
 
-      <ConditionDropdown
-        options={["이상", "이하"]}
-        value={comparison}
-        onChange={setComparison}
+      <ConditionInput
+        value={value}
+        placeholder="백분율을 입력해주세요"
+        unit="%"
+        onChange={setValue}
       />
 
       {filled && (

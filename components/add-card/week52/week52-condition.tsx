@@ -61,36 +61,43 @@ export default function Week52ConditionCard() {
             <>
               <View style={styles.divider} />
 
-              {/* 최고가/최저가 여부 */}
-              {conditionData.highLow?.some((item: any) => item.checked) && (
+              {/* 촤고가 경보 */}
+              {conditionData.highAlert && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
-                    최근 52주 기준 최고가 | 최저가 여부
-                  </Text>
-
-                  {conditionData.highLow
-                    .filter((item: any) => item.checked)
-                    .map((item: any, idx: number) => (
-                      <View key={idx} style={styles.row}>
-                        <Text style={styles.label}>{item.type}</Text>
-                      </View>
-                    ))}
+                  <Text style={styles.sectionTitle}>52주 최고가 경보</Text>
+                  <Text style={styles.desc}>최고가 갱신</Text>
                 </View>
               )}
 
-              {/* 최고가/최저가 근접 여부 */}
-              {conditionData.proximity?.length > 0 && (
+              {/* 최고가 근접 여부 */}
+              {conditionData.highProximity?.length > 0 && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
-                    최근 52주 기준 최고가 | 최저가 근접 여부
-                  </Text>
-                  {conditionData.proximity.map((item: any, idx: number) => (
+                  <Text style={styles.sectionTitle}>52주 최고가 근접 여부</Text>
+                  {conditionData.highProximity.map((item: any, idx: number) => (
                     <View key={idx} style={styles.row}>
-                      <Text style={styles.label}>{item.type}</Text>
-                      <Text style={styles.value}>
-                        {item.sign}
-                        {item.value}%
-                      </Text>
+                      <Text style={styles.label}>근접 기준</Text>
+                      <Text style={styles.value}>{item.value}%</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* 최저가 경보 */}
+              {conditionData.lowAlert && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>52주 최저가 경보</Text>
+                  <Text style={styles.desc}>최저가 갱신</Text>
+                </View>
+              )}
+
+              {/*최저가 근접 여부 */}
+              {conditionData.lowProximity?.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>52주 최저가 근접 여부</Text>
+                  {conditionData.lowProximity.map((item: any, idx: number) => (
+                    <View key={idx} style={styles.row}>
+                      <Text style={styles.label}>근접 기준</Text>
+                      <Text style={styles.value}>{item.value}%</Text>
                     </View>
                   ))}
                 </View>
@@ -103,7 +110,7 @@ export default function Week52ConditionCard() {
       <ConditionBottomSheet
         visible={isOpen}
         onClose={() => setIsOpen(false)}
-        ratio={0.4}
+        ratio={0.7}
       >
         <Week52ConditionContent onConfirm={handleConfirm} />
       </ConditionBottomSheet>
@@ -136,6 +143,7 @@ const styles = StyleSheet.create({
   },
   section: { marginBottom: 8 },
   sectionTitle: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
+  desc: { fontSize: 13, color: "#666", marginLeft: 4 },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",

@@ -1,126 +1,153 @@
+import ConditionSection from "@/components/condition/condition-section";
+import { SMA_SECTION_DESCRIPTIONS } from "@/components/condition/constants";
+import useConditionRows from "@/hooks/use-condition-rows";
 import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import ConditionPlus from "../../../assets/images/condition-plus.svg";
+import {
+  LayoutAnimation,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import SMATargetRow from "./sma-target-row";
-type Period = "5일" | "10일" | "20일" | "30일" | "50일" | "100일" | "200일";
 
 export default function SMAConditionContent({
   onConfirm,
 }: {
   onConfirm: (data: any) => void;
 }) {
-  type Row = { id: number; filled: boolean; value: string; period: Period };
+  const [toggles, setToggles] = useState({
+    target: false,
+    shortCross: false,
+    longCross: false,
+  });
 
-  const [rows, setRows] = useState<Row[]>([
-    { id: 1, filled: false, value: "", period: "5일" },
-  ]);
-
-  const addRow = () =>
-    setRows((prev) => [
-      ...prev,
-      { id: Date.now(), filled: false, value: "", period: "5일" },
-    ]);
-
-  const removeRow = (id: number) =>
-    setRows((prev) => prev.filter((r) => r.id !== id));
-
-  const updateRow = (id: number, data: { value: string; period: Period }) =>
-    setRows((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              value: data.value,
-              period: data.period,
-              filled: data.value.trim() !== "",
-            }
-          : r
-      )
-    );
-
-  const resetRow = (id: number) =>
-    setRows((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, value: "", period: "5일", filled: false } : r
-      )
-    );
-
-  const hasFilled = rows.some((r) => r.filled);
-
-  const handleConfirm = () => {
-    const targets = rows
-      .filter((r) => r.filled)
-      .map((r) => ({ value: r.value, period: r.period }));
-    onConfirm({ targets });
+  const toggle = (key: keyof typeof toggles) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setToggles((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleResetAll = () => {
-    setRows([{ id: 1, filled: false, value: "", period: "5일" }]);
+  const targetRows = useConditionRows<
+    { id: number; filled: boolean; value: string; period: string },
+    { value: string; period: string }
+  >({
+    initial: { filled: false, value: "", period: "5일" },
+    updateFn: (prev, data) => ({
+      ...prev,
+      filled: data.value.trim() !== "",
+      value: data.value,
+      period: data.period,
+    }),
+  });
+
+  const handleConfirmPress = () => {
+    onConfirm({
+      target: toggles.target ? targetRows.rows.filter((r) => r.filled) : [],
+      shortCross: toggles.shortCross,
+      longCross: toggles.longCross,
+    });
   };
 
   return (
-    <KeyboardAwareScrollView
-      style={styles.container}
-      contentContainerStyle={{ flexGrow: 1, paddingBottom: 16 }}
-      enableOnAndroid={true}
-      extraScrollHeight={100}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>SMA 목표 가격 도달 여부 알림</Text>
-        {rows.map((r) => (
-          <SMATargetRow
-            key={r.id}
-            value={r.value}
-            period={r.period}
-            onRemove={() => removeRow(r.id)}
-            onReset={() => resetRow(r.id)}
-            onValueChange={(data) => updateRow(r.id, data)}
-            isSingleRow={rows.length === 1}
-          />
-        ))}
-        {hasFilled && (
-          <TouchableOpacity style={styles.addButton} onPress={addRow}>
-            <ConditionPlus width={20} height={20} />
-          </TouchableOpacity>
-        )}
+    <ScrollView style={styles.wrapper}>
+      <View style={styles.container}>
+        <Text style={styles.sectionTitle}>SMA</Text>
+
+        <ConditionSection
+          title="SMA 목표 가격 알림"
+          description={SMA_SECTION_DESCRIPTIONS.TARGET}
+          value={toggles.target}
+          onToggle={() => toggle("target")}
+          rows={targetRows.rows}
+          hasFilled={targetRows.hasFilled}
+          onAdd={targetRows.addRow}
+          renderRow={(r) => (
+            <SMATargetRow
+              key={r.id}
+              onRemove={() => targetRows.removeRow(r.id)}
+              onReset={() => targetRows.resetRow(r.id)}
+              onValueChange={(data) => targetRows.updateRow(r.id, data)}
+              isSingleRow={targetRows.rows.length === 1}
+            />
+          )}
+        />
+
+        <ConditionSection
+          title="단기선이 장기선을 돌파"
+          description={SMA_SECTION_DESCRIPTIONS.SHORTCROSS}
+          value={toggles.shortCross}
+          onToggle={() => toggle("shortCross")}
+          rows={[]}
+          hasFilled={false}
+          onAdd={() => {}}
+          renderRow={() => null}
+        />
+
+        <ConditionSection
+          title="장기선이 단기선을 누름"
+          description={SMA_SECTION_DESCRIPTIONS.LONGCROSS}
+          value={toggles.longCross}
+          onToggle={() => toggle("longCross")}
+          rows={[]}
+          hasFilled={false}
+          onAdd={() => {}}
+          renderRow={() => null}
+        />
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.reset} onPress={handleResetAll}>
+        <TouchableOpacity
+          style={styles.resetButton}
+          onPress={() =>
+            setToggles({ target: false, shortCross: false, longCross: false })
+          }
+        >
           <Text style={styles.resetText}>초기화</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.confirm} onPress={handleConfirm}>
+
+        <TouchableOpacity
+          style={styles.confirmButton}
+          onPress={handleConfirmPress}
+        >
           <Text style={styles.confirmText}>확인</Text>
         </TouchableOpacity>
       </View>
-    </KeyboardAwareScrollView>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: { flex: 1, backgroundColor: "#fff" },
   container: { paddingHorizontal: 16, paddingVertical: 10 },
-  section: { marginBottom: 20, position: "relative", zIndex: 1 },
   sectionTitle: { fontSize: 15, fontWeight: "600", marginBottom: 10 },
-  addButton: { alignItems: "center", justifyContent: "center", marginTop: 6 },
-  footer: { flexDirection: "row", marginTop: 20 },
-  reset: {
+  footer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#EAEAEA",
+    marginTop: 10,
+  },
+  resetButton: {
     flex: 1,
     borderWidth: 1,
     borderColor: "#E5E5E5",
     borderRadius: 10,
+    paddingVertical: 13,
     alignItems: "center",
-    paddingVertical: 12,
     marginRight: 8,
   },
-  resetText: { fontSize: 15, color: "#333" },
-  confirm: {
+  resetText: { fontSize: 15, color: "#333", fontWeight: "500" },
+  confirmButton: {
     flex: 1,
     backgroundColor: "#4CC439",
     borderRadius: 10,
+    paddingVertical: 13,
     alignItems: "center",
-    paddingVertical: 12,
+    marginLeft: 8,
   },
-  confirmText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+  confirmText: { fontSize: 15, color: "#fff", fontWeight: "600" },
 });

@@ -12,7 +12,7 @@ import {
 import AddIcon from "../../../assets/images/add.svg";
 import EditIcon from "../../../assets/images/edit.svg";
 import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
-import BollingerBandConditionContent from "./bollingerband-condition-content";
+import BasePriceConditionContent from "./base-price-condition-content";
 
 if (
   Platform.OS === "android" &&
@@ -21,18 +21,17 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function BollingerBandConditionCard() {
+export default function BasePriceConditionCard() {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [conditionData, setConditionData] = useState<any>(null);
   const [expanded, setExpanded] = useState(false);
 
   const handleConfirm = (data: any) => {
-    console.log("볼린저밴드 조건 입력:", data);
+    console.log("기준가 조건 입력:", data);
     setConditionData(data);
     setHasCondition(true);
     setIsOpen(false);
-
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
   };
@@ -47,7 +46,7 @@ export default function BollingerBandConditionCard() {
       <Pressable onPress={hasCondition ? toggleExpand : undefined}>
         <View style={styles.card}>
           <View style={styles.header}>
-            <Text style={styles.title}>볼린저밴드</Text>
+            <Text style={styles.title}>기준가</Text>
             <TouchableOpacity onPress={() => setIsOpen(true)}>
               {hasCondition ? (
                 <EditIcon width={18} height={18} />
@@ -60,22 +59,19 @@ export default function BollingerBandConditionCard() {
           {expanded && conditionData && (
             <>
               <View style={styles.divider} />
-
-              {conditionData.upper && (
+              {/* 시가 */}
+              {conditionData.open && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
-                    볼린저 밴드 강세 신호 경고
-                  </Text>
-                  <Text style={styles.desc}>상단 밴드(20,2) 상회</Text>
+                  <Text style={styles.sectionTitle}>시가</Text>
+                  <Text style={styles.desc}>매일 장 시작 시점의 시가 알림</Text>
                 </View>
               )}
 
-              {conditionData.lower && (
+              {/* 종가 */}
+              {conditionData.close && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
-                    볼린저 밴드 하락 신호 경고
-                  </Text>
-                  <Text style={styles.desc}>하단 밴드(20,2) 하회</Text>
+                  <Text style={styles.sectionTitle}>종가</Text>
+                  <Text style={styles.desc}>매일 장 마감 시점의 종가 알림</Text>
                 </View>
               )}
             </>
@@ -88,7 +84,7 @@ export default function BollingerBandConditionCard() {
         onClose={() => setIsOpen(false)}
         ratio={0.45}
       >
-        <BollingerBandConditionContent onConfirm={handleConfirm} />
+        <BasePriceConditionContent onConfirm={handleConfirm} />
       </ConditionBottomSheet>
     </>
   );

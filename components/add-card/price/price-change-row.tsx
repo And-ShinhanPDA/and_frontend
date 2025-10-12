@@ -1,11 +1,7 @@
+import ConditionInput from "@/components/condition/condition-input";
+import SignToggle from "@/components/condition/sign-toggle";
 import React, { useEffect, useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import ConditionMinus from "../../../assets/images/condition-minus.svg";
 
 export default function PriceChangeRow({
@@ -38,28 +34,17 @@ export default function PriceChangeRow({
 
   return (
     <View style={styles.rowContainer}>
-      <TouchableOpacity
-        style={[
-          styles.signToggle,
-          sign === "+" ? styles.plusBorder : styles.minusBorder,
-        ]}
-        onPress={() => setSign(sign === "+" ? "-" : "+")}
-      >
-        <Text style={[sign === "+" ? styles.plusText : styles.minusText]}>
-          {sign}
-        </Text>
-      </TouchableOpacity>
+      <SignToggle
+        sign={sign}
+        onToggle={() => setSign(sign === "+" ? "-" : "+")}
+      />
 
-      <View style={styles.inputWrapper}>
-        <TextInput
-          style={styles.inputWithUnit}
-          value={amount}
-          onChangeText={setAmount}
-          placeholder="금액을 입력해주세요"
-          keyboardType="numeric"
-        />
-        <Text style={styles.unitInside}>원</Text>
-      </View>
+      <ConditionInput
+        value={amount}
+        placeholder="금액을 입력해주세요"
+        unit="원"
+        onChange={setAmount}
+      />
 
       {amount.trim() !== "" && (
         <TouchableOpacity style={styles.removeButton} onPress={handleRemove}>
