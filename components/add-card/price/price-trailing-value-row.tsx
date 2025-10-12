@@ -1,11 +1,7 @@
+import ConditionInput from "@/components/condition/condition-input";
+import SignToggle from "@/components/condition/sign-toggle";
 import React, { useEffect, useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import ConditionMinus from "../../../assets/images/condition-minus.svg";
 
 export default function PriceTrailingValueRow({
@@ -37,33 +33,22 @@ export default function PriceTrailingValueRow({
     }
   };
 
-  const toggleSign = () => {
-    setSign((prev) => (prev === "+" ? "-" : "+"));
-  };
-
+  const filled = value.trim() !== "";
   return (
     <View style={styles.rowContainer}>
-      <TouchableOpacity style={styles.signButton} onPress={toggleSign}>
-        <Text
-          style={[styles.signText, sign === "+" ? styles.plus : styles.minus]}
-        >
-          {sign}
-        </Text>
-      </TouchableOpacity>
+      <SignToggle
+        sign={sign}
+        onToggle={() => setSign(sign === "+" ? "-" : "+")}
+      />
 
-      <View style={styles.inputWrapper}>
-        <TextInput
-          style={styles.inputWithUnit}
-          placeholder="금액을 입력해주세요"
-          keyboardType="numeric"
-          value={value}
-          onChangeText={setValue}
-          placeholderTextColor="#A4A4A4"
-        />
-        <Text style={styles.unitInside}>원</Text>
-      </View>
+      <ConditionInput
+        value={value}
+        placeholder="금액을 입력해주세요"
+        unit="원"
+        onChange={setValue}
+      />
 
-      {value.trim() !== "" && (
+      {filled && (
         <TouchableOpacity style={styles.removeButton} onPress={handleRemove}>
           <ConditionMinus width={18} height={18} />
         </TouchableOpacity>
@@ -77,40 +62,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 10,
-  },
-  signButton: {
-    width: 36,
-    height: 36,
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 8,
-  },
-  signText: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  plus: { color: "#4CC439" },
-  minus: { color: "#FF3B30" },
-  inputWrapper: { flex: 1, position: "relative" },
-  inputWithUnit: {
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    paddingRight: 30,
-    fontSize: 14,
-  },
-  unitInside: {
-    position: "absolute",
-    right: 10,
-    top: "50%",
-    transform: [{ translateY: -10.5 }],
-    fontSize: 13,
-    color: "#555",
   },
   removeButton: {
     marginLeft: 8,
