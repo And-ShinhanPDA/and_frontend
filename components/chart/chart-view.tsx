@@ -37,9 +37,7 @@ const genCandles = (period: Period, count: number, base = 79200): Candle[] => {
   return out;
 };
 
-export default function ChartScreen() {
-  const companyName = "삼성전자";
-
+export default function ChartScreen({ companyName }: { companyName: string }) {
   const [period, setPeriod] = useState<Period>("1D");
   const [smaOn, setSmaOn] = useState({
     sma5: true,
