@@ -27,3 +27,13 @@ export const VOLUME_SECTION_DESCRIPTIONS = {
   SPIKE: "거래량이 전날 종가 거래량보다 20% 높아지면 알려드릴게요.",
   DROP: "거래량이 전날 종가 거래량보다 20% 낮아지면 알려드릴게요.",
 } as const;
+export const BOLLINGER_SECTION_DESCRIPTIONS = {
+  UPPER: "현재가가 상단 볼린저 밴드(20,2)보다 높아질 때 알림을 드릴게요.",
+  LOWER: "현재가가 하단 볼린저 밴드(20,2)보다 낮아질 때 알림을 드릴게요.",
+} as const;
+
+export const RSI_SECTION_DESCRIPTIONS = {
+  TARGET: "설정해주신 범위에 RSI 값이 포함되어 있으면 알림을 드릴게요.",
+  OVERBOUGHT: "RSI가 70 이상인 경우 알림을 드릴게요.",
+  OVERSOLD: "RSI가 30 미만인 경우 알림을 드릴게요.",
+} as const;

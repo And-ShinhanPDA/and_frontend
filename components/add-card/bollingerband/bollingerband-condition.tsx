@@ -13,6 +13,7 @@ import AddIcon from "../../../assets/images/add.svg";
 import EditIcon from "../../../assets/images/edit.svg";
 import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
 import BollingerBandConditionContent from "./bollingerband-condition-content";
+
 if (
   Platform.OS === "android" &&
   UIManager.setLayoutAnimationEnabledExperimental
@@ -27,7 +28,7 @@ export default function BollingerBandConditionCard() {
   const [expanded, setExpanded] = useState(false);
 
   const handleConfirm = (data: any) => {
-    // data: { signals: { type: "강세" | "하락" }[] }
+    console.log("볼린저밴드 조건 입력:", data);
     setConditionData(data);
     setHasCondition(true);
     setIsOpen(false);
@@ -46,7 +47,7 @@ export default function BollingerBandConditionCard() {
       <Pressable onPress={hasCondition ? toggleExpand : undefined}>
         <View style={styles.card}>
           <View style={styles.header}>
-            <Text style={styles.title}>볼린저 밴드</Text>
+            <Text style={styles.title}>볼린저밴드</Text>
             <TouchableOpacity onPress={() => setIsOpen(true)}>
               {hasCondition ? (
                 <EditIcon width={18} height={18} />
@@ -56,26 +57,27 @@ export default function BollingerBandConditionCard() {
             </TouchableOpacity>
           </View>
 
-          {expanded && hasCondition && conditionData && (
+          {expanded && conditionData && (
             <>
               <View style={styles.divider} />
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>
-                  볼린저 밴드 강세 | 하락 경고
-                </Text>
-                {conditionData.signals && conditionData.signals.length > 0 ? (
-                  conditionData.signals.map((s: any, idx: number) => (
-                    <View key={idx} style={styles.row}>
-                      <Text style={styles.label}>신호</Text>
-                      <Text style={styles.value}>{s.type}</Text>
-                    </View>
-                  ))
-                ) : (
-                  <Text style={styles.emptyText}>
-                    조건이 설정되지 않았습니다.
+
+              {conditionData.upper && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>
+                    볼린저 밴드 강세 신호 경고
                   </Text>
-                )}
-              </View>
+                  <Text style={styles.desc}>상단 밴드(20,2) 상회</Text>
+                </View>
+              )}
+
+              {conditionData.lower && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>
+                    볼린저 밴드 하락 신호 경고
+                  </Text>
+                  <Text style={styles.desc}>하단 밴드(20,2) 하회</Text>
+                </View>
+              )}
             </>
           )}
         </View>
@@ -84,7 +86,7 @@ export default function BollingerBandConditionCard() {
       <ConditionBottomSheet
         visible={isOpen}
         onClose={() => setIsOpen(false)}
-        ratio={0.56}
+        ratio={0.45}
       >
         <BollingerBandConditionContent onConfirm={handleConfirm} />
       </ConditionBottomSheet>
@@ -117,12 +119,5 @@ const styles = StyleSheet.create({
   },
   section: { marginBottom: 8 },
   sectionTitle: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
-  label: { fontSize: 13, color: "#333" },
-  value: { fontSize: 13, fontWeight: "500" },
-  emptyText: { fontSize: 13, color: "#888", marginTop: 2 },
+  desc: { fontSize: 13, color: "#666", marginLeft: 4 },
 });

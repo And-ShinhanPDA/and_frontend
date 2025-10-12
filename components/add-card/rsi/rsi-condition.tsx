@@ -28,6 +28,7 @@ export default function RSIConditionCard() {
   const [expanded, setExpanded] = useState(false);
 
   const handleConfirm = (data: any) => {
+    console.log("RSI 조건 입력:", data);
     setConditionData(data);
     setHasCondition(true);
     setIsOpen(false);
@@ -60,33 +61,41 @@ export default function RSIConditionCard() {
             <>
               <View style={styles.divider} />
 
-              {/* RSI 목표 지수 도달 시 경고 */}
-              {conditionData.rsiTargets?.length > 0 && (
+              {/* RSI 목표 지수 도달 경고 */}
+              {Array.isArray(conditionData.target) &&
+                conditionData.target.length > 0 && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>
+                      RSI 목표 지수 도달 시 경고
+                    </Text>
+                    {conditionData.target.map(
+                      (
+                        item: { value: string; comparison: string },
+                        idx: number
+                      ) => (
+                        <View key={idx} style={styles.row}>
+                          <Text style={styles.label}>
+                            {`RSI ${item.value} ${item.comparison}`}
+                          </Text>
+                        </View>
+                      )
+                    )}
+                  </View>
+                )}
+
+              {/* 과매수 */}
+              {conditionData.overbought && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
-                    RSI 목표 지수 도달시 경고
-                  </Text>
-                  {conditionData.rsiTargets.map((item: any, idx: number) => (
-                    <View key={idx} style={styles.row}>
-                      <Text style={styles.label}>
-                        RSI {item.comparison} {item.value}
-                      </Text>
-                    </View>
-                  ))}
+                  <Text style={styles.sectionTitle}>RSI 과매수 경고</Text>
+                  <Text style={styles.desc}>RSI ≥ 70</Text>
                 </View>
               )}
 
-              {/* RSI 과매수 | 과매도 여부 */}
-              {conditionData.rsiStates?.length > 0 && (
+              {/* 과매도 */}
+              {conditionData.oversold && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
-                    RSI 과매수 / 과매도 여부
-                  </Text>
-                  {conditionData.rsiStates.map((item: any, idx: number) => (
-                    <View key={idx} style={styles.row}>
-                      <Text style={styles.label}>{item.state}</Text>
-                    </View>
-                  ))}
+                  <Text style={styles.sectionTitle}>RSI 과매도 경고</Text>
+                  <Text style={styles.desc}>RSI ≤ 30</Text>
                 </View>
               )}
             </>
@@ -120,10 +129,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  title: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  title: { fontSize: 16, fontWeight: "600" },
   divider: {
     height: 1,
     backgroundColor: "#EAEAEA",
@@ -133,6 +139,7 @@ const styles = StyleSheet.create({
   },
   section: { marginBottom: 8 },
   sectionTitle: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
+  desc: { fontSize: 13, color: "#666", marginLeft: 4 },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
