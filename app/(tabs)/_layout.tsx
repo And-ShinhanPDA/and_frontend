@@ -126,6 +126,13 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="condition-additional/[id]"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
 
       <Tabs.Screen
         name="index"
