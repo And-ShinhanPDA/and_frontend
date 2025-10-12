@@ -324,258 +324,334 @@ export default function PriceConditionContent({
   const hasTrailingValueFilled = trailingValueRows.some((r) => r.filled);
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <KeyboardAwareScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        extraScrollHeight={120}
-        enableOnAndroid={true}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.container}>
-          <Text style={styles.sectionTitle}>가격</Text>
+    <View style={styles.wrapper}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <KeyboardAwareScrollView
+          style={{ backgroundColor: "#fff" }}
+          contentContainerStyle={styles.scrollContent}
+          extraScrollHeight={120}
+          enableOnAndroid={true}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.container}>
+            <Text style={styles.sectionTitle}>가격</Text>
 
-          {/* 가격 제한 */}
-          <View style={styles.section}>
-            <View style={styles.toggleHeader}>
-              <Text style={styles.label}>가격 제한</Text>
-              <Switch
-                value={sectionToggles.limit}
-                onValueChange={() => toggleSection("limit")}
-                trackColor={{ false: "#E5E5E5", true: "#4CC439" }}
-              />
-            </View>
-            <Text style={styles.desc}>
-              시가 기준으로 얼마 이상일 때 알림을 드릴게요
-            </Text>
-            {sectionToggles.limit && (
-              <>
-                {rows.map((r) => (
-                  <PriceLimitRow
-                    key={r.id}
-                    onRemove={() => removeRow(r.id)}
-                    onReset={() => resetRow(r.id)}
-                    onValueChange={(data) => updateRowValue(r.id, data)}
-                    isSingleRow={rows.length === 1}
-                  />
+            {/* 가격 제한 */}
+            <View style={styles.section}>
+              <View style={styles.toggleHeader}>
+                <Text style={styles.label}>가격 제한</Text>
+                <Switch
+                  value={sectionToggles.limit}
+                  onValueChange={() => toggleSection("limit")}
+                  trackColor={{ false: "#E5E5E5", true: "#4CC439" }}
+                />
+              </View>
+              <Text style={styles.desc}>
+                시가 기준으로 얼마 이상일 때 알림을 드릴게요
+              </Text>
+              {sectionToggles.limit &&
+                rows.map((r, idx) => (
+                  <React.Fragment key={r.id}>
+                    <PriceLimitRow
+                      onRemove={() => removeRow(r.id)}
+                      onReset={() => resetRow(r.id)}
+                      onValueChange={(data) => updateRowValue(r.id, data)}
+                      isSingleRow={rows.length === 1}
+                    />
+                    {idx < rows.length - 1 && (
+                      <View style={styles.orWrapper}>
+                        <View style={styles.orLine} />
+                        <Text style={styles.orText}>OR</Text>
+                        <View style={styles.orLine} />
+                      </View>
+                    )}
+                  </React.Fragment>
                 ))}
-                {hasFilled && (
-                  <TouchableOpacity style={styles.addButton} onPress={addRow}>
-                    <ConditionPlus width={20} height={20} />
-                  </TouchableOpacity>
-                )}
-              </>
-            )}
-          </View>
 
-          {/* 가격 변경 */}
-          <View style={styles.section}>
-            <View style={styles.toggleHeader}>
-              <Text style={styles.label}>가격 변경 (시가)</Text>
-              <Switch
-                value={sectionToggles.change}
-                onValueChange={() => toggleSection("change")}
-                trackColor={{ false: "#E5E5E5", true: "#4CC439" }}
-              />
+              {hasFilled && (
+                <TouchableOpacity style={styles.addButton} onPress={addRow}>
+                  <ConditionPlus width={20} height={20} />
+                </TouchableOpacity>
+              )}
             </View>
-            <Text style={styles.desc}>
-              시가 기준으로 얼마 이상일 때 알림을 드릴게요
-            </Text>
-            {sectionToggles.change && (
-              <>
-                {priceChangeRows.map((r) => (
-                  <PriceChangeRow
-                    key={r.id}
-                    onRemove={() => removePriceChangeRow(r.id)}
-                    onReset={() => resetPriceChangeRow(r.id)}
-                    onValueChange={(data) => updatePriceChangeValue(r.id, data)}
-                    isSingleRow={priceChangeRows.length === 1}
-                  />
-                ))}
-                {hasPriceChangeFilled && (
-                  <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={addPriceChangeRow}
-                  >
-                    <ConditionPlus width={20} height={20} />
-                  </TouchableOpacity>
-                )}
-              </>
-            )}
-          </View>
 
-          {/* 가격 변경 (현재가 기준) */}
-          <View style={styles.section}>
-            <View style={styles.toggleHeader}>
-              <Text style={styles.label}>가격 변경 (현재가)</Text>
-              <Switch
-                value={sectionToggles.variation}
-                onValueChange={() => toggleSection("variation")}
-                trackColor={{ false: "#E5E5E5", true: "#4CC439" }}
-              />
+            {/* 가격 변경 */}
+            <View style={styles.section}>
+              <View style={styles.toggleHeader}>
+                <Text style={styles.label}>가격 변경 (시가)</Text>
+                <Switch
+                  value={sectionToggles.change}
+                  onValueChange={() => toggleSection("change")}
+                  trackColor={{ false: "#E5E5E5", true: "#4CC439" }}
+                />
+              </View>
+              <Text style={styles.desc}>
+                시가 기준으로 얼마 이상일 때 알림을 드릴게요
+              </Text>
+              {sectionToggles.change && (
+                <>
+                  {priceChangeRows.map((r) => (
+                    <PriceChangeRow
+                      key={r.id}
+                      onRemove={() => removePriceChangeRow(r.id)}
+                      onReset={() => resetPriceChangeRow(r.id)}
+                      onValueChange={(data) =>
+                        updatePriceChangeValue(r.id, data)
+                      }
+                      isSingleRow={priceChangeRows.length === 1}
+                    />
+                  ))}
+                  {hasPriceChangeFilled && (
+                    <TouchableOpacity
+                      style={styles.addButton}
+                      onPress={addPriceChangeRow}
+                    >
+                      <ConditionPlus width={20} height={20} />
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
             </View>
-            <Text style={styles.desc}>
-              현재가 기준으로 얼마 이상일 때 알림을 드릴게요
-            </Text>
-            {sectionToggles.variation && (
-              <>
-                {variationRows.map((r) => (
-                  <PriceVariationRow
-                    key={r.id}
-                    onRemove={() => removeVariationRow(r.id)}
-                    onReset={() => resetVariationRow(r.id)}
-                    onValueChange={(data) => updateVariationValue(r.id, data)}
-                    isSingleRow={variationRows.length === 1}
-                  />
-                ))}
-                {hasVariationFilled && (
-                  <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={addVariationRow}
-                  >
-                    <ConditionPlus width={20} height={20} />
-                  </TouchableOpacity>
-                )}
-              </>
-            )}
-          </View>
 
-          {/* 후행 (%) */}
-          <View style={styles.section}>
-            <View style={styles.toggleHeader}>
-              <Text style={styles.label}>후행 가격 (%)</Text>
-              <Switch
-                value={sectionToggles.trailingPercent}
-                onValueChange={() => toggleSection("trailingPercent")}
-                trackColor={{ false: "#E5E5E5", true: "#4CC439" }}
-              />
+            {/* 가격 변경 (현재가 기준) */}
+            <View style={styles.section}>
+              <View style={styles.toggleHeader}>
+                <Text style={styles.label}>가격 변경 (현재가)</Text>
+                <Switch
+                  value={sectionToggles.variation}
+                  onValueChange={() => toggleSection("variation")}
+                  trackColor={{ false: "#E5E5E5", true: "#4CC439" }}
+                />
+              </View>
+              <Text style={styles.desc}>
+                현재가 기준으로 얼마 이상일 때 알림을 드릴게요
+              </Text>
+              {sectionToggles.variation && (
+                <>
+                  {variationRows.map((r) => (
+                    <PriceVariationRow
+                      key={r.id}
+                      onRemove={() => removeVariationRow(r.id)}
+                      onReset={() => resetVariationRow(r.id)}
+                      onValueChange={(data) => updateVariationValue(r.id, data)}
+                      isSingleRow={variationRows.length === 1}
+                    />
+                  ))}
+                  {hasVariationFilled && (
+                    <TouchableOpacity
+                      style={styles.addButton}
+                      onPress={addVariationRow}
+                    >
+                      <ConditionPlus width={20} height={20} />
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
             </View>
-            <Text style={styles.desc}>
-              특정 변동률을 기준으로 후행 가격을 알려드릴게요
-            </Text>
-            {sectionToggles.trailingPercent && (
-              <>
-                {trailingRows.map((r) => (
-                  <PriceTrailingRow
-                    key={r.id}
-                    onRemove={() => removeTrailingRow(r.id)}
-                    onReset={() => {}}
-                    onValueChange={(data) => updateTrailingValue(r.id, data)}
-                    isSingleRow={trailingRows.length === 1}
-                  />
-                ))}
-                {hasTrailingFilled && (
-                  <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={addTrailingRow}
-                  >
-                    <ConditionPlus width={20} height={20} />
-                  </TouchableOpacity>
-                )}
-              </>
-            )}
-          </View>
 
-          {/* 후행 (원) */}
-          <View style={styles.section}>
-            <View style={styles.toggleHeader}>
-              <Text style={styles.label}>후행 가격 (원)</Text>
-              <Switch
-                value={sectionToggles.trailingValue}
-                onValueChange={() => toggleSection("trailingValue")}
-                trackColor={{ false: "#E5E5E5", true: "#4CC439" }}
-              />
+            {/* 후행 (%) */}
+            <View style={styles.section}>
+              <View style={styles.toggleHeader}>
+                <Text style={styles.label}>후행 가격 (%)</Text>
+                <Switch
+                  value={sectionToggles.trailingPercent}
+                  onValueChange={() => toggleSection("trailingPercent")}
+                  trackColor={{ false: "#E5E5E5", true: "#4CC439" }}
+                />
+              </View>
+              <Text style={styles.desc}>
+                특정 변동률을 기준으로 후행 가격을 알려드릴게요
+              </Text>
+              {sectionToggles.trailingPercent && (
+                <>
+                  {trailingRows.map((r) => (
+                    <PriceTrailingRow
+                      key={r.id}
+                      onRemove={() => removeTrailingRow(r.id)}
+                      onReset={() => {}}
+                      onValueChange={(data) => updateTrailingValue(r.id, data)}
+                      isSingleRow={trailingRows.length === 1}
+                    />
+                  ))}
+                  {hasTrailingFilled && (
+                    <TouchableOpacity
+                      style={styles.addButton}
+                      onPress={addTrailingRow}
+                    >
+                      <ConditionPlus width={20} height={20} />
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
             </View>
-            <Text style={styles.desc}>
-              특정 금액을 기준으로 후행 가격을 알려드릴게요
-            </Text>
-            {sectionToggles.trailingValue && (
-              <>
-                {trailingValueRows.map((r) => (
-                  <PriceTrailingValueRow
-                    key={r.id}
-                    onRemove={() => removeTrailingValueRow(r.id)}
-                    onReset={() => {}}
-                    onValueChange={(data) =>
-                      updateTrailingValueValue(r.id, data)
-                    }
-                    isSingleRow={trailingValueRows.length === 1}
-                  />
-                ))}
-                {hasTrailingValueFilled && (
-                  <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={addTrailingValueRow}
-                  >
-                    <ConditionPlus width={20} height={20} />
-                  </TouchableOpacity>
-                )}
-              </>
-            )}
-          </View>
 
-          {/* 하단 버튼 */}
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.resetButton}
-              onPress={() => {
-                Object.keys(sectionToggles).forEach((k) =>
-                  resetSectionState(k as keyof typeof sectionToggles)
-                );
-                setSectionToggles({
-                  limit: false,
-                  change: false,
-                  variation: false,
-                  trailingPercent: false,
-                  trailingValue: false,
-                });
-              }}
-            >
-              <Text style={styles.resetText}>초기화</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.confirmButton}
-              onPress={handleConfirmPress}
-            >
-              <Text style={styles.confirmText}>확인</Text>
-            </TouchableOpacity>
+            {/* 후행 (원) */}
+            <View style={styles.section}>
+              <View style={styles.toggleHeader}>
+                <Text style={styles.label}>후행 가격 (원)</Text>
+                <Switch
+                  value={sectionToggles.trailingValue}
+                  onValueChange={() => toggleSection("trailingValue")}
+                  trackColor={{ false: "#E5E5E5", true: "#4CC439" }}
+                />
+              </View>
+              <Text style={styles.desc}>
+                특정 금액을 기준으로 후행 가격을 알려드릴게요
+              </Text>
+              {sectionToggles.trailingValue && (
+                <>
+                  {trailingValueRows.map((r) => (
+                    <PriceTrailingValueRow
+                      key={r.id}
+                      onRemove={() => removeTrailingValueRow(r.id)}
+                      onReset={() => {}}
+                      onValueChange={(data) =>
+                        updateTrailingValueValue(r.id, data)
+                      }
+                      isSingleRow={trailingValueRows.length === 1}
+                    />
+                  ))}
+                  {hasTrailingValueFilled && (
+                    <TouchableOpacity
+                      style={styles.addButton}
+                      onPress={addTrailingValueRow}
+                    >
+                      <ConditionPlus width={20} height={20} />
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
+            </View>
           </View>
-        </View>
-      </KeyboardAwareScrollView>
-    </TouchableWithoutFeedback>
+        </KeyboardAwareScrollView>
+      </TouchableWithoutFeedback>
+
+      {/* 하단 버튼 고정 */}
+      <View style={styles.footerFixed}>
+        <TouchableOpacity
+          style={styles.resetButton}
+          onPress={() => {
+            Object.keys(sectionToggles).forEach((k) =>
+              resetSectionState(k as keyof typeof sectionToggles)
+            );
+            setSectionToggles({
+              limit: false,
+              change: false,
+              variation: false,
+              trailingPercent: false,
+              trailingValue: false,
+            });
+          }}
+        >
+          <Text style={styles.resetText}>초기화</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.confirmButton}
+          onPress={handleConfirmPress}
+        >
+          <Text style={styles.confirmText}>확인</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 80 },
-  container: { paddingBottom: 24 },
+  /** 전체 레이아웃 */
+  wrapper: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+
+  /** 스크롤 관련 */
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 120, // footer 영역 안 가리게
+  },
+
+  /** container 디자인 복원 */
+  container: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 24,
+    backgroundColor: "#fff",
+  },
+
+  /** 섹션 */
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 12,
+    color: "#000",
   },
-  section: { marginBottom: 20 },
+  section: {
+    marginBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F2F2F2",
+    paddingBottom: 16,
+  },
+
+  /** toggle header */
   toggleHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 6,
   },
-  label: { fontSize: 14, fontWeight: "600", color: "#222" },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#222",
+  },
   desc: {
     fontSize: 13,
     color: "#666",
     marginBottom: 6,
   },
+
+  /** OR 라인 */
+  orWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 8,
+  },
+  orLine: {
+    flex: 1,
+    height: 0.7,
+    backgroundColor: "#DADADA",
+    marginHorizontal: 8,
+  },
+  orText: {
+    fontFamily: "Inter",
+    fontWeight: "700",
+    fontSize: 12,
+    color: "#000000",
+    letterSpacing: 0.3,
+  },
+
+  /** 버튼 영역 */
   addButton: {
-    marginLeft: 8,
+    marginTop: 4,
     alignItems: "center",
     justifyContent: "center",
   },
-  footer: {
+
+  footerFixed: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#EAEAEA",
   },
   resetButton: {
     flex: 1,
