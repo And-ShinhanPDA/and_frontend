@@ -1,209 +1,156 @@
+import ConditionSection from "@/components/condition/condition-section";
+import { VOLUME_SECTION_DESCRIPTIONS } from "@/components/condition/constants";
+import useConditionRows from "@/hooks/use-condition-rows";
 import React, { useState } from "react";
 import {
+  LayoutAnimation,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import ConditionPlus from "../../../assets/images/condition-plus.svg";
-import VolumeCurrentRow from "./volume-current-row";
-import VolumeRecentRow from "./volume-recent-row";
-import VolumeSpikeRow from "./volume-spike-row";
+import VolumeChangeAvgRow from "./volume-change-avg-row";
+import VolumeChangePrevRow from "./volume-change-prev-row";
+export default function VolumeConditionContent({
+  onConfirm,
+}: {
+  onConfirm: (data: any) => void;
+}) {
+  const [toggles, setToggles] = useState({
+    prevChange: false,
+    avgChange: false,
+    spike: false,
+    drop: false,
+  });
 
-export default function VolumeConditionContent({ onConfirm }: any) {
-  // 현재 거래량 대비 (%)
-  const [currentRows, setCurrentRows] = useState<
-    {
-      id: number;
-      filled: boolean;
-      sign: "+" | "-";
-      value: string;
-      compare: "이상" | "이하";
-    }[]
-  >([{ id: 1, filled: false, sign: "+", value: "", compare: "이상" }]);
-
-  const addCurrentRow = () =>
-    setCurrentRows((prev) => [
+  const toggle = (key: keyof typeof toggles) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setToggles((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+  // 전일 거래량 대비
+  const prevRows = useConditionRows<
+    { id: number; filled: boolean; sign: "+" | "-"; value: string },
+    { sign: "+" | "-"; value: string }
+  >({
+    initial: { filled: false, sign: "+", value: "" },
+    updateFn: (prev, data) => ({
       ...prev,
-      { id: Date.now(), filled: false, sign: "+", value: "", compare: "이상" },
-    ]);
-
-  const removeCurrentRow = (id: number) =>
-    setCurrentRows((prev) => prev.filter((r) => r.id !== id));
-
-  const updateCurrentRow = (
-    id: number,
-    data: { sign: "+" | "-"; value: string; compare: "이상" | "이하" }
-  ) =>
-    setCurrentRows((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, ...data, filled: data.value.trim() !== "" } : r
-      )
-    );
-
-  const resetCurrentRow = (id: number) =>
-    setCurrentRows((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? { ...r, filled: false, sign: "+", value: "", compare: "이상" }
-          : r
-      )
-    );
-
-  const hasCurrentFilled = currentRows.some((r) => r.filled);
-
-  // 최신 거래량 대비 (%)
-  const [recentRows, setRecentRows] = useState<
-    {
-      id: number;
-      filled: boolean;
-      sign: "+" | "-";
-      value: string;
-      compare: "이상" | "이하";
-    }[]
-  >([{ id: 1, filled: false, sign: "+", value: "", compare: "이상" }]);
-
-  const addRecentRow = () =>
-    setRecentRows((prev) => [
+      filled: data.value.trim() !== "",
+      sign: data.sign,
+      value: data.value,
+    }),
+  });
+  // 평균 거래량 대비
+  const avgRows = useConditionRows<
+    { id: number; filled: boolean; sign: "+" | "-"; value: string },
+    { sign: "+" | "-"; value: string }
+  >({
+    initial: { filled: false, sign: "+", value: "" },
+    updateFn: (prev, data) => ({
       ...prev,
-      { id: Date.now(), filled: false, sign: "+", value: "", compare: "이상" },
-    ]);
+      filled: data.value.trim() !== "",
+      sign: data.sign,
+      value: data.value,
+    }),
+  });
 
-  const removeRecentRow = (id: number) =>
-    setRecentRows((prev) => prev.filter((r) => r.id !== id));
-
-  const updateRecentRow = (
-    id: number,
-    data: { sign: "+" | "-"; value: string; compare: "이상" | "이하" }
-  ) =>
-    setRecentRows((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, ...data, filled: data.value.trim() !== "" } : r
-      )
-    );
-
-  const resetRecentRow = (id: number) =>
-    setRecentRows((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? { ...r, filled: false, sign: "+", value: "", compare: "이상" }
-          : r
-      )
-    );
-
-  const hasRecentFilled = recentRows.some((r) => r.filled);
-
-  // 거래량 급증/감소 여부
-  const [spikeRows, setSpikeRows] = useState<
-    { id: number; type: "급증" | "감소" }[]
-  >([]);
-
-  const addSpikeRow = () =>
-    setSpikeRows((prev) => [
-      ...prev,
-      { id: Date.now(), type: prev.length % 2 === 0 ? "급증" : "감소" },
-    ]);
-
-  const toggleSpikeType = (id: number) =>
-    setSpikeRows((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, type: r.type === "급증" ? "감소" : "급증" } : r
-      )
-    );
-
-  const removeSpikeRow = (id: number) =>
-    setSpikeRows((prev) => prev.filter((r) => r.id !== id));
-
-  const handleConfirm = () => {
+  const handleConfirmPress = () => {
     onConfirm({
-      currentVolume: currentRows.filter((r) => r.value.trim() !== ""),
-      recentVolume: recentRows.filter((r) => r.value.trim() !== ""),
-      spikes: spikeRows,
+      prevChange: toggles.prevChange
+        ? prevRows.rows.filter((r) => r.filled)
+        : [],
+      avgChange: toggles.avgChange ? avgRows.rows.filter((r) => r.filled) : [],
+      spike: toggles.spike,
+      drop: toggles.drop,
     });
   };
 
-  const handleReset = () => {
-    setCurrentRows([
-      { id: 1, filled: false, sign: "+", value: "", compare: "이상" },
-    ]);
-    setRecentRows([
-      { id: 1, filled: false, sign: "+", value: "", compare: "이상" },
-    ]);
-    setSpikeRows([]);
-  };
-
   return (
-    <ScrollView style={styles.container}>
-      {/* 현재 거래량 대비 (%) */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>현재 거래량 대비 (%)</Text>
-        {currentRows.map((r) => (
-          <VolumeCurrentRow
-            key={r.id}
-            onRemove={() => removeCurrentRow(r.id)}
-            onReset={() => resetCurrentRow(r.id)}
-            onValueChange={(data) => updateCurrentRow(r.id, data)}
-            isSingleRow={currentRows.length === 1}
-          />
-        ))}
+    <ScrollView style={styles.wrapper}>
+      <View style={styles.container}>
+        <Text style={styles.sectionTitle}>거래량</Text>
 
-        {hasCurrentFilled && (
-          <TouchableOpacity style={styles.addButton} onPress={addCurrentRow}>
-            <ConditionPlus width={20} height={20} />
-          </TouchableOpacity>
-        )}
-      </View>
+        <ConditionSection
+          title="전일 거래량 대비"
+          description={VOLUME_SECTION_DESCRIPTIONS.PREV_CHANGE}
+          value={toggles.prevChange}
+          onToggle={() => toggle("prevChange")}
+          rows={prevRows.rows}
+          hasFilled={prevRows.hasFilled}
+          onAdd={prevRows.addRow}
+          renderRow={(r) => (
+            <VolumeChangePrevRow
+              key={r.id}
+              onRemove={() => prevRows.removeRow(r.id)}
+              onReset={() => prevRows.resetRow(r.id)}
+              onValueChange={(data) => prevRows.updateRow(r.id, data)}
+              isSingleRow={prevRows.rows.length === 1}
+            />
+          )}
+        />
 
-      {/* 최신 거래량 대비 (%) */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>최신 거래량 대비 (%)</Text>
-        <Text style={styles.subText}>최신 거래량 기준: 20일</Text>
+        <ConditionSection
+          title="평균 거래량 대비"
+          description={VOLUME_SECTION_DESCRIPTIONS.AVG_CHANGE}
+          value={toggles.avgChange}
+          onToggle={() => toggle("avgChange")}
+          rows={avgRows.rows}
+          hasFilled={avgRows.hasFilled}
+          onAdd={avgRows.addRow}
+          renderRow={(r) => (
+            <VolumeChangeAvgRow
+              key={r.id}
+              onRemove={() => avgRows.removeRow(r.id)}
+              onReset={() => avgRows.resetRow(r.id)}
+              onValueChange={(data) => avgRows.updateRow(r.id, data)}
+              isSingleRow={avgRows.rows.length === 1}
+            />
+          )}
+        />
 
-        {recentRows.map((r) => (
-          <VolumeRecentRow
-            key={r.id}
-            onRemove={() => removeRecentRow(r.id)}
-            onReset={() => resetRecentRow(r.id)}
-            onValueChange={(data) => updateRecentRow(r.id, data)}
-            isSingleRow={recentRows.length === 1}
-          />
-        ))}
+        <ConditionSection
+          title="거래량 급증 경고"
+          description={VOLUME_SECTION_DESCRIPTIONS.SPIKE}
+          value={toggles.spike}
+          onToggle={() => toggle("spike")}
+          rows={[]}
+          hasFilled={false}
+          onAdd={() => {}}
+          renderRow={() => null}
+        />
 
-        {hasRecentFilled && (
-          <TouchableOpacity style={styles.addButton} onPress={addRecentRow}>
-            <ConditionPlus width={20} height={20} />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* 거래량 급증/감소 여부 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>거래량 급증 | 감소 여부</Text>
-        <Text style={styles.subText}>전날 대비 20%</Text>
-
-        {spikeRows.map((r) => (
-          <VolumeSpikeRow
-            key={r.id}
-            type={r.type}
-            onToggle={() => toggleSpikeType(r.id)}
-            onRemove={() => removeSpikeRow(r.id)}
-          />
-        ))}
-
-        {/* 2개까지만 추가 가능 */}
-        {spikeRows.length < 2 && (
-          <TouchableOpacity style={styles.addButton} onPress={addSpikeRow}>
-            <ConditionPlus width={20} height={20} />
-          </TouchableOpacity>
-        )}
+        <ConditionSection
+          title="거래량 감소 경고"
+          description={VOLUME_SECTION_DESCRIPTIONS.DROP}
+          value={toggles.drop}
+          onToggle={() => toggle("drop")}
+          rows={[]}
+          hasFilled={false}
+          onAdd={() => {}}
+          renderRow={() => null}
+        />
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.reset} onPress={handleReset}>
+        <TouchableOpacity
+          style={styles.resetButton}
+          onPress={() =>
+            setToggles({
+              prevChange: false,
+              avgChange: false,
+              spike: false,
+              drop: false,
+            })
+          }
+        >
           <Text style={styles.resetText}>초기화</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.confirm} onPress={handleConfirm}>
+
+        <TouchableOpacity
+          style={styles.confirmButton}
+          onPress={handleConfirmPress}
+        >
           <Text style={styles.confirmText}>확인</Text>
         </TouchableOpacity>
       </View>
@@ -212,32 +159,36 @@ export default function VolumeConditionContent({ onConfirm }: any) {
 }
 
 const styles = StyleSheet.create({
+  wrapper: { flex: 1, backgroundColor: "#fff" },
   container: { paddingHorizontal: 16, paddingVertical: 10 },
-  section: { marginBottom: 20 },
-  sectionTitle: { fontSize: 15, fontWeight: "600", marginBottom: 6 },
-  subText: { fontSize: 12, color: "#777", marginBottom: 8 },
-  addButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 6,
+  sectionTitle: { fontSize: 15, fontWeight: "600", marginBottom: 10 },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#EAEAEA",
+    marginTop: 10,
   },
-  footer: { flexDirection: "row", marginTop: 20 },
-  reset: {
+  resetButton: {
     flex: 1,
     borderWidth: 1,
     borderColor: "#E5E5E5",
     borderRadius: 10,
+    paddingVertical: 13,
     alignItems: "center",
-    paddingVertical: 12,
     marginRight: 8,
   },
-  resetText: { fontSize: 15, color: "#333" },
-  confirm: {
+  resetText: { fontSize: 15, color: "#333", fontWeight: "500" },
+  confirmButton: {
     flex: 1,
     backgroundColor: "#4CC439",
     borderRadius: 10,
+    paddingVertical: 13,
     alignItems: "center",
-    paddingVertical: 12,
+    marginLeft: 8,
   },
-  confirmText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+  confirmText: { fontSize: 15, color: "#fff", fontWeight: "600" },
 });
