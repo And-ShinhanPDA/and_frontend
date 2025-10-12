@@ -1,10 +1,12 @@
+import ConditionSection from "@/components/condition/condition-section";
+import { PRICE_SECTION_DESCRIPTIONS } from "@/components/condition/constants";
+import useConditionRows from "@/hooks/use-condition-rows";
 import React, { useState } from "react";
 import {
   Keyboard,
   LayoutAnimation,
   Platform,
   StyleSheet,
-  Switch,
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -12,13 +14,11 @@ import {
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import ConditionPlus from "../../../assets/images/condition-plus.svg";
 import PriceChangeRow from "./price-change-row";
 import PriceLimitRow from "./price-limit-row";
 import PriceTrailingRow from "./price-trailing-row";
 import PriceTrailingValueRow from "./price-trailing-value-row";
 import PriceVariationRow from "./price-variation-row";
-
 if (
   Platform.OS === "android" &&
   UIManager.setLayoutAnimationEnabledExperimental
@@ -52,7 +52,7 @@ export default function PriceConditionContent({
   const resetSectionState = (key: keyof typeof sectionToggles) => {
     switch (key) {
       case "limit":
-        setRows([{ id: 1, filled: false, value: "", comparison: "이상" }]);
+        limitRows.resetRow();
         break;
       case "change":
         setPriceChangeRows([{ id: 1, filled: false, sign: "+", value: "" }]);
@@ -74,7 +74,7 @@ export default function PriceConditionContent({
   const handleConfirmPress = () => {
     onConfirm({
       priceLimits: sectionToggles.limit
-        ? rows
+        ? limitRows.rows
             .filter((r) => r.filled)
             .map((r) => ({
               value: r.value,
@@ -117,50 +117,19 @@ export default function PriceConditionContent({
     });
   };
 
-  // 가격 제한 조건 상태 관리
-  const [rows, setRows] = useState<
-    {
-      id: number;
-      filled: boolean;
-      value: string;
-      comparison: "이상" | "이하";
-    }[]
-  >([{ id: 1, filled: false, value: "", comparison: "이상" }]);
-
-  const addRow = () =>
-    setRows((prev) => [
+  // 가격 제한
+  const limitRows = useConditionRows<
+    { id: number; filled: boolean; value: string; comparison: "이상" | "이하" },
+    { amount: string; comparison: "이상" | "이하" }
+  >({
+    initial: { filled: false, value: "", comparison: "이상" },
+    updateFn: (prev, data) => ({
       ...prev,
-      { id: Date.now(), filled: false, value: "", comparison: "이상" },
-    ]);
-
-  const removeRow = (id: number) =>
-    setRows((prev) => prev.filter((r) => r.id !== id));
-
-  const updateRowValue = (
-    id: number,
-    data: { amount: string; comparison: "이상" | "이하" }
-  ) =>
-    setRows((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              filled: data.amount.trim() !== "",
-              value: data.amount,
-              comparison: data.comparison,
-            }
-          : r
-      )
-    );
-
-  const resetRow = (id: number) =>
-    setRows((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, filled: false, value: "", comparison: "이상" } : r
-      )
-    );
-
-  const hasFilled = rows.some((r) => r.filled);
+      filled: data.amount.trim() !== "",
+      value: data.amount,
+      comparison: data.comparison,
+    }),
+  });
 
   // 가격 변경
   const [priceChangeRows, setPriceChangeRows] = useState<
@@ -337,196 +306,108 @@ export default function PriceConditionContent({
             <Text style={styles.sectionTitle}>가격</Text>
 
             {/* 가격 제한 */}
-            <View style={styles.section}>
-              <View style={styles.toggleHeader}>
-                <Text style={styles.label}>가격 제한</Text>
-                <Switch
-                  value={sectionToggles.limit}
-                  onValueChange={() => toggleSection("limit")}
-                  trackColor={{ false: "#E5E5E5", true: "#4CC439" }}
+            <ConditionSection
+              title="가격 제한"
+              description={PRICE_SECTION_DESCRIPTIONS.LIMIT}
+              value={sectionToggles.limit}
+              onToggle={() => toggleSection("limit")}
+              rows={limitRows.rows}
+              hasFilled={limitRows.hasFilled}
+              onAdd={limitRows.addRow}
+              renderRow={(r, idx) => (
+                <PriceLimitRow
+                  key={r.id}
+                  onRemove={() => limitRows.removeRow(r.id)}
+                  onReset={() => limitRows.resetRow(r.id)}
+                  onValueChange={(data) => limitRows.updateRow(r.id, data)}
+                  isSingleRow={limitRows.rows.length === 1}
                 />
-              </View>
-              <Text style={styles.desc}>
-                시가 기준으로 얼마 이상일 때 알림을 드릴게요
-              </Text>
-              {sectionToggles.limit &&
-                rows.map((r, idx) => (
-                  <React.Fragment key={r.id}>
-                    <PriceLimitRow
-                      onRemove={() => removeRow(r.id)}
-                      onReset={() => resetRow(r.id)}
-                      onValueChange={(data) => updateRowValue(r.id, data)}
-                      isSingleRow={rows.length === 1}
-                    />
-                    {idx < rows.length - 1 && (
-                      <View style={styles.orWrapper}>
-                        <View style={styles.orLine} />
-                        <Text style={styles.orText}>OR</Text>
-                        <View style={styles.orLine} />
-                      </View>
-                    )}
-                  </React.Fragment>
-                ))}
-
-              {hasFilled && (
-                <TouchableOpacity style={styles.addButton} onPress={addRow}>
-                  <ConditionPlus width={20} height={20} />
-                </TouchableOpacity>
               )}
-            </View>
+            />
 
-            {/* 가격 변경 */}
-            <View style={styles.section}>
-              <View style={styles.toggleHeader}>
-                <Text style={styles.label}>가격 변경 (시가)</Text>
-                <Switch
-                  value={sectionToggles.change}
-                  onValueChange={() => toggleSection("change")}
-                  trackColor={{ false: "#E5E5E5", true: "#4CC439" }}
+            <ConditionSection
+              title="가격 변경 (시가)"
+              description="시가 기준으로 얼마 이상일 때 알림을 드릴게요"
+              value={sectionToggles.change}
+              onToggle={() => toggleSection("change")}
+              rows={priceChangeRows}
+              hasFilled={hasPriceChangeFilled}
+              onAdd={addPriceChangeRow}
+              renderRow={(r, idx) => (
+                <PriceChangeRow
+                  key={r.id}
+                  onRemove={() => removePriceChangeRow(r.id)}
+                  onReset={() => resetPriceChangeRow(r.id)}
+                  onValueChange={(data) => updatePriceChangeValue(r.id, data)}
+                  isSingleRow={priceChangeRows.length === 1}
                 />
-              </View>
-              <Text style={styles.desc}>
-                시가 기준으로 얼마 이상일 때 알림을 드릴게요
-              </Text>
-              {sectionToggles.change && (
-                <>
-                  {priceChangeRows.map((r) => (
-                    <PriceChangeRow
-                      key={r.id}
-                      onRemove={() => removePriceChangeRow(r.id)}
-                      onReset={() => resetPriceChangeRow(r.id)}
-                      onValueChange={(data) =>
-                        updatePriceChangeValue(r.id, data)
-                      }
-                      isSingleRow={priceChangeRows.length === 1}
-                    />
-                  ))}
-                  {hasPriceChangeFilled && (
-                    <TouchableOpacity
-                      style={styles.addButton}
-                      onPress={addPriceChangeRow}
-                    >
-                      <ConditionPlus width={20} height={20} />
-                    </TouchableOpacity>
-                  )}
-                </>
               )}
-            </View>
+            />
 
             {/* 가격 변경 (현재가 기준) */}
-            <View style={styles.section}>
-              <View style={styles.toggleHeader}>
-                <Text style={styles.label}>가격 변경 (현재가)</Text>
-                <Switch
-                  value={sectionToggles.variation}
-                  onValueChange={() => toggleSection("variation")}
-                  trackColor={{ false: "#E5E5E5", true: "#4CC439" }}
+            <ConditionSection
+              title="가격 변경 (현재가)"
+              description="현재가 기준으로 얼마 이상일 때 알림을 드릴게요"
+              value={sectionToggles.variation}
+              onToggle={() => toggleSection("variation")}
+              rows={variationRows}
+              hasFilled={hasVariationFilled}
+              onAdd={addVariationRow}
+              renderRow={(r, idx) => (
+                <PriceVariationRow
+                  key={r.id}
+                  onRemove={() => removeVariationRow(r.id)}
+                  onReset={() => resetVariationRow(r.id)}
+                  onValueChange={(data) => updateVariationValue(r.id, data)}
+                  isSingleRow={variationRows.length === 1}
                 />
-              </View>
-              <Text style={styles.desc}>
-                현재가 기준으로 얼마 이상일 때 알림을 드릴게요
-              </Text>
-              {sectionToggles.variation && (
-                <>
-                  {variationRows.map((r) => (
-                    <PriceVariationRow
-                      key={r.id}
-                      onRemove={() => removeVariationRow(r.id)}
-                      onReset={() => resetVariationRow(r.id)}
-                      onValueChange={(data) => updateVariationValue(r.id, data)}
-                      isSingleRow={variationRows.length === 1}
-                    />
-                  ))}
-                  {hasVariationFilled && (
-                    <TouchableOpacity
-                      style={styles.addButton}
-                      onPress={addVariationRow}
-                    >
-                      <ConditionPlus width={20} height={20} />
-                    </TouchableOpacity>
-                  )}
-                </>
               )}
-            </View>
+            />
 
             {/* 후행 (%) */}
-            <View style={styles.section}>
-              <View style={styles.toggleHeader}>
-                <Text style={styles.label}>후행 가격 (%)</Text>
-                <Switch
-                  value={sectionToggles.trailingPercent}
-                  onValueChange={() => toggleSection("trailingPercent")}
-                  trackColor={{ false: "#E5E5E5", true: "#4CC439" }}
+            <ConditionSection
+              title="후행 가격 (%)"
+              description="특정 변동률을 기준으로 후행 가격을 알려드릴게요"
+              value={sectionToggles.trailingPercent}
+              onToggle={() => toggleSection("trailingPercent")}
+              rows={trailingRows}
+              hasFilled={hasTrailingFilled}
+              onAdd={addTrailingRow}
+              renderRow={(r, idx) => (
+                <PriceTrailingRow
+                  key={r.id}
+                  onRemove={() => removeTrailingRow(r.id)}
+                  onReset={() => {}}
+                  onValueChange={(data) => updateTrailingValue(r.id, data)}
+                  isSingleRow={trailingRows.length === 1}
                 />
-              </View>
-              <Text style={styles.desc}>
-                특정 변동률을 기준으로 후행 가격을 알려드릴게요
-              </Text>
-              {sectionToggles.trailingPercent && (
-                <>
-                  {trailingRows.map((r) => (
-                    <PriceTrailingRow
-                      key={r.id}
-                      onRemove={() => removeTrailingRow(r.id)}
-                      onReset={() => {}}
-                      onValueChange={(data) => updateTrailingValue(r.id, data)}
-                      isSingleRow={trailingRows.length === 1}
-                    />
-                  ))}
-                  {hasTrailingFilled && (
-                    <TouchableOpacity
-                      style={styles.addButton}
-                      onPress={addTrailingRow}
-                    >
-                      <ConditionPlus width={20} height={20} />
-                    </TouchableOpacity>
-                  )}
-                </>
               )}
-            </View>
+            />
 
             {/* 후행 (원) */}
-            <View style={styles.section}>
-              <View style={styles.toggleHeader}>
-                <Text style={styles.label}>후행 가격 (원)</Text>
-                <Switch
-                  value={sectionToggles.trailingValue}
-                  onValueChange={() => toggleSection("trailingValue")}
-                  trackColor={{ false: "#E5E5E5", true: "#4CC439" }}
+            <ConditionSection
+              title="후행 가격 (원)"
+              description="특정 금액을 기준으로 후행 가격을 알려드릴게요"
+              value={sectionToggles.trailingValue}
+              onToggle={() => toggleSection("trailingValue")}
+              rows={trailingValueRows}
+              hasFilled={hasTrailingValueFilled}
+              onAdd={addTrailingValueRow}
+              renderRow={(r, idx) => (
+                <PriceTrailingValueRow
+                  key={r.id}
+                  onRemove={() => removeTrailingValueRow(r.id)}
+                  onReset={() => {}}
+                  onValueChange={(data) => updateTrailingValueValue(r.id, data)}
+                  isSingleRow={trailingValueRows.length === 1}
                 />
-              </View>
-              <Text style={styles.desc}>
-                특정 금액을 기준으로 후행 가격을 알려드릴게요
-              </Text>
-              {sectionToggles.trailingValue && (
-                <>
-                  {trailingValueRows.map((r) => (
-                    <PriceTrailingValueRow
-                      key={r.id}
-                      onRemove={() => removeTrailingValueRow(r.id)}
-                      onReset={() => {}}
-                      onValueChange={(data) =>
-                        updateTrailingValueValue(r.id, data)
-                      }
-                      isSingleRow={trailingValueRows.length === 1}
-                    />
-                  ))}
-                  {hasTrailingValueFilled && (
-                    <TouchableOpacity
-                      style={styles.addButton}
-                      onPress={addTrailingValueRow}
-                    >
-                      <ConditionPlus width={20} height={20} />
-                    </TouchableOpacity>
-                  )}
-                </>
               )}
-            </View>
+            />
           </View>
         </KeyboardAwareScrollView>
       </TouchableWithoutFeedback>
 
-      {/* 하단 버튼 고정 */}
+      {/* 하단 버튼 */}
       <View style={styles.footerFixed}>
         <TouchableOpacity
           style={styles.resetButton}
@@ -558,29 +439,22 @@ export default function PriceConditionContent({
 }
 
 const styles = StyleSheet.create({
-  /** 전체 레이아웃 */
   wrapper: {
     flex: 1,
     backgroundColor: "#fff",
   },
-
-  /** 스크롤 관련 */
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 120, // footer 영역 안 가리게
+    paddingBottom: 30, // footer 영역 안 가리게
   },
-
-  /** container 디자인 복원 */
   container: {
     paddingHorizontal: 20,
     paddingTop: 10,
     paddingBottom: 24,
     backgroundColor: "#fff",
   },
-
-  /** 섹션 */
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",
@@ -593,8 +467,6 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F2F2F2",
     paddingBottom: 16,
   },
-
-  /** toggle header */
   toggleHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -611,8 +483,6 @@ const styles = StyleSheet.create({
     color: "#666",
     marginBottom: 6,
   },
-
-  /** OR 라인 */
   orWrapper: {
     flexDirection: "row",
     alignItems: "center",
@@ -632,14 +502,11 @@ const styles = StyleSheet.create({
     color: "#000000",
     letterSpacing: 0.3,
   },
-
-  /** 버튼 영역 */
   addButton: {
     marginTop: 4,
     alignItems: "center",
     justifyContent: "center",
   },
-
   footerFixed: {
     position: "absolute",
     bottom: 0,
