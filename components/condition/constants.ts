@@ -37,3 +37,9 @@ export const RSI_SECTION_DESCRIPTIONS = {
   OVERBOUGHT: "RSI가 70 이상인 경우 알림을 드릴게요.",
   OVERSOLD: "RSI가 30 미만인 경우 알림을 드릴게요.",
 } as const;
+
+export const SMA_SECTION_DESCRIPTIONS = {
+  TARGET: "SMA 값이 목표 가격에 도달하면 알림을 드릴게요.",
+  SHORTCROSS: "단기 이동평균선이 장기 이동평균선을 돌파할 때 알림을 드릴게요.",
+  LONGCROSS: "장기 이동평균선이 단기 이동평균선을 누를 때 알림을 드릴게요.",
+} as const;

@@ -28,6 +28,7 @@ export default function SMAConditionCard() {
   const [expanded, setExpanded] = useState(false);
 
   const handleConfirm = (data: any) => {
+    console.log("SMA 조건 입력:", data);
     setConditionData(data);
     setHasCondition(true);
     setIsOpen(false);
@@ -56,26 +57,42 @@ export default function SMAConditionCard() {
             </TouchableOpacity>
           </View>
 
-          {expanded && hasCondition && conditionData && (
+          {expanded && conditionData && (
             <>
               <View style={styles.divider} />
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>SMA 목표 가격 도달 여부</Text>
-                {conditionData.targets && conditionData.targets.length > 0 ? (
-                  conditionData.targets.map((t: any, idx: number) => (
-                    <View key={idx} style={styles.row}>
-                      <Text style={styles.label}>{t.period}</Text>
-                      <Text style={styles.value}>
-                        {t.value ? `${t.value}원` : "미입력"}
-                      </Text>
-                    </View>
-                  ))
-                ) : (
-                  <Text style={styles.emptyText}>
-                    조건이 설정되지 않았습니다.
-                  </Text>
+
+              {Array.isArray(conditionData.target) &&
+                conditionData.target.length > 0 && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>SMA 목표 가격 알림</Text>
+                    {conditionData.target.map(
+                      (
+                        item: { value: string; period: string },
+                        idx: number
+                      ) => (
+                        <Text key={idx} style={styles.desc}>
+                          {`${item.period} SMA 목표가 ${item.value}원`}
+                        </Text>
+                      )
+                    )}
+                  </View>
                 )}
-              </View>
+
+              {conditionData.shortCross && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>
+                    단기선이 장기선을 돌파
+                  </Text>
+                </View>
+              )}
+
+              {conditionData.longCross && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>
+                    장기선이 단기선을 누름
+                  </Text>
+                </View>
+              )}
             </>
           )}
         </View>
@@ -84,7 +101,7 @@ export default function SMAConditionCard() {
       <ConditionBottomSheet
         visible={isOpen}
         onClose={() => setIsOpen(false)}
-        ratio={0.6}
+        ratio={0.55}
       >
         <SMAConditionContent onConfirm={handleConfirm} />
       </ConditionBottomSheet>
@@ -117,12 +134,5 @@ const styles = StyleSheet.create({
   },
   section: { marginBottom: 8 },
   sectionTitle: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
-  label: { fontSize: 13, color: "#333" },
-  value: { fontSize: 13, fontWeight: "500" },
-  emptyText: { fontSize: 13, color: "#888", marginTop: 2 },
+  desc: { fontSize: 13, color: "#666", marginLeft: 4 },
 });
