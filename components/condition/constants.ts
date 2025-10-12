@@ -6,3 +6,10 @@ export const PRICE_SECTION_DESCRIPTIONS = {
   TRAILING_PERCENT: "특정 변동률을 기준으로 후행 가격을 알려드릴게요",
   TRAILING_VALUE: "특정 금액을 기준으로 후행 가격을 알려드릴게요",
 } as const;
+
+export const WEEK52_SECTION_DESCRIPTIONS = {
+  HIGH_ALERT: "최근 52주 최고가를 갱신하면 알림을 드릴게요",
+  HIGH_PROXIMITY: "현재가가 최근 52주 최고가에 근접하면 알림을 드릴게요",
+  LOW_ALERT: "최근 52주 최저가를 갱신하면 알림을 드릴게요",
+  LOW_PROXIMITY: "현재가가 최근 52주 최저가에 근접하면 알림을 드릴게요",
+} as const;
