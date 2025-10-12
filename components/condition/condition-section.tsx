@@ -4,6 +4,7 @@ import ConditionSwitch from "@/components/condition/condition-switch";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ConditionPlus from "../../assets/images/condition-plus.svg";
+
 interface ConditionSectionProps<T> {
   title: string;
   description: string;
@@ -53,16 +54,16 @@ export default function ConditionSection<T>({
 
 const styles = StyleSheet.create({
   section: {
-    marginBottom: 24,
+    marginBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: "#F2F2F2",
-    paddingBottom: 16,
+    paddingBottom: 8,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: 4,
   },
   label: {
     fontSize: 14,

@@ -14,11 +14,12 @@ import {
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import PriceChangeRow from "./price-change-row";
-import PriceLimitRow from "./price-limit-row";
-import PriceTrailingRow from "./price-trailing-row";
-import PriceTrailingValueRow from "./price-trailing-value-row";
-import PriceVariationRow from "./price-variation-row";
+import PriceChangeCurrentRow from "./price-change-current-row"; // 가격 변경(현재가)
+import PriceChangeOpenRow from "./price-change-open-row"; // 가격 변경(시가)
+import PriceLimitRow from "./price-limit-row"; // 가격 제한
+import PriceTrailingRow from "./price-trailing-row"; // 후행가격(%)
+import PriceTrailingValueRow from "./price-trailing-value-row"; //후행가격(원)
+import PriceVariationRow from "./price-variation-row"; // 변동률
 if (
   Platform.OS === "android" &&
   UIManager.setLayoutAnimationEnabledExperimental
@@ -31,10 +32,11 @@ export default function PriceConditionContent({
 }: {
   onConfirm: (data: any) => void;
 }) {
-  /** 상태 관리 */
+  // 상태 관리
   const [sectionToggles, setSectionToggles] = useState({
     limit: false,
-    change: false,
+    changeOpen: false,
+    changeCurrent: false,
     variation: false,
     trailingPercent: false,
     trailingValue: false,
@@ -54,19 +56,20 @@ export default function PriceConditionContent({
       case "limit":
         limitRows.resetRow();
         break;
-      case "change":
-        setPriceChangeRows([{ id: 1, filled: false, sign: "+", value: "" }]);
+      case "changeOpen":
+        openChangeRows.resetRow();
+        break;
+      case "changeCurrent":
+        currentChangeRows.resetRow();
         break;
       case "variation":
-        setVariationRows([
-          { id: 1, filled: false, sign: "+", value: "", period: "1일기준" },
-        ]);
+        variationRows.resetRow();
         break;
       case "trailingPercent":
-        setTrailingRows([{ id: 1, filled: false, sign: "+", value: "" }]);
+        trailingRows.resetRow();
         break;
       case "trailingValue":
-        setTrailingValueRows([{ id: 1, filled: false, sign: "+", value: "" }]);
+        trailingValueRows.resetRow();
         break;
     }
   };
@@ -81,8 +84,16 @@ export default function PriceConditionContent({
               comparison: r.comparison,
             }))
         : [],
-      priceChanges: sectionToggles.change
-        ? priceChangeRows
+      openChanges: sectionToggles.changeOpen
+        ? openChangeRows.rows
+            .filter((r) => r.filled)
+            .map((r) => ({
+              sign: r.sign,
+              value: r.value,
+            }))
+        : [],
+      currentChanges: sectionToggles.changeCurrent
+        ? currentChangeRows.rows
             .filter((r) => r.filled)
             .map((r) => ({
               sign: r.sign,
@@ -90,7 +101,7 @@ export default function PriceConditionContent({
             }))
         : [],
       variations: sectionToggles.variation
-        ? variationRows
+        ? variationRows.rows
             .filter((r) => r.filled)
             .map((r) => ({
               sign: r.sign,
@@ -99,7 +110,7 @@ export default function PriceConditionContent({
             }))
         : [],
       trailingPercents: sectionToggles.trailingPercent
-        ? trailingRows
+        ? trailingRows.rows
             .filter((r) => r.filled)
             .map((r) => ({
               sign: r.sign,
@@ -107,7 +118,7 @@ export default function PriceConditionContent({
             }))
         : [],
       trailingValues: sectionToggles.trailingValue
-        ? trailingValueRows
+        ? trailingValueRows.rows
             .filter((r) => r.filled)
             .map((r) => ({
               sign: r.sign,
@@ -131,166 +142,82 @@ export default function PriceConditionContent({
     }),
   });
 
-  // 가격 변경
-  const [priceChangeRows, setPriceChangeRows] = useState<
-    { id: number; filled: boolean; sign: "+" | "-"; value: string }[]
-  >([{ id: 1, filled: false, sign: "+", value: "" }]);
-
-  const addPriceChangeRow = () =>
-    setPriceChangeRows((prev) => [
+  // 가격 변경 (시가 기준)
+  const openChangeRows = useConditionRows<
+    { id: number; filled: boolean; sign: "+" | "-"; value: string },
+    { sign: "+" | "-"; amount: string }
+  >({
+    initial: { filled: false, sign: "+", value: "" },
+    updateFn: (prev, data) => ({
       ...prev,
-      { id: Date.now(), filled: false, sign: "+", value: "" },
-    ]);
+      filled: data.amount.trim() !== "",
+      value: data.amount,
+      sign: data.sign,
+    }),
+  });
 
-  const removePriceChangeRow = (id: number) =>
-    setPriceChangeRows((prev) => prev.filter((r) => r.id !== id));
-
-  const updatePriceChangeValue = (
-    id: number,
-    data: { sign: "+" | "-"; amount: string }
-  ) =>
-    setPriceChangeRows((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              filled: data.amount.trim() !== "",
-              value: data.amount,
-              sign: data.sign,
-            }
-          : r
-      )
-    );
-
-  const resetPriceChangeRow = (id: number) =>
-    setPriceChangeRows((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, filled: false, sign: "+", value: "" } : r
-      )
-    );
-
-  const hasPriceChangeFilled = priceChangeRows.some((r) => r.filled);
+  // 가격 변경 (현재가 기준)
+  const currentChangeRows = useConditionRows<
+    { id: number; filled: boolean; sign: "+" | "-"; value: string },
+    { sign: "+" | "-"; amount: string }
+  >({
+    initial: { filled: false, sign: "+", value: "" },
+    updateFn: (prev, data) => ({
+      ...prev,
+      filled: data.amount.trim() !== "",
+      value: data.amount,
+      sign: data.sign,
+    }),
+  });
 
   // 변동률
-  const [variationRows, setVariationRows] = useState<
+  const variationRows = useConditionRows<
     {
       id: number;
       filled: boolean;
       sign: "+" | "-";
       value: string;
       period: "1일기준" | "현재기준";
-    }[]
-  >([{ id: 1, filled: false, sign: "+", value: "", period: "1일기준" }]);
-
-  const addVariationRow = () =>
-    setVariationRows((prev) => [
+    },
+    { sign: "+" | "-"; value: string; period: "1일기준" | "현재기준" }
+  >({
+    initial: { filled: false, sign: "+", value: "", period: "1일기준" },
+    updateFn: (prev, data) => ({
       ...prev,
-      {
-        id: Date.now(),
-        filled: false,
-        sign: "+",
-        value: "",
-        period: "1일기준",
-      },
-    ]);
-
-  const removeVariationRow = (id: number) =>
-    setVariationRows((prev) => prev.filter((r) => r.id !== id));
-
-  const updateVariationValue = (
-    id: number,
-    data: { sign: "+" | "-"; value: string; period: "1일기준" | "현재기준" }
-  ) =>
-    setVariationRows((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              filled: data.value.trim() !== "",
-              value: data.value,
-              sign: data.sign,
-              period: data.period,
-            }
-          : r
-      )
-    );
-
-  const resetVariationRow = (id: number) =>
-    setVariationRows((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? { ...r, filled: false, sign: "+", value: "", period: "1일기준" }
-          : r
-      )
-    );
-
-  const hasVariationFilled = variationRows.some((r) => r.filled);
+      filled: data.value.trim() !== "",
+      value: data.value,
+      sign: data.sign,
+      period: data.period,
+    }),
+  });
 
   // 후행 (%)
-  const [trailingRows, setTrailingRows] = useState<
-    { id: number; filled: boolean; sign: "+" | "-"; value: string }[]
-  >([{ id: 1, filled: false, sign: "+", value: "" }]);
-
-  const addTrailingRow = () =>
-    setTrailingRows((prev) => [
+  const trailingRows = useConditionRows<
+    { id: number; filled: boolean; sign: "+" | "-"; value: string },
+    { sign: "+" | "-"; value: string }
+  >({
+    initial: { filled: false, sign: "+", value: "" },
+    updateFn: (prev, data) => ({
       ...prev,
-      { id: Date.now(), filled: false, sign: "+", value: "" },
-    ]);
-
-  const removeTrailingRow = (id: number) =>
-    setTrailingRows((prev) => prev.filter((r) => r.id !== id));
-
-  const updateTrailingValue = (
-    id: number,
-    data: { sign: "+" | "-"; value: string }
-  ) =>
-    setTrailingRows((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              filled: data.value.trim() !== "",
-              sign: data.sign,
-              value: data.value,
-            }
-          : r
-      )
-    );
-
-  const hasTrailingFilled = trailingRows.some((r) => r.filled);
+      filled: data.value.trim() !== "",
+      sign: data.sign,
+      value: data.value,
+    }),
+  });
 
   // 후행 (원)
-  const [trailingValueRows, setTrailingValueRows] = useState<
-    { id: number; filled: boolean; sign: "+" | "-"; value: string }[]
-  >([{ id: 1, filled: false, sign: "+", value: "" }]);
-
-  const addTrailingValueRow = () =>
-    setTrailingValueRows((prev) => [
+  const trailingValueRows = useConditionRows<
+    { id: number; filled: boolean; sign: "+" | "-"; value: string },
+    { sign: "+" | "-"; value: string }
+  >({
+    initial: { filled: false, sign: "+", value: "" },
+    updateFn: (prev, data) => ({
       ...prev,
-      { id: Date.now(), filled: false, sign: "+", value: "" },
-    ]);
-
-  const removeTrailingValueRow = (id: number) =>
-    setTrailingValueRows((prev) => prev.filter((r) => r.id !== id));
-
-  const updateTrailingValueValue = (
-    id: number,
-    data: { sign: "+" | "-"; value: string }
-  ) =>
-    setTrailingValueRows((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              filled: data.value.trim() !== "",
-              sign: data.sign,
-              value: data.value,
-            }
-          : r
-      )
-    );
-
-  const hasTrailingValueFilled = trailingValueRows.some((r) => r.filled);
+      filled: data.value.trim() !== "",
+      sign: data.sign,
+      value: data.value,
+    }),
+  });
 
   return (
     <View style={styles.wrapper}>
@@ -325,21 +252,22 @@ export default function PriceConditionContent({
               )}
             />
 
+            {/* 가격 변경 (시가 기준) */}
             <ConditionSection
               title="가격 변경 (시가)"
-              description="시가 기준으로 얼마 이상일 때 알림을 드릴게요"
-              value={sectionToggles.change}
-              onToggle={() => toggleSection("change")}
-              rows={priceChangeRows}
-              hasFilled={hasPriceChangeFilled}
-              onAdd={addPriceChangeRow}
+              description={PRICE_SECTION_DESCRIPTIONS.CHANGE_OPEN}
+              value={sectionToggles.changeOpen}
+              onToggle={() => toggleSection("changeOpen")}
+              rows={openChangeRows.rows}
+              hasFilled={openChangeRows.hasFilled}
+              onAdd={openChangeRows.addRow}
               renderRow={(r, idx) => (
-                <PriceChangeRow
+                <PriceChangeOpenRow
                   key={r.id}
-                  onRemove={() => removePriceChangeRow(r.id)}
-                  onReset={() => resetPriceChangeRow(r.id)}
-                  onValueChange={(data) => updatePriceChangeValue(r.id, data)}
-                  isSingleRow={priceChangeRows.length === 1}
+                  onRemove={() => openChangeRows.removeRow(r.id)}
+                  onReset={() => openChangeRows.resetRow(r.id)}
+                  onValueChange={(data) => openChangeRows.updateRow(r.id, data)}
+                  isSingleRow={openChangeRows.rows.length === 1}
                 />
               )}
             />
@@ -347,39 +275,60 @@ export default function PriceConditionContent({
             {/* 가격 변경 (현재가 기준) */}
             <ConditionSection
               title="가격 변경 (현재가)"
-              description="현재가 기준으로 얼마 이상일 때 알림을 드릴게요"
-              value={sectionToggles.variation}
-              onToggle={() => toggleSection("variation")}
-              rows={variationRows}
-              hasFilled={hasVariationFilled}
-              onAdd={addVariationRow}
+              description={PRICE_SECTION_DESCRIPTIONS.CHANGE_CURRENT}
+              value={sectionToggles.changeCurrent}
+              onToggle={() => toggleSection("changeCurrent")}
+              rows={currentChangeRows.rows}
+              hasFilled={currentChangeRows.hasFilled}
+              onAdd={currentChangeRows.addRow}
               renderRow={(r, idx) => (
-                <PriceVariationRow
+                <PriceChangeCurrentRow
                   key={r.id}
-                  onRemove={() => removeVariationRow(r.id)}
-                  onReset={() => resetVariationRow(r.id)}
-                  onValueChange={(data) => updateVariationValue(r.id, data)}
-                  isSingleRow={variationRows.length === 1}
+                  onRemove={() => currentChangeRows.removeRow(r.id)}
+                  onReset={() => currentChangeRows.resetRow(r.id)}
+                  onValueChange={(data) =>
+                    currentChangeRows.updateRow(r.id, data)
+                  }
+                  isSingleRow={currentChangeRows.rows.length === 1}
                 />
               )}
             />
 
+            {/* 변동률 */}
+            <ConditionSection
+              title="변동률"
+              description={PRICE_SECTION_DESCRIPTIONS.VARIATION}
+              value={sectionToggles.variation}
+              onToggle={() => toggleSection("variation")}
+              rows={variationRows.rows}
+              hasFilled={variationRows.hasFilled}
+              onAdd={variationRows.addRow}
+              renderRow={(r, idx) => (
+                <PriceVariationRow
+                  key={r.id}
+                  onRemove={() => variationRows.removeRow(r.id)}
+                  onReset={() => variationRows.resetRow(r.id)}
+                  onValueChange={(data) => variationRows.updateRow(r.id, data)}
+                  isSingleRow={variationRows.rows.length === 1}
+                />
+              )}
+            />
             {/* 후행 (%) */}
             <ConditionSection
               title="후행 가격 (%)"
-              description="특정 변동률을 기준으로 후행 가격을 알려드릴게요"
+              description={PRICE_SECTION_DESCRIPTIONS.TRAILING_PERCENT}
               value={sectionToggles.trailingPercent}
               onToggle={() => toggleSection("trailingPercent")}
-              rows={trailingRows}
-              hasFilled={hasTrailingFilled}
-              onAdd={addTrailingRow}
+              rows={trailingRows.rows}
+              hasFilled={trailingRows.hasFilled}
+              onAdd={trailingRows.addRow}
               renderRow={(r, idx) => (
                 <PriceTrailingRow
                   key={r.id}
-                  onRemove={() => removeTrailingRow(r.id)}
-                  onReset={() => {}}
-                  onValueChange={(data) => updateTrailingValue(r.id, data)}
-                  isSingleRow={trailingRows.length === 1}
+                  onRemove={() => trailingRows.removeRow(r.id)}
+                  onReset={() => trailingRows.resetRow(r.id)}
+                  onValueChange={(data) => trailingRows.updateRow(r.id, data)}
+                  isSingleRow={trailingRows.rows.length === 1}
                 />
               )}
             />
@@ -387,19 +336,21 @@ export default function PriceConditionContent({
             {/* 후행 (원) */}
             <ConditionSection
               title="후행 가격 (원)"
-              description="특정 금액을 기준으로 후행 가격을 알려드릴게요"
+              description={PRICE_SECTION_DESCRIPTIONS.TRAILING_VALUE}
               value={sectionToggles.trailingValue}
               onToggle={() => toggleSection("trailingValue")}
-              rows={trailingValueRows}
-              hasFilled={hasTrailingValueFilled}
-              onAdd={addTrailingValueRow}
+              rows={trailingValueRows.rows}
+              hasFilled={trailingValueRows.hasFilled}
+              onAdd={trailingValueRows.addRow}
               renderRow={(r, idx) => (
                 <PriceTrailingValueRow
                   key={r.id}
-                  onRemove={() => removeTrailingValueRow(r.id)}
-                  onReset={() => {}}
-                  onValueChange={(data) => updateTrailingValueValue(r.id, data)}
-                  isSingleRow={trailingValueRows.length === 1}
+                  onRemove={() => trailingValueRows.removeRow(r.id)}
+                  onReset={() => trailingValueRows.resetRow(r.id)}
+                  onValueChange={(data) =>
+                    trailingValueRows.updateRow(r.id, data)
+                  }
+                  isSingleRow={trailingValueRows.rows.length === 1}
                 />
               )}
             />
@@ -417,7 +368,8 @@ export default function PriceConditionContent({
             );
             setSectionToggles({
               limit: false,
-              change: false,
+              changeOpen: false,
+              changeCurrent: false,
               variation: false,
               trailingPercent: false,
               trailingValue: false,
@@ -452,7 +404,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 24,
+    paddingBottom: 16,
     backgroundColor: "#fff",
   },
   sectionTitle: {

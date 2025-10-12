@@ -76,19 +76,37 @@ export default function PriceConditionCard() {
                 </View>
               )}
 
-              {/* 가격 변경 */}
-              {conditionData.priceChanges?.length > 0 && (
+              {/* 가격 변경 (시가 기준) */}
+              {conditionData.openChanges?.length > 0 && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>가격 변경</Text>
-                  {conditionData.priceChanges.map((item: any, idx: number) => (
+                  <Text style={styles.sectionTitle}>가격 변경 (시가)</Text>
+                  {conditionData.openChanges.map((item: any, idx: number) => (
                     <View key={idx} style={styles.row}>
-                      <Text style={styles.label}>현재가</Text>
+                      <Text style={styles.label}>시가 대비</Text>
                       <Text style={styles.value}>
                         {item.sign}
                         {parseInt(item.value).toLocaleString()}원
                       </Text>
                     </View>
                   ))}
+                </View>
+              )}
+
+              {/* 가격 변경 (현재가 기준) */}
+              {conditionData.currentChanges?.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>가격 변경 (현재가)</Text>
+                  {conditionData.currentChanges.map(
+                    (item: any, idx: number) => (
+                      <View key={idx} style={styles.row}>
+                        <Text style={styles.label}>현재가 기준</Text>
+                        <Text style={styles.value}>
+                          {item.sign}
+                          {parseInt(item.value).toLocaleString()}원
+                        </Text>
+                      </View>
+                    )
+                  )}
                 </View>
               )}
 
