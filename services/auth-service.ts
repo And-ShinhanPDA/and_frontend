@@ -1,4 +1,5 @@
 import { SignUpPayload, User } from "@/types/auth";
+const key = process.env.EXPO_PUBLIC_API_KEY;
 
 export const authService = {
   async signIn(

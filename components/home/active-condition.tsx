@@ -1,4 +1,5 @@
-import React from "react";
+import { saveActivatedConditions } from "@/services/widgetShare";
+import React, { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 type Condition = {
@@ -6,7 +7,7 @@ type Condition = {
   name: string;
   count: number;
 };
-// 추후 실제 데이터로 교체 필요
+
 const sampleConditions: Condition[] = [
   { id: 1, name: "알림1", count: 3 },
   { id: 2, name: "알림2", count: 4 },
@@ -18,10 +19,14 @@ export default function ActivatedConditionCard({
 }: {
   data?: Condition[];
 }) {
+  // 위젯으로 데이터 전달
+  useEffect(() => {
+    saveActivatedConditions(data);
+  }, [data]);
+
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>활성화 된 조건 알림</Text>
-
       {data.map((item) => (
         <View style={styles.row} key={item.id}>
           <View style={styles.left}>
