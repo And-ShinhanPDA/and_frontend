@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingHorizontal: 16,
     paddingTop: 24,
-    paddingBottom: 40, // 하단 여백 추가
+    paddingBottom: 10,
   },
   header: {
     fontSize: 20,
