@@ -21,13 +21,17 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function BollingerBandConditionCard() {
+export default function BollingerBandConditionCard({
+  onConditionChange,
+}: {
+  onConditionChange: (c: any) => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [conditionData, setConditionData] = useState<any>(null);
   const [expanded, setExpanded] = useState(false);
 
-  const handleConfirm = (data: any) => {
+  const handleConfirm = (data: { upper: boolean; lower: boolean }) => {
     console.log("볼린저밴드 조건 입력:", data);
     setConditionData(data);
     setHasCondition(true);
@@ -35,6 +39,27 @@ export default function BollingerBandConditionCard() {
 
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
+
+    const indicators: any[] = [];
+
+    if (data.upper) {
+      indicators.push({
+        indicator: "BOLLINGER_UPPER_TOUCH",
+        threshold: null,
+        threshold2: null,
+      });
+    }
+
+    if (data.lower) {
+      indicators.push({
+        indicator: "BOLLINGER_LOWER_TOUCH",
+        threshold: null,
+        threshold2: null,
+      });
+    }
+
+    // ✅ CompanyAlertDetail로 전달
+    onConditionChange(indicators);
   };
 
   const toggleExpand = () => {
@@ -66,16 +91,14 @@ export default function BollingerBandConditionCard() {
                   <Text style={styles.sectionTitle}>
                     볼린저 밴드 강세 신호 경고
                   </Text>
-                  <Text style={styles.desc}>상단 밴드(20,2) 상회</Text>
+                  <Text style={styles.desc}>상단 볼린저 밴드 (20, 2) 상회</Text>
                 </View>
               )}
 
               {conditionData.lower && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
-                    볼린저 밴드 하락 신호 경고
-                  </Text>
-                  <Text style={styles.desc}>하단 밴드(20,2) 하회</Text>
+                  <Text style={styles.sectionTitle}>약세 신호 경고</Text>
+                  <Text style={styles.desc}>하단 볼린저 밴드 (20, 2) 상회</Text>
                 </View>
               )}
             </>

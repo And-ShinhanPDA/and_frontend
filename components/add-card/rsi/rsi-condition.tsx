@@ -21,7 +21,11 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function RSIConditionCard() {
+export default function RSIConditionCard({
+  onConditionChange,
+}: {
+  onConditionChange: (c: any) => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [conditionData, setConditionData] = useState<any>(null);
@@ -35,6 +39,27 @@ export default function RSIConditionCard() {
 
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
+
+    const indicators: any[] = [];
+
+    // 과매수 경고
+    if (data.overbought) {
+      indicators.push({
+        indicator: "RSI_OVER",
+        threshold: 70,
+        threshold2: null,
+      });
+    }
+
+    // 과매도 경고
+    if (data.oversold) {
+      indicators.push({
+        indicator: "RSI_UNDER",
+        threshold: 30,
+        threshold2: null,
+      });
+    }
+    onConditionChange(indicators);
   };
 
   const toggleExpand = () => {
@@ -60,28 +85,6 @@ export default function RSIConditionCard() {
           {expanded && conditionData && (
             <>
               <View style={styles.divider} />
-
-              {/* RSI 목표 지수 도달 경고 */}
-              {Array.isArray(conditionData.target) &&
-                conditionData.target.length > 0 && (
-                  <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>
-                      RSI 목표 지수 도달 시 경고
-                    </Text>
-                    {conditionData.target.map(
-                      (
-                        item: { value: string; comparison: string },
-                        idx: number
-                      ) => (
-                        <View key={idx} style={styles.row}>
-                          <Text style={styles.label}>
-                            {`RSI ${item.value} ${item.comparison}`}
-                          </Text>
-                        </View>
-                      )
-                    )}
-                  </View>
-                )}
 
               {/* 과매수 */}
               {conditionData.overbought && (

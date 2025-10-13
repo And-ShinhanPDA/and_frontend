@@ -8,6 +8,8 @@ import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
 import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -19,7 +21,9 @@ import {
   View,
 } from "react-native";
 import Arrow from "../../../assets/images/arrow.svg";
+
 export default function CompanyAlertDetail() {
+  const { accessToken } = useAuth();
   const { name } = useLocalSearchParams();
   const router = useRouter();
   const [isPresetOpen, setIsPresetOpen] = useState(false);
@@ -34,6 +38,37 @@ export default function CompanyAlertDetail() {
     "볼린저밴드",
   ];
 
+  const [title, setTitle] = useState("");
+  const [conditions, setConditions] = useState<any[]>([]);
+
+  const handleSave = async () => {
+    try {
+      if (!accessToken) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+
+      const payload = {
+        stockCode: "005930",
+        title: title || `${name}`,
+        isActive: true,
+        isPreset: false,
+        conditions: conditions,
+      };
+
+      const res = await alertService.createAlert(payload, accessToken);
+      console.log("✅ 알림 등록 성공:", res);
+      alert("알림이 성공적으로 등록되었습니다!");
+      router.back();
+    } catch (error: any) {
+      console.error("❌ 알림 등록 실패:", error);
+      if (error.response?.status === 401) {
+        alert("로그인 세션이 만료되었습니다. 다시 로그인 해주세요.");
+      } else {
+        alert("알림 등록 중 오류가 발생했습니다.");
+      }
+    }
+  };
   const [expanded, setExpanded] = useState(false);
   return (
     <ScrollView style={styles.container}>
@@ -90,8 +125,29 @@ export default function CompanyAlertDetail() {
       <BasePriceConditionCard />
       <VolumeConditionCard />
       <SMAConditionCard />
-      <RSIConditionCard />
-      <BollingerBandCondition />
+      <RSIConditionCard
+        onConditionChange={(data) =>
+          setConditions((prev) => {
+            const newItems = Array.isArray(data) ? data : [data];
+            const filtered = prev.filter(
+              (p) => !newItems.some((n) => n.indicator === p.indicator)
+            );
+            return [...filtered, ...newItems];
+          })
+        }
+      />
+      <BollingerBandCondition
+        onConditionChange={(data) =>
+          setConditions((prev) => {
+            const newItems = Array.isArray(data) ? data : [data];
+            const filtered = prev.filter(
+              (p) => !newItems.some((n) => n.indicator === p.indicator)
+            );
+            return [...filtered, ...newItems];
+          })
+        }
+      />
+
       {/* 하단 버튼 */}
       <View style={styles.footer}>
         <TouchableOpacity
@@ -101,10 +157,7 @@ export default function CompanyAlertDetail() {
           <Text style={styles.presetText}>프리셋</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={() => console.log("조건 저장")}
-        >
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveText}>저장</Text>
         </TouchableOpacity>
       </View>

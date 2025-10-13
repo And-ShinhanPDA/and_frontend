@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import RSITargetRow from "./rsi-target-row";
 
 export default function RSIConditionContent({
   onConfirm,
@@ -58,26 +57,6 @@ export default function RSIConditionContent({
     <ScrollView style={styles.wrapper}>
       <View style={styles.container}>
         <Text style={styles.sectionTitle}>RSI</Text>
-
-        {/* RSI 목표 지수 도달 경고 */}
-        <ConditionSection
-          title="RSI 목표 지수 도달 시 경고"
-          description={RSI_SECTION_DESCRIPTIONS.TARGET}
-          value={toggles.target}
-          onToggle={() => toggle("target")}
-          rows={targetRows.rows}
-          hasFilled={targetRows.hasFilled}
-          onAdd={targetRows.addRow}
-          renderRow={(r) => (
-            <RSITargetRow
-              key={r.id}
-              onRemove={() => targetRows.removeRow(r.id)}
-              onReset={() => targetRows.resetRow(r.id)}
-              onValueChange={(data) => targetRows.updateRow(r.id, data)}
-              isSingleRow={targetRows.rows.length === 1}
-            />
-          )}
-        />
 
         {/* RSI 과매수 */}
         <ConditionSection
