@@ -3,6 +3,7 @@ import React from "react";
 import { Image, Pressable } from "react-native";
 
 import { HapticTab } from "@/components/haptic-tab";
+import PriceAlertToast from "@/components/home/price-toast-alert";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Typography } from "@/components/ui/Typography";
 import { Colors } from "@/constants/theme";
@@ -138,7 +139,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "홈",
-          headerShown: false,
+          header: () => <PriceAlertToast />, // 커스텀 헤더 사용
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="house.fill" color={color} />
           ),

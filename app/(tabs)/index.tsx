@@ -1,16 +1,22 @@
 import ActivatedCompanyCard from "@/components/home/active-company";
 import ActivatedConditionCard from "@/components/home/active-condition";
-import PriceAlertToast from "@/components/home/price-toast-alert";
 import TreemapChart from "@/components/home/treemap-chart";
-import { ScrollView, StyleSheet } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
+
 export default function HomeScreen() {
   return (
-    <ScrollView style={styles.container}>
-      <PriceAlertToast />
-      <ActivatedConditionCard />
-      <ActivatedCompanyCard />
-      <TreemapChart />
-    </ScrollView>
+    <View style={styles.wrapper}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+      >
+        <ActivatedConditionCard />
+        <ActivatedCompanyCard />
+        <TreemapChart />
+      </ScrollView>
+    </View>
   );
 }
 
@@ -19,11 +25,17 @@ export const options = {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     flex: 1,
     backgroundColor: "#F5F6F8",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  contentContainer: {
     paddingHorizontal: 16,
-    paddingTop: 60,
+    paddingTop: 24,
+    paddingBottom: 40, // 하단 여백 추가
   },
   header: {
     fontSize: 20,
