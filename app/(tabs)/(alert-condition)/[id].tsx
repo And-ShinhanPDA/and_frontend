@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
   FlatList,
@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -25,11 +26,26 @@ type Company = {
 
 export default function AlertConditionDetail() {
   const { name } = useLocalSearchParams<{ name: string }>();
-  const [scrollX, setScrollX] = useState(0);
-  const scrollRef = useRef<ScrollView | null>(null);
+  const headerScrollRef = useRef<ScrollView | null>(null);
+  const rowScrollRefs = useRef<(ScrollView | null)[]>([]);
+  const flatListRef = useRef<FlatList | null>(null);
+  const scrollingRef = useRef(false);
+  const [isHorizontalScrolling, setIsHorizontalScrolling] = useState(false);
 
-  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setScrollX(e.nativeEvent.contentOffset.x);
+  const syncScroll = (offsetX: number) => {
+    if (scrollingRef.current) return;
+
+    scrollingRef.current = true;
+
+    headerScrollRef.current?.scrollTo({ x: offsetX, animated: false });
+
+    rowScrollRefs.current.forEach((ref) => {
+      ref?.scrollTo({ x: offsetX, animated: false });
+    });
+
+    setTimeout(() => {
+      scrollingRef.current = false;
+    }, 10);
   };
 
   const companies: Company[] = [
@@ -69,15 +85,49 @@ export default function AlertConditionDetail() {
       volume: "50",
       sma: "50",
     },
+    {
+      id: "5",
+      name: "카카오",
+      logo: ShinhanLogo,
+      currentPrice: "50,000원",
+      openPrice: "50,000원",
+      volume: "50",
+      sma: "50",
+    },
+    {
+      id: "6",
+      name: "LG전자",
+      logo: ShinhanLogo,
+      currentPrice: "50,000원",
+      openPrice: "50,000원",
+      volume: "50",
+      sma: "50",
+    },
+    {
+      id: "7",
+      name: "SK하이닉스",
+      logo: ShinhanLogo,
+      currentPrice: "50,000원",
+      openPrice: "50,000원",
+      volume: "50",
+      sma: "50",
+    },
+    {
+      id: "8",
+      name: "현대차",
+      logo: ShinhanLogo,
+      currentPrice: "50,000원",
+      openPrice: "50,000원",
+      volume: "50",
+      sma: "50",
+    },
   ];
 
   return (
     <View style={styles.container}>
       <View style={styles.header}></View>
 
-      {/* ✅ 제목/태그와 아이콘을 좌우 분리 */}
       <View style={styles.conditionBox}>
-        {/* 왼쪽: 제목 + 태그 */}
         <View style={styles.conditionLeft}>
           <Text style={styles.conditionTitle}>
             {name || "제목 없는 조건 알림"}
@@ -91,25 +141,35 @@ export default function AlertConditionDetail() {
           </View>
         </View>
 
-        {/* 오른쪽: 아이콘 중앙 정렬 */}
         <View style={styles.conditionRight}>
-          <Image
-            source={require("@/assets/images/alert/company_search.png")}
-            style={{ width: 24, height: 24 }}
-          />
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/condition-alertDetail/[id]")}
+          >
+            <Image
+              source={require("@/assets/images/alert/company_search.png")}
+              style={{ width: 24, height: 24 }}
+            />
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* ✅ 테이블 헤더 */}
+      {/* 테이블 헤더 */}
       <View style={styles.tableRow}>
         <View style={styles.fixedColumn}></View>
 
         <ScrollView
           horizontal
-          ref={scrollRef}
+          ref={headerScrollRef}
           showsHorizontalScrollIndicator={false}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
+          scrollEventThrottle={8}
+          onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+            syncScroll(e.nativeEvent.contentOffset.x);
+          }}
+          onScrollBeginDrag={() => setIsHorizontalScrolling(true)}
+          onScrollEndDrag={() => setIsHorizontalScrolling(false)}
+          onMomentumScrollEnd={() => setIsHorizontalScrolling(false)}
+          directionalLockEnabled={true}
+          bounces={false}
         >
           <View style={styles.tableHeader}>
             <Text style={styles.headerText}>현재가</Text>
@@ -120,11 +180,16 @@ export default function AlertConditionDetail() {
         </ScrollView>
       </View>
 
-      {/* ✅ 기업 리스트 */}
+      {/* 기업 리스트 */}
       <FlatList
+        ref={flatListRef}
         data={companies}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={!isHorizontalScrolling}
+        scrollEventThrottle={8}
+        bounces={true}
+        renderItem={({ item, index }) => (
           <View style={styles.tableRow}>
             <View style={styles.fixedColumn}>
               <item.logo width={48} height={48} style={styles.logo} />
@@ -132,15 +197,21 @@ export default function AlertConditionDetail() {
 
             <ScrollView
               horizontal
-              showsHorizontalScrollIndicator={false}
-              scrollEventThrottle={16}
-              contentOffset={{ x: scrollX, y: 0 }}
-              onScroll={(e) => {
-                scrollRef.current?.scrollTo({
-                  x: e.nativeEvent.contentOffset.x,
-                  animated: false,
-                });
+              ref={(ref) => {
+                rowScrollRefs.current[index] = ref;
               }}
+              showsHorizontalScrollIndicator={false}
+              scrollEventThrottle={8}
+              onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+                syncScroll(e.nativeEvent.contentOffset.x);
+              }}
+              onScrollBeginDrag={() => setIsHorizontalScrolling(true)}
+              onScrollEndDrag={() => setIsHorizontalScrolling(false)}
+              onMomentumScrollEnd={() => setIsHorizontalScrolling(false)}
+              directionalLockEnabled={true}
+              bounces={false}
+              nestedScrollEnabled={true}
+              style={styles.rowScrollView}
             >
               <View style={styles.dataRow}>
                 <Text style={styles.dataText}>{item.currentPrice}</Text>
@@ -160,11 +231,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   header: { paddingTop: 20 },
 
-  /* ✅ 제목/태그 컨테이너 */
   conditionBox: {
-    flexDirection: "row", // 왼쪽-오른쪽 분리
+    flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center", // 수직 중앙
+    alignItems: "center",
     borderWidth: 1,
     borderColor: "#E6E6E6",
     borderRadius: 6,
@@ -199,7 +269,6 @@ const styles = StyleSheet.create({
   },
   tagText: { fontSize: 12, fontFamily: "Pretendard" },
 
-  /* ✅ 표 관련 */
   tableRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -213,6 +282,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+  },
+  rowScrollView: {
+    flex: 1,
   },
   tableHeader: { flexDirection: "row" },
   headerText: {

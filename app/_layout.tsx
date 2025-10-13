@@ -1,12 +1,7 @@
 // app/_layout.tsx
 import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import {
-  ActivityIndicator,
-  Keyboard,
-  TouchableWithoutFeedback,
-  View,
-} from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import "react-native-reanimated";
 
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
@@ -38,16 +33,14 @@ function RouterGate() {
   // 로그인 여부와 관계없이 Stack만 보여줌
   // KeyboardAvoidingView 제거 - 화면이 밀리는 것 방지
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={{ flex: 1 }}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: "#fff" },
-          }}
-        />
-      </View>
-    </TouchableWithoutFeedback>
+    <View style={{ flex: 1 }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: "#fff" },
+        }}
+      />
+    </View>
   );
 }
 

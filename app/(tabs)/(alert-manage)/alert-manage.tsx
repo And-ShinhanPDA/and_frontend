@@ -27,7 +27,7 @@ export default function AlertManage() {
   const [fadeAnimations, setFadeAnimations] = useState<
     Record<string, Animated.Value>
   >({});
-  const [deleteWidth, setDeleteWidth] = useState(80); // 삭제버튼 실제 폭 측정용 상태값
+  const [deleteWidth, setDeleteWidth] = useState(80);
 
   const [companies, setCompanies] = useState<Company[]>([
     { id: "1", name: "신한지주", Logo: ShinhanLogo, alerts: 3, enabled: false },
@@ -104,6 +104,9 @@ export default function AlertManage() {
         onRowOpen={handleRowOpen}
         onRowClose={handleRowClose}
         rightOpenValue={-deleteWidth}
+        leftOpenValue={0}
+        disableLeftSwipe={false}
+        disableRightSwipe={true}
         renderItem={({ item, index }) => {
           const fadeAnim = fadeAnimations[item.id] || new Animated.Value(1);
           const filtered = companies.filter((c) =>

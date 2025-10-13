@@ -20,7 +20,7 @@ import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 
-export default function ConditionAdditionalDetail() {
+export default function ConditionAlertDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
 
@@ -34,14 +34,12 @@ export default function ConditionAdditionalDetail() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() =>
-            router.replace("/(tabs)/(alert-condition)/alert-condition")
-          }
+          onPress={() => router.back()}
         >
           <Arrow width={22} height={22} />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>조건 알림 추가</Text>
+        <Text style={styles.headerTitle}>조건 알림 상세 화면</Text>
       </View>
 
       {/* 탭 */}

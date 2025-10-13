@@ -109,6 +109,15 @@ export default function TabLayout() {
         options={{
           href: null,
           headerShown: false,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+      <Tabs.Screen
+        name="condition-alertDetail/[id]"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: "none" },
         }}
       />
 
