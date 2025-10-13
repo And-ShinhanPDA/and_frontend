@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   FlatList,
+  Image,
   StyleSheet,
   Text,
   TextInput,
@@ -9,40 +10,116 @@ import {
   View,
 } from "react-native";
 
-// SVG 아이콘들
-import Logo_10 from "@/assets/images/companies/logo_10_두산.svg";
-import Logo_11 from "@/assets/images/companies/logo_11_기아.svg";
-import Logo_12 from "@/assets/images/companies/logo_12_신한금융그룹.svg";
-import Logo_1 from "@/assets/images/companies/logo_1_삼성전자.svg";
-import Logo_2 from "@/assets/images/companies/logo_2_하이닉스.svg";
-import Logo_3 from "@/assets/images/companies/logo_3_에너지솔루션.svg";
-import Logo_4 from "@/assets/images/companies/logo_4_한화에어로스페이스.svg";
-import Logo_5 from "@/assets/images/companies/logo_5_현대차.svg";
-import Logo_6 from "@/assets/images/companies/logo_6_KB.svg";
-import Logo_7 from "@/assets/images/companies/logo_7_네이버.svg";
-import Logo_8 from "@/assets/images/companies/logo_8_HD현대중공업.svg";
-import Logo_9 from "@/assets/images/companies/logo_9_셀트리온.svg";
-
 export default function ChartList() {
   const router = useRouter();
   const [search, setSearch] = useState("");
 
   const companies = [
-    { id: "1", name: "삼성전자", logo: Logo_1 },
-    { id: "2", name: "하이닉스", logo: Logo_2 },
-    { id: "3", name: "에너지솔루션", logo: Logo_3 },
-    { id: "4", name: "한화에어로스페이스", logo: Logo_4 },
-    { id: "5", name: "현대차", logo: Logo_5 },
-    { id: "6", name: "KB", logo: Logo_6 },
-    { id: "7", name: "네이버", logo: Logo_7 },
-    { id: "8", name: "HD현대중공업", logo: Logo_8 },
-    { id: "9", name: "셀트리온", logo: Logo_9 },
-    { id: "10", name: "두산", logo: Logo_10 },
-    { id: "11", name: "기아", logo: Logo_11 },
-    { id: "12", name: "신한금융그룹", logo: Logo_12 },
+    {
+      id: "1",
+      name: "삼성전자",
+      logo: require("@/assets/images/companies/logo_1_삼성전자.png"),
+    },
+    {
+      id: "2",
+      name: "하이닉스",
+      logo: require("@/assets/images/companies/logo_2_하이닉스.png"),
+    },
+    {
+      id: "3",
+      name: "에너지솔루션",
+      logo: require("@/assets/images/companies/logo_3_에너지솔루션.png"),
+    },
+    {
+      id: "4",
+      name: "한화에어로스페이스",
+      logo: require("@/assets/images/companies/logo_4_한화에어로스페이스.png"),
+    },
+    {
+      id: "5",
+      name: "현대차",
+      logo: require("@/assets/images/companies/logo_5_현대차.png"),
+    },
+    {
+      id: "6",
+      name: "KB",
+      logo: require("@/assets/images/companies/logo_6_KB.png"),
+    },
+    {
+      id: "7",
+      name: "네이버",
+      logo: require("@/assets/images/companies/logo_7_네이버.png"),
+    },
+    {
+      id: "8",
+      name: "HD현대중공업",
+      logo: require("@/assets/images/companies/logo_8_HD현대중공업.png"),
+    },
+    {
+      id: "9",
+      name: "셀트리온",
+      logo: require("@/assets/images/companies/logo_9_셀트리온.png"),
+    },
+    {
+      id: "10",
+      name: "두산",
+      logo: require("@/assets/images/companies/logo_10_두산.png"),
+    },
+    {
+      id: "11",
+      name: "기아",
+      logo: require("@/assets/images/companies/logo_11_기아.png"),
+    },
+    {
+      id: "12",
+      name: "신한금융그룹",
+      logo: require("@/assets/images/companies/logo_12_신한금융그룹.png"),
+    },
+    {
+      id: "13",
+      name: "카카오",
+      logo: require("@/assets/images/companies/logo_13_카카오.png"),
+    },
+    {
+      id: "14",
+      name: "하나금융지주",
+      logo: require("@/assets/images/companies/logo_14_하나금융지주.png"),
+    },
+    {
+      id: "15",
+      name: "한국전력공사",
+      logo: require("@/assets/images/companies/logo_15_한국전력공사.png"),
+    },
+    {
+      id: "16",
+      name: "포스코홀딩스",
+      logo: require("@/assets/images/companies/logo_16_포스코홀딩스.png"),
+    },
+    {
+      id: "17",
+      name: "HMM",
+      logo: require("@/assets/images/companies/logo_17_HMM.png"),
+    },
+    {
+      id: "18",
+      name: "메리츠금융지주",
+      logo: require("@/assets/images/companies/logo_18_메리츠금융지주.png"),
+    },
+    {
+      id: "19",
+      name: "우리금융지주",
+      logo: require("@/assets/images/companies/logo_19_우리금융지주.png"),
+    },
+    {
+      id: "20",
+      name: "고려아연",
+      logo: require("@/assets/images/companies/logo_20_고려아연.png"),
+    },
   ];
 
-  const filtered = companies.filter((c) => c.name.includes(search));
+  const filtered = companies.filter(
+    (c) => c.name.toLowerCase().includes(search.toLowerCase()) // 👈 대소문자 구분 없이 검색
+  );
 
   const renderItem = ({ item }: any) => (
     <TouchableOpacity
@@ -53,8 +130,9 @@ export default function ChartList() {
           params: { chartId: item.id, name: item.name },
         })
       }
+      activeOpacity={0.7}
     >
-      <item.logo width={48} height={48} />
+      <Image source={item.logo} style={styles.logo} resizeMode="contain" />
       <Text style={styles.name}>{item.name}</Text>
     </TouchableOpacity>
   );
@@ -66,6 +144,7 @@ export default function ChartList() {
         placeholder="기업을 검색해보세요"
         value={search}
         onChangeText={setSearch}
+        clearButtonMode="while-editing"
       />
 
       <FlatList
@@ -74,14 +153,19 @@ export default function ChartList() {
         renderItem={renderItem}
         numColumns={4}
         columnWrapperStyle={styles.row}
-        contentContainerStyle={{ paddingBottom: 50 }}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#fff" },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#fff",
+  },
   searchBar: {
     height: 40,
     borderWidth: 1,
@@ -97,10 +181,20 @@ const styles = StyleSheet.create({
   item: {
     flex: 1,
     alignItems: "center",
+    padding: 8,
+  },
+  logo: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
   },
   name: {
     fontSize: 12,
     textAlign: "center",
     marginTop: 6,
+    color: "#333",
+  },
+  listContent: {
+    paddingBottom: 50,
   },
 });
