@@ -28,9 +28,11 @@ export default function VolumeConditionCard() {
   const [expanded, setExpanded] = useState(false);
 
   const handleConfirm = (data: any) => {
+    console.log("거래량 조건 입력:", data);
     setConditionData(data);
     setHasCondition(true);
     setIsOpen(false);
+
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
   };
@@ -59,39 +61,55 @@ export default function VolumeConditionCard() {
             <>
               <View style={styles.divider} />
 
-              {/* 현재 거래량 대비 */}
-              {conditionData.currentVolume?.length > 0 && (
+              {/* 전일 거래량 대비 */}
+              {conditionData.prevChange?.length > 0 && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>현재 거래량 대비</Text>
-                  {conditionData.currentVolume.map((item: any, idx: number) => (
-                    <Text key={idx} style={styles.value}>
-                      {item.value}% {item.compare}
-                    </Text>
+                  <Text style={styles.sectionTitle}>전일 거래량 대비</Text>
+                  {conditionData.prevChange.map((item: any, idx: number) => (
+                    <View key={idx} style={styles.row}>
+                      <Text style={styles.label}>변동 기준</Text>
+                      <Text style={styles.value}>
+                        {item.sign}
+                        {item.value}%
+                      </Text>
+                    </View>
                   ))}
                 </View>
               )}
 
-              {/* 최신 거래량 대비 */}
-              {conditionData.recentVolume?.length > 0 && (
+              {/* 평균 거래량 대비 */}
+              {conditionData.avgChange?.length > 0 && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>최신 거래량 대비</Text>
-                  {conditionData.recentVolume.map((item: any, idx: number) => (
-                    <Text key={idx} style={styles.value}>
-                      {item.value}% {item.compare}
-                    </Text>
+                  <Text style={styles.sectionTitle}>평균 거래량 대비</Text>
+                  {conditionData.avgChange.map((item: any, idx: number) => (
+                    <View key={idx} style={styles.row}>
+                      <Text style={styles.label}>변동 기준</Text>
+                      <Text style={styles.value}>
+                        {item.sign}
+                        {item.value}%
+                      </Text>
+                    </View>
                   ))}
                 </View>
               )}
 
-              {/* 급증 감소 여부 */}
-              {conditionData.spikes?.length > 0 && (
+              {/* 거래량 급증 경고 */}
+              {conditionData.spike && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>거래량 급증·감소 여부</Text>
-                  {conditionData.spikes.map((item: any, idx: number) => (
-                    <Text key={idx} style={styles.value}>
-                      {item.type}
-                    </Text>
-                  ))}
+                  <Text style={styles.sectionTitle}>거래량 급증 경고</Text>
+                  <Text style={styles.desc}>
+                    전일 대비 거래량이 20% 이상 증가 시 알림
+                  </Text>
+                </View>
+              )}
+
+              {/* 거래량 감소 경고 */}
+              {conditionData.drop && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>거래량 감소 경고</Text>
+                  <Text style={styles.desc}>
+                    전일 대비 거래량이 20% 이상 감소 시 알림
+                  </Text>
                 </View>
               )}
             </>
@@ -102,7 +120,7 @@ export default function VolumeConditionCard() {
       <ConditionBottomSheet
         visible={isOpen}
         onClose={() => setIsOpen(false)}
-        ratio={0.4}
+        ratio={0.75}
       >
         <VolumeConditionContent onConfirm={handleConfirm} />
       </ConditionBottomSheet>
@@ -126,8 +144,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: { fontSize: 16, fontWeight: "600" },
-  divider: { height: 1, backgroundColor: "#EAEAEA", marginVertical: 8 },
+  divider: {
+    height: 1,
+    backgroundColor: "#EAEAEA",
+    marginTop: 8,
+    marginBottom: 6,
+    marginHorizontal: -12,
+  },
   section: { marginBottom: 8 },
   sectionTitle: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
-  value: { fontSize: 13, color: "#333", marginLeft: 4 },
+  desc: { fontSize: 13, color: "#666", marginLeft: 4 },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  label: { fontSize: 13, color: "#333" },
+  value: { fontSize: 13, color: "#000", fontWeight: "500" },
 });

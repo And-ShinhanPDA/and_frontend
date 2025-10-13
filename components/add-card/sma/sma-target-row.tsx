@@ -12,22 +12,18 @@ import ConditionMinus from "../../../assets/images/condition-minus.svg";
 type Period = "5일" | "10일" | "20일" | "30일" | "50일" | "100일" | "200일";
 
 export default function SMATargetRow({
-  value: initialValue,
-  period: initialPeriod,
   onRemove,
   onReset,
   onValueChange,
   isSingleRow,
 }: {
-  value: string;
-  period: Period;
   onRemove: () => void;
   onReset: () => void;
   onValueChange: (data: { value: string; period: Period }) => void;
   isSingleRow: boolean;
 }) {
-  const [value, setValue] = useState(initialValue);
-  const [period, setPeriod] = useState<Period>(initialPeriod);
+  const [value, setValue] = useState("");
+  const [period, setPeriod] = useState<Period>("5일");
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
   useEffect(() => {
@@ -45,11 +41,6 @@ export default function SMATargetRow({
   };
 
   const hasValue = value.trim() !== "";
-  const [dropdownAbove, setDropdownAbove] = useState(false);
-
-  useEffect(() => {
-    setDropdownAbove(false); // 기본값
-  }, []);
 
   return (
     <View style={[styles.rowContainer, dropdownVisible && styles.rowRaised]}>
@@ -74,16 +65,7 @@ export default function SMATargetRow({
         </TouchableOpacity>
 
         {dropdownVisible && (
-          <View
-            style={[
-              styles.dropdownMenu,
-
-              {
-                top: dropdownAbove ? "auto" : 38,
-                bottom: dropdownAbove ? 38 : "auto",
-              },
-            ]}
-          >
+          <View style={styles.dropdownMenu}>
             {["5일", "10일", "20일", "30일", "50일", "100일", "200일"].map(
               (opt) => (
                 <TouchableOpacity
@@ -126,7 +108,6 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   rowRaised: { zIndex: 20, elevation: 20 },
-
   inputWrapper: { flex: 1, position: "relative" },
   inputWithUnit: {
     borderWidth: 1,
@@ -146,7 +127,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#555",
   },
-
   dropdownWrapper: { position: "relative", marginLeft: 8 },
   dropdownButton: {
     flexDirection: "row",
@@ -172,13 +152,8 @@ const styles = StyleSheet.create({
     elevation: 16,
     overflow: "hidden",
   },
-  dropdownItem: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    alignItems: "center",
-  },
+  dropdownItem: { paddingHorizontal: 10, paddingVertical: 8 },
   dropdownText: { fontSize: 13, color: "#333" },
   selectedText: { color: "#4CC439", fontWeight: "600" },
-
   removeButton: { marginLeft: 8 },
 });

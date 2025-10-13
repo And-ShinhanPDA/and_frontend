@@ -1,8 +1,7 @@
 import ConditionSection from "@/components/condition/condition-section";
-import { BOLLINGER_SECTION_DESCRIPTIONS } from "@/components/condition/constants";
+import { BASE_SECTION_DESCRIPTIONS } from "@/components/condition/constants";
 import React, { useState } from "react";
 import {
-  LayoutAnimation,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,49 +9,46 @@ import {
   View,
 } from "react-native";
 
-export default function BollingerBandConditionContent({
+export default function BasePriceConditionContent({
   onConfirm,
 }: {
   onConfirm: (data: any) => void;
 }) {
   const [toggles, setToggles] = useState({
-    upper: false,
-    lower: false,
+    open: false,
+    close: false,
   });
 
-  const toggle = (key: keyof typeof toggles) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  const toggleSection = (key: keyof typeof toggles) =>
     setToggles((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
 
   const handleConfirmPress = () => {
-    onConfirm({
-      upper: toggles.upper,
-      lower: toggles.lower,
-    });
+    onConfirm(toggles);
   };
 
   return (
     <ScrollView style={styles.wrapper}>
       <View style={styles.container}>
-        <Text style={styles.sectionTitle}>볼린저밴드</Text>
+        <Text style={styles.sectionTitle}>기준가</Text>
 
+        {/* 시가 */}
         <ConditionSection
-          title="볼린저 밴드 강세 신호 경고"
-          description={BOLLINGER_SECTION_DESCRIPTIONS.UPPER}
-          value={toggles.upper}
-          onToggle={() => toggle("upper")}
+          title="시가"
+          description={BASE_SECTION_DESCRIPTIONS.OPEN}
+          value={toggles.open}
+          onToggle={() => toggleSection("open")}
           rows={[]}
           hasFilled={false}
           onAdd={() => {}}
           renderRow={() => null}
         />
 
+        {/* 종가 */}
         <ConditionSection
-          title="볼린저 밴드 하락 신호 경고"
-          description={BOLLINGER_SECTION_DESCRIPTIONS.LOWER}
-          value={toggles.lower}
-          onToggle={() => toggle("lower")}
+          title="종가"
+          description={BASE_SECTION_DESCRIPTIONS.CLOSE}
+          value={toggles.close}
+          onToggle={() => toggleSection("close")}
           rows={[]}
           hasFilled={false}
           onAdd={() => {}}
@@ -60,10 +56,10 @@ export default function BollingerBandConditionContent({
         />
       </View>
 
-      <View style={styles.footer}>
+      <View style={styles.footerFixed}>
         <TouchableOpacity
           style={styles.resetButton}
-          onPress={() => setToggles({ upper: false, lower: false })}
+          onPress={() => setToggles({ open: false, close: false })}
         >
           <Text style={styles.resetText}>초기화</Text>
         </TouchableOpacity>
@@ -83,7 +79,7 @@ const styles = StyleSheet.create({
   wrapper: { flex: 1, backgroundColor: "#fff" },
   container: { paddingHorizontal: 16, paddingVertical: 10 },
   sectionTitle: { fontSize: 15, fontWeight: "600", marginBottom: 10 },
-  footer: {
+  footerFixed: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 20,
