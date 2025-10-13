@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 
-export default function ChartList() {
+export default function AlertAdditional() {
   const router = useRouter();
   const [search, setSearch] = useState("");
 
@@ -117,9 +117,13 @@ export default function ChartList() {
     },
   ];
 
-  const filtered = companies.filter(
-    (c) => c.name.toLowerCase().includes(search.toLowerCase()) // 👈 대소문자 구분 없이 검색
+  const filtered = companies.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const onSubmit = async () => {
+    router.replace("/(tabs)");
+  };
 
   const renderItem = ({ item }: any) => (
     <TouchableOpacity
@@ -139,14 +143,21 @@ export default function ChartList() {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.searchBar}
-        placeholder="기업을 검색해보세요"
-        value={search}
-        onChangeText={setSearch}
-        clearButtonMode="while-editing"
-      />
+      {/* 검색 바 - 두번째 코드 스타일 적용 */}
+      <View style={styles.searchWrapper}>
+        <Image
+          source={require("@/assets/images/alert/search.png")}
+          style={styles.searchIcon}
+        />
+        <TextInput
+          style={styles.searchBar}
+          placeholder="기업을 검색해보세요"
+          value={search}
+          onChangeText={setSearch}
+        />
+      </View>
 
+      {/* 회사 리스트 */}
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
@@ -160,23 +171,40 @@ export default function ChartList() {
   );
 }
 
+export const options = {
+  title: "알림 추가",
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: "#fff",
   },
-  searchBar: {
+  searchWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    marginBottom: 18,
     height: 40,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 15,
+    margin: 22,
+  },
+  searchBar: {
+    flex: 1,
+    marginLeft: 6,
+    fontFamily: "Pretendard",
+  },
+  searchIcon: {
+    width: 15,
+    height: 15,
+    resizeMode: "contain",
+    marginBottom: 2,
   },
   row: {
     justifyContent: "space-between",
     marginBottom: 20,
+    paddingHorizontal: 22,
   },
   item: {
     flex: 1,
@@ -193,6 +221,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 6,
     color: "#333",
+    fontFamily: "Pretendard",
   },
   listContent: {
     paddingBottom: 50,
