@@ -27,9 +27,11 @@ type Company = {
 export default function AlertConditionDetail() {
   const { name } = useLocalSearchParams<{ name: string }>();
   const headerScrollRef = useRef<ScrollView | null>(null);
-  const rowScrollRefs = useRef<(ScrollView | null)[]>([]);
-  const flatListRef = useRef<FlatList | null>(null);
+  const dataScrollRef = useRef<ScrollView | null>(null);
+  const leftFlatListRef = useRef<FlatList | null>(null);
+  const rightFlatListRef = useRef<FlatList | null>(null);
   const scrollingRef = useRef(false);
+  const verticalScrollingRef = useRef(false);
   const [isHorizontalScrolling, setIsHorizontalScrolling] = useState(false);
 
   const syncScroll = (offsetX: number) => {
@@ -38,13 +40,29 @@ export default function AlertConditionDetail() {
     scrollingRef.current = true;
 
     headerScrollRef.current?.scrollTo({ x: offsetX, animated: false });
-
-    rowScrollRefs.current.forEach((ref) => {
-      ref?.scrollTo({ x: offsetX, animated: false });
-    });
+    dataScrollRef.current?.scrollTo({ x: offsetX, animated: false });
 
     setTimeout(() => {
       scrollingRef.current = false;
+    }, 10);
+  };
+
+  const syncVerticalScroll = (offsetY: number) => {
+    if (verticalScrollingRef.current) return;
+
+    verticalScrollingRef.current = true;
+
+    leftFlatListRef.current?.scrollToOffset({
+      offset: offsetY,
+      animated: false,
+    });
+    rightFlatListRef.current?.scrollToOffset({
+      offset: offsetY,
+      animated: false,
+    });
+
+    setTimeout(() => {
+      verticalScrollingRef.current = false;
     }, 10);
   };
 
@@ -121,6 +139,60 @@ export default function AlertConditionDetail() {
       volume: "50",
       sma: "50",
     },
+    {
+      id: "9",
+      name: "LG전자",
+      logo: ShinhanLogo,
+      currentPrice: "50,000원",
+      openPrice: "50,000원",
+      volume: "50",
+      sma: "50",
+    },
+    {
+      id: "10",
+      name: "SK하이닉스",
+      logo: ShinhanLogo,
+      currentPrice: "50,000원",
+      openPrice: "50,000원",
+      volume: "50",
+      sma: "50",
+    },
+    {
+      id: "11",
+      name: "현대차",
+      logo: ShinhanLogo,
+      currentPrice: "50,000원",
+      openPrice: "50,000원",
+      volume: "50",
+      sma: "50",
+    },
+    {
+      id: "12",
+      name: "LG전자",
+      logo: ShinhanLogo,
+      currentPrice: "50,000원",
+      openPrice: "50,000원",
+      volume: "50",
+      sma: "50",
+    },
+    {
+      id: "13",
+      name: "SK하이닉스",
+      logo: ShinhanLogo,
+      currentPrice: "50,000원",
+      openPrice: "50,000원",
+      volume: "50",
+      sma: "50",
+    },
+    {
+      id: "14",
+      name: "현대차",
+      logo: ShinhanLogo,
+      currentPrice: "50,000원",
+      openPrice: "50,000원",
+      volume: "50",
+      sma: "50",
+    },
   ];
 
   return (
@@ -154,22 +226,17 @@ export default function AlertConditionDetail() {
       </View>
 
       {/* 테이블 헤더 */}
-      <View style={styles.tableRow}>
+      <View style={styles.tableHeaderRow}>
         <View style={styles.fixedColumn}></View>
 
         <ScrollView
           horizontal
           ref={headerScrollRef}
           showsHorizontalScrollIndicator={false}
-          scrollEventThrottle={8}
-          onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
-            syncScroll(e.nativeEvent.contentOffset.x);
-          }}
-          onScrollBeginDrag={() => setIsHorizontalScrolling(true)}
-          onScrollEndDrag={() => setIsHorizontalScrolling(false)}
-          onMomentumScrollEnd={() => setIsHorizontalScrolling(false)}
-          directionalLockEnabled={true}
+          scrollEventThrottle={16}
+          scrollEnabled={false}
           bounces={false}
+          style={styles.headerScrollView}
         >
           <View style={styles.tableHeader}>
             <Text style={styles.headerText}>현재가</Text>
@@ -180,49 +247,72 @@ export default function AlertConditionDetail() {
         </ScrollView>
       </View>
 
-      {/* 기업 리스트 */}
-      <FlatList
-        ref={flatListRef}
-        data={companies}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        scrollEnabled={!isHorizontalScrolling}
-        scrollEventThrottle={8}
-        bounces={true}
-        renderItem={({ item, index }) => (
-          <View style={styles.tableRow}>
-            <View style={styles.fixedColumn}>
-              <item.logo width={48} height={48} style={styles.logo} />
-            </View>
+      {/* 테이블 바디 */}
+      <View style={styles.tableBody}>
+        {/* 왼쪽 고정 영역 (로고) */}
+        <View style={styles.fixedColumnContainer}>
+          <FlatList
+            ref={leftFlatListRef}
+            data={companies}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={!isHorizontalScrolling}
+            scrollEventThrottle={16}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={10}
+            windowSize={10}
+            onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+              syncVerticalScroll(e.nativeEvent.contentOffset.y);
+            }}
+            renderItem={({ item }) => (
+              <View style={styles.fixedCell}>
+                <item.logo width={48} height={48} style={styles.logo} />
+              </View>
+            )}
+          />
+        </View>
 
-            <ScrollView
-              horizontal
-              ref={(ref) => {
-                rowScrollRefs.current[index] = ref;
-              }}
-              showsHorizontalScrollIndicator={false}
-              scrollEventThrottle={8}
-              onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
-                syncScroll(e.nativeEvent.contentOffset.x);
-              }}
-              onScrollBeginDrag={() => setIsHorizontalScrolling(true)}
-              onScrollEndDrag={() => setIsHorizontalScrolling(false)}
-              onMomentumScrollEnd={() => setIsHorizontalScrolling(false)}
-              directionalLockEnabled={true}
-              bounces={false}
-              nestedScrollEnabled={true}
-              style={styles.rowScrollView}
-            >
+        {/* 오른쪽 스크롤 영역 (데이터) */}
+        <ScrollView
+          horizontal
+          ref={dataScrollRef}
+          showsHorizontalScrollIndicator={false}
+          // scrollEventThrottle={3}
+          onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+            syncScroll(e.nativeEvent.contentOffset.x);
+          }}
+          onScrollBeginDrag={() => setIsHorizontalScrolling(true)}
+          onScrollEndDrag={() => setIsHorizontalScrolling(false)}
+          onMomentumScrollEnd={() => setIsHorizontalScrolling(false)}
+          directionalLockEnabled={true}
+          bounces={false}
+          style={styles.dataScrollView}
+        >
+          <FlatList
+            ref={rightFlatListRef}
+            data={companies}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={!isHorizontalScrolling}
+            scrollEventThrottle={16}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={10}
+            windowSize={10}
+            onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+              syncVerticalScroll(e.nativeEvent.contentOffset.y);
+            }}
+            nestedScrollEnabled={true}
+            renderItem={({ item }) => (
               <View style={styles.dataRow}>
                 <Text style={styles.dataText}>{item.currentPrice}</Text>
                 <Text style={styles.dataText}>{item.openPrice}</Text>
                 <Text style={styles.dataText}>{item.volume}</Text>
                 <Text style={styles.dataText}>{item.sma}</Text>
               </View>
-            </ScrollView>
-          </View>
-        )}
-      />
+            )}
+          />
+        </ScrollView>
+      </View>
     </View>
   );
 }
@@ -269,9 +359,8 @@ const styles = StyleSheet.create({
   },
   tagText: { fontSize: 12, fontFamily: "Pretendard" },
 
-  tableRow: {
+  tableHeaderRow: {
     flexDirection: "row",
-    alignItems: "center",
     borderBottomWidth: 1,
     borderColor: "#F5F6F8",
     paddingHorizontal: 22,
@@ -279,14 +368,15 @@ const styles = StyleSheet.create({
   },
   fixedColumn: {
     width: 100,
-    flexDirection: "row",
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
   },
-  rowScrollView: {
+  headerScrollView: {
     flex: 1,
   },
-  tableHeader: { flexDirection: "row" },
+  tableHeader: {
+    flexDirection: "row",
+  },
   headerText: {
     width: 100,
     fontSize: 15,
@@ -294,8 +384,38 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "Pretendard",
   },
-  logo: { width: 30, height: 30, resizeMode: "contain" },
-  dataRow: { flexDirection: "row" },
+
+  tableBody: {
+    flex: 1,
+    flexDirection: "row",
+    paddingHorizontal: 22,
+  },
+  fixedColumnContainer: {
+    width: 100,
+  },
+  fixedCell: {
+    height: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderColor: "#F5F6F8",
+  },
+  logo: {
+    width: 30,
+    height: 30,
+    resizeMode: "contain",
+  },
+
+  dataScrollView: {
+    flex: 1,
+  },
+  dataRow: {
+    height: 60,
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderColor: "#F5F6F8",
+  },
   dataText: {
     width: 100,
     fontSize: 13,
