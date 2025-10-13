@@ -64,6 +64,18 @@ export default function TabLayout() {
             {children}
           </Typography>
         ),
+
+        tabBarStyle: {
+          paddingTop: 8,
+          paddingBottom: 12,
+          borderTopLeftRadius: 30,
+          borderTopRightRadius: 30,
+          borderTopWidth: 1,
+          borderLeftWidth: 1,
+          borderRightWidth: 1,
+          borderColor: "#E5E5E5",
+          backgroundColor: "#fff",
+        },
       }}
     >
       <Tabs.Screen
