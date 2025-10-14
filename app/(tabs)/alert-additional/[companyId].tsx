@@ -1,4 +1,3 @@
-import BasePriceConditionCard from "@/components/add-card/baseprice/base-price-condition";
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
 import CurrentStatusCard from "@/components/add-card/current-status";
 import PriceConditionCard from "@/components/add-card/price/price-condition";
@@ -138,8 +137,8 @@ export default function CompanyAlertDetail() {
       />
       <View style={styles.divider} />
       <PriceConditionCard />
-      <Week52ConditionCard />
-      <BasePriceConditionCard />
+      <Week52ConditionCard onTempSave={handleTempSave} />
+
       <VolumeConditionCard />
       <SMAConditionCard onTempSave={handleTempSave} />
 

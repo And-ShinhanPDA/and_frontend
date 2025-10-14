@@ -24,7 +24,7 @@ if (
 export default function BollingerBandConditionCard({
   onTempSave,
 }: {
-  onTempSave: (id: string, data: any) => void;
+  onTempSave: (id: string, getter: () => any[]) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
@@ -39,7 +39,6 @@ export default function BollingerBandConditionCard({
     setConditionData(data);
     setHasCondition(true);
     setIsOpen(false);
-
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
   };
@@ -47,34 +46,29 @@ export default function BollingerBandConditionCard({
   useEffect(() => {
     const getCondition = () => {
       if (!conditionData) return [];
-      const indicators: any[] = [];
-      if (conditionData.upper)
-        indicators.push({ indicator: "BOLLINGER_UPPER_TOUCH" });
-      if (conditionData.lower)
-        indicators.push({ indicator: "BOLLINGER_LOWER_TOUCH" });
-      return indicators;
+
+      const list: any[] = [];
+
+      if (conditionData.upper) {
+        list.push({
+          indicator: "BOLLINGER_UPPER_TOUCH",
+          threshold: null,
+        });
+      }
+
+      if (conditionData.lower) {
+        list.push({
+          indicator: "BOLLINGER_LOWER_TOUCH",
+          threshold: null,
+        });
+      }
+
+      console.log("최종 볼린저밴드 payload:", list);
+      return list;
     };
+
     onTempSave("bollinger", getCondition);
   }, [conditionData]);
-
-  // if (data.upper) {
-  //   indicators.push({
-  //     indicator: "BOLLINGER_UPPER_TOUCH",
-  //     threshold: null,
-  //     threshold2: null,
-  //   });
-  // }
-
-  // if (data.lower) {
-  //   indicators.push({
-  //     indicator: "BOLLINGER_LOWER_TOUCH",
-  //     threshold: null,
-  //     threshold2: null,
-  //   });
-  // }
-
-  // // ✅ CompanyAlertDetail로 전달
-  // onConditionChange(indicators);
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -99,7 +93,6 @@ export default function BollingerBandConditionCard({
           {expanded && conditionData && (
             <>
               <View style={styles.divider} />
-
               {conditionData.upper && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>
@@ -108,11 +101,12 @@ export default function BollingerBandConditionCard({
                   <Text style={styles.desc}>상단 볼린저 밴드 (20, 2) 상회</Text>
                 </View>
               )}
-
               {conditionData.lower && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>약세 신호 경고</Text>
-                  <Text style={styles.desc}>하단 볼린저 밴드 (20, 2) 상회</Text>
+                  <Text style={styles.sectionTitle}>
+                    볼린저 밴드 약세 신호 경고
+                  </Text>
+                  <Text style={styles.desc}>하단 볼린저 밴드 (20, 2) 하회</Text>
                 </View>
               )}
             </>

@@ -112,11 +112,15 @@ export default function SMAConditionCard({
                   <Text style={styles.sectionTitle}>SMA 목표 가격 알림</Text>
                   <Text style={styles.desc}>
                     {`${conditionData.target.indicator
-                      .replace("SMA_", "")
-                      .replace("_UP", "일 이상")
-                      .replace("_DOWN", "일 이하")} - ${
+                      .replace("SMA_", "SMA")
+                      .replace("_UP", "") // "SMA_30_UP" → "SMA30"
+                      .replace("_DOWN", "")} ${
                       conditionData.target.threshold
-                    }원`}
+                    }원 ${
+                      conditionData.target.indicator.includes("_UP")
+                        ? "이상"
+                        : "이하"
+                    }`}
                   </Text>
                 </View>
               )}
