@@ -232,7 +232,7 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="chart/index"
+        name="(chart)/index"
         options={{
           title: "차트",
           tabBarLabel: ({ focused }) => (
@@ -258,7 +258,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="chart/[chartId]"
+        name="(chart)/(chart-detail)/[id]"
         options={{
           href: null,
         }}

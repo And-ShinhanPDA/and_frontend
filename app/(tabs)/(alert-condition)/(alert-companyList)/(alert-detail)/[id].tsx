@@ -2,8 +2,6 @@ import Arrow from "@/assets/images/arrow.svg";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Image,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,100 +10,140 @@ import {
   View,
 } from "react-native";
 
+import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
 import PriceConditionSimpleCard from "@/components/add-card/price/price-simple";
+import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
+import SMAConditionCard from "@/components/add-card/sma/sma-condition";
+import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
+import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
+import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
+import PresetSelect from "@/components/preset/preset-select";
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
 
-import { Typography } from "@/components/ui/Typography";
-
-export default function ConditionAlertDetail() {
+export default function ConditionAdditionalDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-
+  const { accessToken } = useAuth();
   const [isPresetOpen, setIsPresetOpen] = useState(false);
 
   const tabs = ["제목", "가격", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
 
+  const [conditionGetters, setConditionGetters] = useState<{
+    [k: string]: () => any[];
+  }>({});
+
+  const handleTempSave = (id: string, getter: () => any[]) => {
+    setConditionGetters((prev) => ({ ...prev, [id]: getter }));
+  };
+
+  const handleSave = async () => {
+    try {
+      if (!accessToken) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+
+      const mergedConditions = Object.values(conditionGetters)
+        .map((fn) => fn())
+        .flat()
+        .filter(
+          (c) =>
+            c && c.indicator && (c.threshold === null || !isNaN(c.threshold))
+        );
+
+      const payload = {
+        stockCode: "005930",
+        title: "알람1번조건",
+        isActive: true,
+        isPreset: false,
+        conditions: mergedConditions,
+      };
+
+      const res = await alertService.createAlert(payload, accessToken);
+      console.log("알림 등록 성공:", res);
+      alert("알림이 성공적으로 등록되었습니다!");
+      router.back();
+    } catch (error: any) {
+      console.error("알림 등록 실패:", error);
+      if (error.response?.status === 401) {
+        alert("로그인 세션이 만료되었습니다. 다시 로그인 해주세요.");
+      } else {
+        alert("알림 등록 중 오류가 발생했습니다.");
+      }
+    }
+  };
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() =>
+            router.push("/(tabs)/(alert-condition)/alert-condition")
+          }
         >
-          <Arrow width={22} height={22} />
+          <Arrow width={24} height={24} />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>조건 알림 상세 화면</Text>
-
-        <View style={styles.rightButtons}>
-          <Pressable
-            onPress={() => console.log("프리셋으로 추가 버튼")}
-            style={styles.presetHeaderButton}
-          >
-            <Image
-              source={require("@/assets/images/preset.png")}
-              style={{ width: 12, height: 12, marginRight: 3 }}
-              resizeMode="contain"
-            />
-            <Typography weight="400" size={12} style={{ color: "#4CC53A" }}>
-              프리셋으로 추가
-            </Typography>
-          </Pressable>
-
-          <TouchableOpacity
-            onPress={() =>
-              router.push("/(tabs)/condition-alertDetail/modify/[modifyID]")
-            }
-            style={styles.modifyButton}
-          >
-            <Image
-              source={require("@/assets/images/alert/modify.png")}
-              style={{ width: 16, height: 16 }}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.headerTitle}>조건 알림 추가</Text>
       </View>
 
-      {/* 탭 */}
-      <View style={styles.tabBarContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabBarContent}
-        >
-          {tabs.map((tab, idx) => (
-            <TouchableOpacity key={idx} style={styles.tabItem}>
-              <Text style={styles.tabText}>{tab}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        <View style={styles.tabBarBorder} />
-      </View>
-
+      {/* 탭  */}
       <ScrollView
-        style={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContentContainer}
+        style={styles.tabBar}
+        horizontal
+        showsHorizontalScrollIndicator={false}
       >
-        {/* 제목*/}
-        <TextInput
-          style={styles.titleInput}
-          placeholder="이 조건을 대표할 수 있는 한 줄 제목"
-          placeholderTextColor="#A4A4A4"
-        />
-
-        <View style={styles.divider} />
-
-        {/* 조건 카드 */}
-        <PriceConditionSimpleCard />
-        {/* <Week52ConditionCard />
-        <VolumeConditionCard />
-        <SMAConditionCard />
-        <RSIConditionCard />
-        <BollingerBandCondition /> */}
+        {tabs.map((tab, idx) => (
+          <TouchableOpacity key={idx} style={styles.tabItem}>
+            <Text style={styles.tabText}>{tab}</Text>
+          </TouchableOpacity>
+        ))}
       </ScrollView>
-    </View>
+
+      {/* 제목*/}
+      <TextInput
+        style={styles.titleInput}
+        placeholder="이 조건을 대표할 수 있는 한 줄 제목"
+        placeholderTextColor="#A4A4A4"
+      />
+
+      <View style={styles.divider} />
+
+      {/* 조건 카드 */}
+      <PriceConditionSimpleCard />
+      <Week52ConditionCard onTempSave={handleTempSave} />
+
+      <VolumeConditionCard onTempSave={handleTempSave} />
+      <SMAConditionCard onTempSave={handleTempSave} />
+
+      <RSIConditionCard onTempSave={handleTempSave} />
+      <BollingerBandCondition onTempSave={handleTempSave} />
+
+      {/* 하단 버튼 */}
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.presetButton}
+          onPress={() => setIsPresetOpen(true)}
+        >
+          <Text style={styles.presetText}>프리셋</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <Text style={styles.saveText}>저장</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* 프리셋 */}
+      <ConditionBottomSheet
+        visible={isPresetOpen}
+        onClose={() => setIsPresetOpen(false)}
+        ratio={0.8}
+      >
+        <PresetSelect onClose={() => setIsPresetOpen(false)} />
+      </ConditionBottomSheet>
+    </ScrollView>
   );
 }
 
@@ -113,79 +151,41 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    paddingHorizontal: 16,
     paddingTop: 60,
   },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 12,
-    marginBottom: 20,
-    paddingHorizontal: 16,
-  },
-  leftSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 1,
+    justifyContent: "center",
+    marginBottom: 12,
   },
   backButton: {
-    width: 24,
-    height: 24,
-    justifyContent: "center",
-    alignItems: "center",
+    position: "absolute",
+    left: 0,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "600",
+    textAlign: "center",
     color: "#111",
   },
-  rightButtons: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-  },
-  presetHeaderButton: {
-    backgroundColor: "rgba(76, 197, 58, 0.15)",
-    borderRadius: 7,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-  },
-  modifyButton: {
-    width: 24,
-    height: 24,
-    justifyContent: "center",
-    alignItems: "center",
-  },
 
-  tabBarContainer: {
-    position: "relative",
+  tabBar: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E5E5",
+    paddingVertical: 8,
     marginBottom: 10,
   },
-  tabBarContent: {
-    paddingHorizontal: 16,
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  tabBarBorder: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: "#E5E5E5",
-  },
   tabItem: {
-    marginRight: 20,
-    paddingVertical: 4,
+    marginRight: 16,
   },
   tabText: {
     fontSize: 15,
     fontWeight: "500",
     color: "#333",
-    lineHeight: 20,
   },
 
   titleInput: {
@@ -205,29 +205,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F6F8",
     marginVertical: 10,
     marginHorizontal: -16,
-    width: "100%",
-    alignSelf: "stretch",
-  },
-
-  scrollContent: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-
-  scrollContentContainer: {
-    paddingBottom: 20,
   },
 
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#E5E5E5",
-    elevation: 5,
-    paddingBottom: 30,
+    marginTop: 24,
+    marginBottom: 40,
   },
   presetButton: {
     flex: 1,

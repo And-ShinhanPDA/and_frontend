@@ -215,7 +215,11 @@ export default function AlertConditionDetail() {
 
         <View style={styles.conditionRight}>
           <TouchableOpacity
-            onPress={() => router.push("/(tabs)/condition-alertDetail/[id]")}
+            onPress={() =>
+              router.push(
+                "/(tabs)/(alert-condition)/(alert-companyList)/(alert-detail)/[id]"
+              )
+            }
           >
             <Image
               source={require("@/assets/images/alert/company_search.png")}
