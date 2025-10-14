@@ -41,6 +41,14 @@ export default function CompanyAlertDetail() {
   const [title, setTitle] = useState("");
   const [conditions, setConditions] = useState<any[]>([]);
 
+  const [conditionGetters, setConditionGetters] = useState<{
+    [k: string]: () => any[];
+  }>({});
+
+  const handleTempSave = (id: string, getter: () => any[]) => {
+    setConditionGetters((prev) => ({ ...prev, [id]: getter }));
+  };
+
   const handleSave = async () => {
     try {
       if (!accessToken) {
@@ -48,20 +56,28 @@ export default function CompanyAlertDetail() {
         return;
       }
 
+      const mergedConditions = Object.values(conditionGetters)
+        .map((fn) => fn())
+        .flat()
+        .filter(
+          (c) =>
+            c && c.indicator && (c.threshold === null || !isNaN(c.threshold))
+        );
+
       const payload = {
         stockCode: "005930",
         title: title || `${name}`,
         isActive: true,
         isPreset: false,
-        conditions: conditions,
+        conditions: mergedConditions,
       };
 
       const res = await alertService.createAlert(payload, accessToken);
-      console.log("✅ 알림 등록 성공:", res);
+      console.log("알림 등록 성공:", res);
       alert("알림이 성공적으로 등록되었습니다!");
       router.back();
     } catch (error: any) {
-      console.error("❌ 알림 등록 실패:", error);
+      console.error("알림 등록 실패:", error);
       if (error.response?.status === 401) {
         alert("로그인 세션이 만료되었습니다. 다시 로그인 해주세요.");
       } else {
@@ -69,6 +85,7 @@ export default function CompanyAlertDetail() {
       }
     }
   };
+
   const [expanded, setExpanded] = useState(false);
   return (
     <ScrollView style={styles.container}>
@@ -124,29 +141,10 @@ export default function CompanyAlertDetail() {
       <Week52ConditionCard />
       <BasePriceConditionCard />
       <VolumeConditionCard />
-      <SMAConditionCard />
-      <RSIConditionCard
-        onConditionChange={(data) =>
-          setConditions((prev) => {
-            const newItems = Array.isArray(data) ? data : [data];
-            const filtered = prev.filter(
-              (p) => !newItems.some((n) => n.indicator === p.indicator)
-            );
-            return [...filtered, ...newItems];
-          })
-        }
-      />
-      <BollingerBandCondition
-        onConditionChange={(data) =>
-          setConditions((prev) => {
-            const newItems = Array.isArray(data) ? data : [data];
-            const filtered = prev.filter(
-              (p) => !newItems.some((n) => n.indicator === p.indicator)
-            );
-            return [...filtered, ...newItems];
-          })
-        }
-      />
+      <SMAConditionCard onTempSave={handleTempSave} />
+
+      <RSIConditionCard onTempSave={handleTempSave} />
+      <BollingerBandCondition onTempSave={handleTempSave} />
 
       {/* 하단 버튼 */}
       <View style={styles.footer}>

@@ -1,7 +1,6 @@
 import ConditionSection from "@/components/condition/condition-section";
 import { RSI_SECTION_DESCRIPTIONS } from "@/components/condition/constants";
-import useConditionRows from "@/hooks/use-condition-rows";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   LayoutAnimation,
   ScrollView,
@@ -13,44 +12,34 @@ import {
 
 export default function RSIConditionContent({
   onConfirm,
+  initialValue,
 }: {
   onConfirm: (data: any) => void;
+  initialValue?: { overbought: boolean; oversold: boolean } | null;
 }) {
   const [toggles, setToggles] = useState({
-    target: false,
     overbought: false,
     oversold: false,
   });
+
+  useEffect(() => {
+    if (initialValue) {
+      setToggles({
+        overbought: !!initialValue.overbought,
+        oversold: !!initialValue.oversold,
+      });
+    } else {
+      setToggles({ overbought: false, oversold: false });
+    }
+  }, [initialValue]);
 
   const toggle = (key: keyof typeof toggles) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setToggles((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // RSI 목표 지수
-  const targetRows = useConditionRows<
-    { id: number; filled: boolean; value: string; comparison: "이상" | "이하" },
-    { value: string; comparison: "이상" | "이하" }
-  >({
-    initial: { filled: false, value: "", comparison: "이상" },
-    updateFn: (prev, data) => ({
-      ...prev,
-      filled: data.value.trim() !== "",
-      value: data.value,
-      comparison: data.comparison,
-    }),
-  });
-
   const handleConfirmPress = () => {
-    onConfirm({
-      target: toggles.target
-        ? targetRows.rows
-            .filter((r) => r.filled)
-            .map(({ value, comparison }) => ({ value, comparison }))
-        : [],
-      overbought: toggles.overbought,
-      oversold: toggles.oversold,
-    });
+    onConfirm({ ...toggles });
   };
 
   return (
@@ -87,7 +76,7 @@ export default function RSIConditionContent({
         <TouchableOpacity
           style={styles.resetButton}
           onPress={() => {
-            setToggles({ target: false, overbought: false, oversold: false });
+            setToggles({ overbought: false, oversold: false });
           }}
         >
           <Text style={styles.resetText}>초기화</Text>

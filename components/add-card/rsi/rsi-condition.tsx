@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   LayoutAnimation,
   Platform,
@@ -22,16 +22,19 @@ if (
 }
 
 export default function RSIConditionCard({
-  onConditionChange,
+  onTempSave,
 }: {
-  onConditionChange: (c: any) => void;
+  onTempSave: (id: string, getter: () => any[]) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
-  const [conditionData, setConditionData] = useState<any>(null);
+  const [conditionData, setConditionData] = useState<{
+    overbought: boolean;
+    oversold: boolean;
+  } | null>(null);
   const [expanded, setExpanded] = useState(false);
 
-  const handleConfirm = (data: any) => {
+  const handleConfirm = (data: { overbought: boolean; oversold: boolean }) => {
     console.log("RSI 조건 입력:", data);
     setConditionData(data);
     setHasCondition(true);
@@ -39,28 +42,29 @@ export default function RSIConditionCard({
 
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
-
-    const indicators: any[] = [];
-
-    // 과매수 경고
-    if (data.overbought) {
-      indicators.push({
-        indicator: "RSI_OVER",
-        threshold: 70,
-        threshold2: null,
-      });
-    }
-
-    // 과매도 경고
-    if (data.oversold) {
-      indicators.push({
-        indicator: "RSI_UNDER",
-        threshold: 30,
-        threshold2: null,
-      });
-    }
-    onConditionChange(indicators);
   };
+
+  useEffect(() => {
+    const getCondition = () => {
+      if (!conditionData) return [];
+
+      const list: any[] = [];
+      if (conditionData.overbought)
+        list.push({
+          indicator: "RSI_OVER",
+          threshold: 70,
+          threshold2: null,
+        });
+      if (conditionData.oversold)
+        list.push({
+          indicator: "RSI_UNDER",
+          threshold: 30,
+          threshold2: null,
+        });
+      return list;
+    };
+    onTempSave("rsi", getCondition);
+  }, [conditionData]);
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -109,9 +113,12 @@ export default function RSIConditionCard({
       <ConditionBottomSheet
         visible={isOpen}
         onClose={() => setIsOpen(false)}
-        ratio={0.55}
+        ratio={0.45}
       >
-        <RSIConditionContent onConfirm={handleConfirm} />
+        <RSIConditionContent
+          onConfirm={handleConfirm}
+          initialValue={conditionData}
+        />
       </ConditionBottomSheet>
     </>
   );

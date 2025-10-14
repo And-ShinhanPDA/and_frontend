@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   LayoutAnimation,
   Platform,
@@ -22,13 +22,16 @@ if (
 }
 
 export default function BollingerBandConditionCard({
-  onConditionChange,
+  onTempSave,
 }: {
-  onConditionChange: (c: any) => void;
+  onTempSave: (id: string, data: any) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
-  const [conditionData, setConditionData] = useState<any>(null);
+  const [conditionData, setConditionData] = useState<{
+    upper: boolean;
+    lower: boolean;
+  } | null>(null);
   const [expanded, setExpanded] = useState(false);
 
   const handleConfirm = (data: { upper: boolean; lower: boolean }) => {
@@ -39,28 +42,39 @@ export default function BollingerBandConditionCard({
 
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
-
-    const indicators: any[] = [];
-
-    if (data.upper) {
-      indicators.push({
-        indicator: "BOLLINGER_UPPER_TOUCH",
-        threshold: null,
-        threshold2: null,
-      });
-    }
-
-    if (data.lower) {
-      indicators.push({
-        indicator: "BOLLINGER_LOWER_TOUCH",
-        threshold: null,
-        threshold2: null,
-      });
-    }
-
-    // ✅ CompanyAlertDetail로 전달
-    onConditionChange(indicators);
   };
+
+  useEffect(() => {
+    const getCondition = () => {
+      if (!conditionData) return [];
+      const indicators: any[] = [];
+      if (conditionData.upper)
+        indicators.push({ indicator: "BOLLINGER_UPPER_TOUCH" });
+      if (conditionData.lower)
+        indicators.push({ indicator: "BOLLINGER_LOWER_TOUCH" });
+      return indicators;
+    };
+    onTempSave("bollinger", getCondition);
+  }, [conditionData]);
+
+  // if (data.upper) {
+  //   indicators.push({
+  //     indicator: "BOLLINGER_UPPER_TOUCH",
+  //     threshold: null,
+  //     threshold2: null,
+  //   });
+  // }
+
+  // if (data.lower) {
+  //   indicators.push({
+  //     indicator: "BOLLINGER_LOWER_TOUCH",
+  //     threshold: null,
+  //     threshold2: null,
+  //   });
+  // }
+
+  // // ✅ CompanyAlertDetail로 전달
+  // onConditionChange(indicators);
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -111,7 +125,10 @@ export default function BollingerBandConditionCard({
         onClose={() => setIsOpen(false)}
         ratio={0.45}
       >
-        <BollingerBandConditionContent onConfirm={handleConfirm} />
+        <BollingerBandConditionContent
+          onConfirm={handleConfirm}
+          initialValue={conditionData}
+        />
       </ConditionBottomSheet>
     </>
   );
