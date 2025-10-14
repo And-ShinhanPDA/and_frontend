@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   LayoutAnimation,
   Platform,
@@ -21,7 +21,11 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function SMAConditionCard() {
+export default function SMAConditionCard({
+  onTempSave,
+}: {
+  onTempSave: (id: string, getter: () => any[]) => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [conditionData, setConditionData] = useState<any>(null);
@@ -36,6 +40,47 @@ export default function SMAConditionCard() {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
   };
+
+  useEffect(() => {
+    const getCondition = () => {
+      if (!conditionData) return [];
+
+      const list: any[] = [];
+
+      // SMA 목표가 알림
+      if (
+        conditionData.target &&
+        conditionData.target.indicator &&
+        !isNaN(Number(conditionData.target.threshold))
+      ) {
+        list.push({
+          indicator: conditionData.target.indicator,
+          threshold: Number(conditionData.target.threshold),
+        });
+      }
+
+      // 단기선이 장기선을 돌파
+      if (conditionData.shortCross) {
+        list.push({
+          indicator: "GOLDEN_CROSS",
+          threshold: null,
+        });
+      }
+
+      // 장기선이 단기선을 누름
+      if (conditionData.longCross) {
+        list.push({
+          indicator: "DEAD_CROSS",
+          threshold: null,
+        });
+      }
+
+      console.log("📤 최종 SMA payload:", list);
+      return list;
+    };
+
+    onTempSave("sma", getCondition);
+  }, [conditionData]);
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -61,23 +106,26 @@ export default function SMAConditionCard() {
             <>
               <View style={styles.divider} />
 
-              {Array.isArray(conditionData.target) &&
-                conditionData.target.length > 0 && (
-                  <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>SMA 목표 가격 알림</Text>
-                    {conditionData.target.map(
-                      (
-                        item: { value: string; period: string },
-                        idx: number
-                      ) => (
-                        <Text key={idx} style={styles.desc}>
-                          {`${item.period} SMA 목표가 ${item.value}원`}
-                        </Text>
-                      )
-                    )}
-                  </View>
-                )}
+              {/* SMA 목표 가격 알림 표시 */}
+              {conditionData.target && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>SMA 목표 가격 알림</Text>
+                  <Text style={styles.desc}>
+                    {`${conditionData.target.indicator
+                      .replace("SMA_", "SMA")
+                      .replace("_UP", "") // "SMA_30_UP" → "SMA30"
+                      .replace("_DOWN", "")} ${
+                      conditionData.target.threshold
+                    }원 ${
+                      conditionData.target.indicator.includes("_UP")
+                        ? "이상"
+                        : "이하"
+                    }`}
+                  </Text>
+                </View>
+              )}
 
+              {/* 단기선이 장기선을 돌파 */}
               {conditionData.shortCross && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>
@@ -86,6 +134,7 @@ export default function SMAConditionCard() {
                 </View>
               )}
 
+              {/* 장기선이 단기선을 누름 */}
               {conditionData.longCross && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>
@@ -103,7 +152,10 @@ export default function SMAConditionCard() {
         onClose={() => setIsOpen(false)}
         ratio={0.55}
       >
-        <SMAConditionContent onConfirm={handleConfirm} />
+        <SMAConditionContent
+          onConfirm={handleConfirm}
+          initialValue={conditionData}
+        />
       </ConditionBottomSheet>
     </>
   );

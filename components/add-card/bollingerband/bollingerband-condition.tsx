@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   LayoutAnimation,
   Platform,
@@ -21,21 +21,54 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function BollingerBandConditionCard() {
+export default function BollingerBandConditionCard({
+  onTempSave,
+}: {
+  onTempSave: (id: string, getter: () => any[]) => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
-  const [conditionData, setConditionData] = useState<any>(null);
+  const [conditionData, setConditionData] = useState<{
+    upper: boolean;
+    lower: boolean;
+  } | null>(null);
   const [expanded, setExpanded] = useState(false);
 
-  const handleConfirm = (data: any) => {
+  const handleConfirm = (data: { upper: boolean; lower: boolean }) => {
     console.log("볼린저밴드 조건 입력:", data);
     setConditionData(data);
     setHasCondition(true);
     setIsOpen(false);
-
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
   };
+
+  useEffect(() => {
+    const getCondition = () => {
+      if (!conditionData) return [];
+
+      const list: any[] = [];
+
+      if (conditionData.upper) {
+        list.push({
+          indicator: "BOLLINGER_UPPER_TOUCH",
+          threshold: null,
+        });
+      }
+
+      if (conditionData.lower) {
+        list.push({
+          indicator: "BOLLINGER_LOWER_TOUCH",
+          threshold: null,
+        });
+      }
+
+      console.log("최종 볼린저밴드 payload:", list);
+      return list;
+    };
+
+    onTempSave("bollinger", getCondition);
+  }, [conditionData]);
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -60,22 +93,20 @@ export default function BollingerBandConditionCard() {
           {expanded && conditionData && (
             <>
               <View style={styles.divider} />
-
               {conditionData.upper && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>
                     볼린저 밴드 강세 신호 경고
                   </Text>
-                  <Text style={styles.desc}>상단 밴드(20,2) 상회</Text>
+                  <Text style={styles.desc}>상단 볼린저 밴드 (20, 2) 상회</Text>
                 </View>
               )}
-
               {conditionData.lower && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>
-                    볼린저 밴드 하락 신호 경고
+                    볼린저 밴드 약세 신호 경고
                   </Text>
-                  <Text style={styles.desc}>하단 밴드(20,2) 하회</Text>
+                  <Text style={styles.desc}>하단 볼린저 밴드 (20, 2) 하회</Text>
                 </View>
               )}
             </>
@@ -88,7 +119,10 @@ export default function BollingerBandConditionCard() {
         onClose={() => setIsOpen(false)}
         ratio={0.45}
       >
-        <BollingerBandConditionContent onConfirm={handleConfirm} />
+        <BollingerBandConditionContent
+          onConfirm={handleConfirm}
+          initialValue={conditionData}
+        />
       </ConditionBottomSheet>
     </>
   );

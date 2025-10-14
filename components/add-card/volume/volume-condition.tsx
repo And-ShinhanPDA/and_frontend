@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   LayoutAnimation,
   Platform,
@@ -21,7 +21,11 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function VolumeConditionCard() {
+export default function VolumeConditionCard({
+  onTempSave,
+}: {
+  onTempSave: (id: string, getter: () => any[]) => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [conditionData, setConditionData] = useState<any>(null);
@@ -32,10 +36,54 @@ export default function VolumeConditionCard() {
     setConditionData(data);
     setHasCondition(true);
     setIsOpen(false);
-
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
   };
+
+  useEffect(() => {
+    const getCondition = () => {
+      if (!conditionData) return [];
+
+      const list: any[] = [];
+
+      // 평균 거래량 대비 상승
+      if (conditionData.avgRise) {
+        list.push({
+          indicator: "VOLUME_AVG_DEV_UP",
+          threshold: Number(conditionData.avgRise),
+        });
+      }
+
+      // 평균 거래량 대비 하락
+      if (conditionData.avgDrop) {
+        list.push({
+          indicator: "VOLUME_AVG_DEV_DOWN",
+          threshold: Number(conditionData.avgDrop),
+        });
+      }
+
+      // 전일 대비 거래량 급증
+      if (conditionData.spike) {
+        list.push({
+          indicator: "VOLUME_CHANGE_PERCENT_UP",
+          threshold: 20,
+        });
+      }
+
+      // 전일 대비 거래량 감소
+      if (conditionData.drop) {
+        list.push({
+          indicator: "VOLUME_CHANGE_PERCENT_DOWN",
+          threshold: 20,
+        });
+      }
+
+      console.log("최종 거래량 payload:", list);
+      return list;
+    };
+
+    onTempSave("volume", getCondition);
+  }, [conditionData]);
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -61,35 +109,23 @@ export default function VolumeConditionCard() {
             <>
               <View style={styles.divider} />
 
-              {/* 전일 거래량 대비 */}
-              {conditionData.prevChange?.length > 0 && (
+              {/* 평균 거래량 대비 상승 */}
+              {conditionData.avgRise && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>전일 거래량 대비</Text>
-                  {conditionData.prevChange.map((item: any, idx: number) => (
-                    <View key={idx} style={styles.row}>
-                      <Text style={styles.label}>변동 기준</Text>
-                      <Text style={styles.value}>
-                        {item.sign}
-                        {item.value}%
-                      </Text>
-                    </View>
-                  ))}
+                  <Text style={styles.sectionTitle}>평균 거래량 대비 상승</Text>
+                  <Text style={styles.desc}>
+                    평균 대비 +{conditionData.avgRise}% 이상
+                  </Text>
                 </View>
               )}
 
-              {/* 평균 거래량 대비 */}
-              {conditionData.avgChange?.length > 0 && (
+              {/* 평균 거래량 대비 하락 */}
+              {conditionData.avgDrop && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>평균 거래량 대비</Text>
-                  {conditionData.avgChange.map((item: any, idx: number) => (
-                    <View key={idx} style={styles.row}>
-                      <Text style={styles.label}>변동 기준</Text>
-                      <Text style={styles.value}>
-                        {item.sign}
-                        {item.value}%
-                      </Text>
-                    </View>
-                  ))}
+                  <Text style={styles.sectionTitle}>평균 거래량 대비 하락</Text>
+                  <Text style={styles.desc}>
+                    평균 대비 -{conditionData.avgDrop}% 이하
+                  </Text>
                 </View>
               )}
 
@@ -120,9 +156,12 @@ export default function VolumeConditionCard() {
       <ConditionBottomSheet
         visible={isOpen}
         onClose={() => setIsOpen(false)}
-        ratio={0.75}
+        ratio={0.7}
       >
-        <VolumeConditionContent onConfirm={handleConfirm} />
+        <VolumeConditionContent
+          onConfirm={handleConfirm}
+          initialValue={conditionData || null}
+        />
       </ConditionBottomSheet>
     </>
   );
@@ -154,12 +193,4 @@ const styles = StyleSheet.create({
   section: { marginBottom: 8 },
   sectionTitle: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
   desc: { fontSize: 13, color: "#666", marginLeft: 4 },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  label: { fontSize: 13, color: "#333" },
-  value: { fontSize: 13, color: "#000", fontWeight: "500" },
 });

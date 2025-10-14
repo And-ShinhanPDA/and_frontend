@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   LayoutAnimation,
   Platform,
@@ -21,7 +21,11 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function Week52ConditionCard() {
+export default function Week52ConditionCard({
+  onTempSave,
+}: {
+  onTempSave: (id: string, getter: () => any[]) => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [conditionData, setConditionData] = useState<any>(null);
@@ -32,7 +36,6 @@ export default function Week52ConditionCard() {
     setConditionData(data);
     setHasCondition(true);
     setIsOpen(false);
-
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
   };
@@ -41,6 +44,57 @@ export default function Week52ConditionCard() {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded((prev) => !prev);
   };
+
+  useEffect(() => {
+    const getCondition = () => {
+      if (!conditionData) return [];
+
+      const list: any[] = [];
+
+      // 52주 최고가 이상
+      if (conditionData.highAlert) {
+        list.push({
+          indicator: "HIGH_52W",
+          threshold: null,
+        });
+      }
+
+      // 52주 최저가 이하
+      if (conditionData.lowAlert) {
+        list.push({
+          indicator: "LOW_52W",
+          threshold: null,
+        });
+      }
+
+      // 52주 최고가 근접 (설정값 존재 시)
+      if (
+        conditionData.highProximity &&
+        !isNaN(Number(conditionData.highProximity.value))
+      ) {
+        list.push({
+          indicator: "NEAR_HIGH_52W",
+          threshold: Number(conditionData.highProximity.value),
+        });
+      }
+
+      // 52주 최저가 근접 (설정값 존재 시)
+      if (
+        conditionData.lowProximity &&
+        !isNaN(Number(conditionData.lowProximity.value))
+      ) {
+        list.push({
+          indicator: "NEAR_LOW_52W",
+          threshold: Number(conditionData.lowProximity.value),
+        });
+      }
+
+      console.log("최종 52주 payload:", list);
+      return list;
+    };
+
+    onTempSave("week52", getCondition);
+  }, [conditionData]);
 
   return (
     <>
@@ -61,7 +115,7 @@ export default function Week52ConditionCard() {
             <>
               <View style={styles.divider} />
 
-              {/* 촤고가 경보 */}
+              {/* 최고가 경보 */}
               {conditionData.highAlert && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>52주 최고가 경보</Text>
@@ -69,16 +123,13 @@ export default function Week52ConditionCard() {
                 </View>
               )}
 
-              {/* 최고가 근접 여부 */}
-              {conditionData.highProximity?.length > 0 && (
+              {/* 최고가 근접 */}
+              {conditionData.highProximity?.value && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>52주 최고가 근접 여부</Text>
-                  {conditionData.highProximity.map((item: any, idx: number) => (
-                    <View key={idx} style={styles.row}>
-                      <Text style={styles.label}>근접 기준</Text>
-                      <Text style={styles.value}>{item.value}%</Text>
-                    </View>
-                  ))}
+                  <Text style={styles.sectionTitle}>52주 최고가 근접</Text>
+                  <Text style={styles.desc}>
+                    근접 기준 {conditionData.highProximity.value}%
+                  </Text>
                 </View>
               )}
 
@@ -90,16 +141,13 @@ export default function Week52ConditionCard() {
                 </View>
               )}
 
-              {/*최저가 근접 여부 */}
-              {conditionData.lowProximity?.length > 0 && (
+              {/* 최저가 근접 */}
+              {conditionData.lowProximity?.value && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>52주 최저가 근접 여부</Text>
-                  {conditionData.lowProximity.map((item: any, idx: number) => (
-                    <View key={idx} style={styles.row}>
-                      <Text style={styles.label}>근접 기준</Text>
-                      <Text style={styles.value}>{item.value}%</Text>
-                    </View>
-                  ))}
+                  <Text style={styles.sectionTitle}>52주 최저가 근접</Text>
+                  <Text style={styles.desc}>
+                    근접 기준 {conditionData.lowProximity.value}%
+                  </Text>
                 </View>
               )}
             </>
@@ -112,7 +160,10 @@ export default function Week52ConditionCard() {
         onClose={() => setIsOpen(false)}
         ratio={0.7}
       >
-        <Week52ConditionContent onConfirm={handleConfirm} />
+        <Week52ConditionContent
+          onConfirm={handleConfirm}
+          initialValue={conditionData || null}
+        />
       </ConditionBottomSheet>
     </>
   );
@@ -144,12 +195,4 @@ const styles = StyleSheet.create({
   section: { marginBottom: 8 },
   sectionTitle: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
   desc: { fontSize: 13, color: "#666", marginLeft: 4 },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  label: { fontSize: 13, color: "#333" },
-  value: { fontSize: 13, color: "#000", fontWeight: "500" },
 });

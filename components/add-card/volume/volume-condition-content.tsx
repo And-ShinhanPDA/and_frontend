@@ -1,66 +1,62 @@
 import ConditionSection from "@/components/condition/condition-section";
 import { VOLUME_SECTION_DESCRIPTIONS } from "@/components/condition/constants";
-import useConditionRows from "@/hooks/use-condition-rows";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   LayoutAnimation,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import VolumeChangeAvgRow from "./volume-change-avg-row";
-import VolumeChangePrevRow from "./volume-change-prev-row";
+
 export default function VolumeConditionContent({
   onConfirm,
+  initialValue,
 }: {
   onConfirm: (data: any) => void;
+  initialValue?: {
+    avgRise?: string | null;
+    avgDrop?: string | null;
+    spike?: boolean;
+    drop?: boolean;
+  } | null;
 }) {
   const [toggles, setToggles] = useState({
-    prevChange: false,
-    avgChange: false,
+    avgRise: false,
+    avgDrop: false,
     spike: false,
     drop: false,
   });
+
+  const [avgRiseValue, setAvgRiseValue] = useState("");
+  const [avgDropValue, setAvgDropValue] = useState("");
+
+  useEffect(() => {
+    if (initialValue) {
+      setToggles({
+        avgRise: !!initialValue.avgRise,
+        avgDrop: !!initialValue.avgDrop,
+        spike: !!initialValue.spike,
+        drop: !!initialValue.drop,
+      });
+      setAvgRiseValue(initialValue.avgRise || "");
+      setAvgDropValue(initialValue.avgDrop || "");
+    }
+  }, [initialValue]);
 
   const toggle = (key: keyof typeof toggles) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setToggles((prev) => ({ ...prev, [key]: !prev[key] }));
   };
-  // 전일 거래량 대비
-  const prevRows = useConditionRows<
-    { id: number; filled: boolean; sign: "+" | "-"; value: string },
-    { sign: "+" | "-"; value: string }
-  >({
-    initial: { filled: false, sign: "+", value: "" },
-    updateFn: (prev, data) => ({
-      ...prev,
-      filled: data.value.trim() !== "",
-      sign: data.sign,
-      value: data.value,
-    }),
-  });
-  // 평균 거래량 대비
-  const avgRows = useConditionRows<
-    { id: number; filled: boolean; sign: "+" | "-"; value: string },
-    { sign: "+" | "-"; value: string }
-  >({
-    initial: { filled: false, sign: "+", value: "" },
-    updateFn: (prev, data) => ({
-      ...prev,
-      filled: data.value.trim() !== "",
-      sign: data.sign,
-      value: data.value,
-    }),
-  });
 
   const handleConfirmPress = () => {
     onConfirm({
-      prevChange: toggles.prevChange
-        ? prevRows.rows.filter((r) => r.filled)
-        : [],
-      avgChange: toggles.avgChange ? avgRows.rows.filter((r) => r.filled) : [],
+      avgRise:
+        toggles.avgRise && avgRiseValue.trim() !== "" ? avgRiseValue : null,
+      avgDrop:
+        toggles.avgDrop && avgDropValue.trim() !== "" ? avgDropValue : null,
       spike: toggles.spike,
       drop: toggles.drop,
     });
@@ -71,44 +67,57 @@ export default function VolumeConditionContent({
       <View style={styles.container}>
         <Text style={styles.sectionTitle}>거래량</Text>
 
+        {/* 평균 거래량 대비 상승 */}
         <ConditionSection
-          title="전일 거래량 대비"
-          description={VOLUME_SECTION_DESCRIPTIONS.PREV_CHANGE}
-          value={toggles.prevChange}
-          onToggle={() => toggle("prevChange")}
-          rows={prevRows.rows}
-          hasFilled={prevRows.hasFilled}
-          onAdd={prevRows.addRow}
-          renderRow={(r) => (
-            <VolumeChangePrevRow
-              key={r.id}
-              onRemove={() => prevRows.removeRow(r.id)}
-              onReset={() => prevRows.resetRow(r.id)}
-              onValueChange={(data) => prevRows.updateRow(r.id, data)}
-              isSingleRow={prevRows.rows.length === 1}
-            />
-          )}
-        />
-
-        <ConditionSection
-          title="평균 거래량 대비"
+          title="평균 거래량 대비 상승"
           description={VOLUME_SECTION_DESCRIPTIONS.AVG_CHANGE}
-          value={toggles.avgChange}
-          onToggle={() => toggle("avgChange")}
-          rows={avgRows.rows}
-          hasFilled={avgRows.hasFilled}
-          onAdd={avgRows.addRow}
-          renderRow={(r) => (
-            <VolumeChangeAvgRow
-              key={r.id}
-              onRemove={() => avgRows.removeRow(r.id)}
-              onReset={() => avgRows.resetRow(r.id)}
-              onValueChange={(data) => avgRows.updateRow(r.id, data)}
-              isSingleRow={avgRows.rows.length === 1}
-            />
-          )}
+          value={toggles.avgRise}
+          onToggle={() => toggle("avgRise")}
+          rows={[{}]}
+          hasFilled={avgRiseValue.trim() !== ""}
+          onAdd={() => {}}
+          renderRow={() =>
+            toggles.avgRise && (
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="상승 비율을 입력해주세요 (%)"
+                  keyboardType="numeric"
+                  value={avgRiseValue}
+                  onChangeText={setAvgRiseValue}
+                />
+                <Text style={styles.unit}>%</Text>
+              </View>
+            )
+          }
         />
 
+        {/* 평균 거래량 대비 하락 */}
+        <ConditionSection
+          title="평균 거래량 대비 하락"
+          description={VOLUME_SECTION_DESCRIPTIONS.AVG_CHANGE}
+          value={toggles.avgDrop}
+          onToggle={() => toggle("avgDrop")}
+          rows={[{}]}
+          hasFilled={avgDropValue.trim() !== ""}
+          onAdd={() => {}}
+          renderRow={() =>
+            toggles.avgDrop && (
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="하락 비율을 입력해주세요 (%)"
+                  keyboardType="numeric"
+                  value={avgDropValue}
+                  onChangeText={setAvgDropValue}
+                />
+                <Text style={styles.unit}>%</Text>
+              </View>
+            )
+          }
+        />
+
+        {/* 거래량 급증 경고 */}
         <ConditionSection
           title="거래량 급증 경고"
           description={VOLUME_SECTION_DESCRIPTIONS.SPIKE}
@@ -120,6 +129,7 @@ export default function VolumeConditionContent({
           renderRow={() => null}
         />
 
+        {/* 거래량 감소 경고 */}
         <ConditionSection
           title="거래량 감소 경고"
           description={VOLUME_SECTION_DESCRIPTIONS.DROP}
@@ -135,14 +145,16 @@ export default function VolumeConditionContent({
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.resetButton}
-          onPress={() =>
+          onPress={() => {
             setToggles({
-              prevChange: false,
-              avgChange: false,
+              avgRise: false,
+              avgDrop: false,
               spike: false,
               drop: false,
-            })
-          }
+            });
+            setAvgRiseValue("");
+            setAvgDropValue("");
+          }}
         >
           <Text style={styles.resetText}>초기화</Text>
         </TouchableOpacity>
@@ -162,6 +174,23 @@ const styles = StyleSheet.create({
   wrapper: { flex: 1, backgroundColor: "#fff" },
   container: { paddingHorizontal: 16, paddingVertical: 10 },
   sectionTitle: { fontSize: 15, fontWeight: "600", marginBottom: 10 },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    fontSize: 14,
+    backgroundColor: "#fff",
+  },
+  unit: { marginLeft: 6, fontSize: 13, color: "#555" },
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",
