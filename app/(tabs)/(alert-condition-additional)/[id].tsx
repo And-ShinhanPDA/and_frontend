@@ -20,7 +20,8 @@ import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
-export default function ConditionAdditionalDetail() {
+
+export default function ConditionAdditional() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { accessToken } = useAuth();
@@ -62,7 +63,7 @@ export default function ConditionAdditionalDetail() {
       const res = await alertService.createAlert(payload, accessToken);
       console.log("알림 등록 성공:", res);
       alert("알림이 성공적으로 등록되었습니다!");
-      router.back();
+      router.replace("/(tabs)/(alert-condition)");
     } catch (error: any) {
       console.error("알림 등록 실패:", error);
       if (error.response?.status === 401) {
@@ -73,52 +74,60 @@ export default function ConditionAdditionalDetail() {
     }
   };
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() =>
-            router.push("/(tabs)/(alert-condition)/alert-condition")
+            router.replace("/(tabs)/(alert-condition)/alertCondition")
           }
         >
-          <Arrow width={24} height={24} />
+          <Arrow width={22} height={22} />
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>조건 알림 추가</Text>
       </View>
 
-      {/* 탭  */}
+      {/* 탭 */}
+      <View style={styles.tabBarContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabBarContent}
+        >
+          {tabs.map((tab, idx) => (
+            <TouchableOpacity key={idx} style={styles.tabItem}>
+              <Text style={styles.tabText}>{tab}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+        <View style={styles.tabBarBorder} />
+      </View>
+
       <ScrollView
-        style={styles.tabBar}
-        horizontal
-        showsHorizontalScrollIndicator={false}
+        style={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContentContainer}
       >
-        {tabs.map((tab, idx) => (
-          <TouchableOpacity key={idx} style={styles.tabItem}>
-            <Text style={styles.tabText}>{tab}</Text>
-          </TouchableOpacity>
-        ))}
+        <TextInput
+          style={styles.titleInput}
+          placeholder="이 조건을 대표할 수 있는 한 줄 제목"
+          placeholderTextColor="#A4A4A4"
+        />
+
+        <View style={styles.divider} />
+
+        {/* 조건 카드 */}
+        <ChangeConditionCard onTempSave={handleTempSave} />
+        <Week52ConditionCard onTempSave={handleTempSave} />
+
+        <VolumeConditionCard onTempSave={handleTempSave} />
+        <SMAConditionCard onTempSave={handleTempSave} />
+
+        <RSIConditionCard onTempSave={handleTempSave} />
+        <BollingerBandCondition onTempSave={handleTempSave} />
       </ScrollView>
-
-      {/* 제목*/}
-      <TextInput
-        style={styles.titleInput}
-        placeholder="이 조건을 대표할 수 있는 한 줄 제목"
-        placeholderTextColor="#A4A4A4"
-      />
-
-      <View style={styles.divider} />
-
-      {/* 조건 카드 */}
-      <ChangeConditionCard onTempSave={handleTempSave} />
-      <Week52ConditionCard onTempSave={handleTempSave} />
-
-      <VolumeConditionCard onTempSave={handleTempSave} />
-      <SMAConditionCard onTempSave={handleTempSave} />
-
-      <RSIConditionCard onTempSave={handleTempSave} />
-      <BollingerBandCondition onTempSave={handleTempSave} />
 
       {/* 하단 버튼 */}
       <View style={styles.footer}>
@@ -142,7 +151,7 @@ export default function ConditionAdditionalDetail() {
       >
         <PresetSelect onClose={() => setIsPresetOpen(false)} />
       </ConditionBottomSheet>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -150,41 +159,53 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingHorizontal: 16,
     paddingTop: 60,
   },
-
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    marginTop: 12,
+    marginBottom: 20,
+    paddingHorizontal: 16,
   },
   backButton: {
     position: "absolute",
-    left: 0,
+    left: 16,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "600",
     textAlign: "center",
     color: "#111",
   },
 
-  tabBar: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5E5",
-    paddingVertical: 8,
+  tabBarContainer: {
+    position: "relative",
     marginBottom: 10,
   },
+  tabBarContent: {
+    paddingHorizontal: 16,
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  tabBarBorder: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: "#E5E5E5",
+  },
   tabItem: {
-    marginRight: 16,
+    marginRight: 20,
+    paddingVertical: 4,
   },
   tabText: {
     fontSize: 15,
     fontWeight: "500",
     color: "#333",
+    lineHeight: 20,
   },
 
   titleInput: {
@@ -204,13 +225,29 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F6F8",
     marginVertical: 10,
     marginHorizontal: -16,
+    width: "100%",
+    alignSelf: "stretch",
+  },
+
+  scrollContent: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+
+  scrollContentContainer: {
+    paddingBottom: 20,
   },
 
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 24,
-    marginBottom: 40,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#E5E5E5",
+    elevation: 5,
+    paddingBottom: 30,
   },
   presetButton: {
     flex: 1,

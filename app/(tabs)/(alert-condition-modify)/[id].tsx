@@ -21,13 +21,12 @@ import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 
-export default function ConditionAlertDetailModify() {
+export default function ConditionAlertDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  const { accessToken } = useAuth();
   const [isPresetOpen, setIsPresetOpen] = useState(false);
-
   const tabs = ["제목", "가격", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
+  const { accessToken } = useAuth();
 
   const [conditionGetters, setConditionGetters] = useState<{
     [k: string]: () => any[];
@@ -77,16 +76,16 @@ export default function ConditionAlertDetailModify() {
     <View style={styles.container}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <View style={styles.leftSection}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Arrow width={22} height={22} />
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Arrow width={22} height={22} />
+        </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>조건 알림 상세 수정</Text>
-        </View>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          제목 없는 조건 알림 수정
+        </Text>
       </View>
 
       {/* 탭 */}
@@ -166,15 +165,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "space-between",
     marginTop: 12,
     marginBottom: 20,
     paddingHorizontal: 16,
-  },
-  leftSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
   },
   backButton: {
     width: 24,
@@ -183,9 +177,33 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
+    flex: 1,
     fontSize: 20,
     fontWeight: "600",
     color: "#111",
+    textAlign: "center",
+    marginHorizontal: 16,
+  },
+  rightSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 11,
+    marginLeft: "auto",
+  },
+  presetAddButton: {
+    backgroundColor: "rgba(76, 197, 58, 0.15)",
+    borderRadius: 7,
+    paddingHorizontal: 10,
+    height: 25,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  },
+  modifyButton: {
+    width: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   tabBarContainer: {

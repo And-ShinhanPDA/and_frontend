@@ -1,6 +1,9 @@
+import Arrow from "@/assets/images/arrow.svg";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  Image,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,25 +11,28 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Arrow from "../../../assets/images/arrow.svg";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
-import PriceConditionSimpleCard from "@/components/add-card/price/price-simple";
+
 import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
 import SMAConditionCard from "@/components/add-card/sma/sma-condition";
 import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
 import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
+
+import ChangeConditionCard from "@/components/add-card/change/change-condition";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
+import { Typography } from "@/components/ui/Typography";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
-export default function ConditionAdditionalDetail() {
+
+export default function ConditionAlertDetailModify() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  const { accessToken } = useAuth();
-  const [isPresetOpen, setIsPresetOpen] = useState(false);
 
+  const [isPresetOpen, setIsPresetOpen] = useState(false);
   const tabs = ["제목", "가격", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
+  const { accessToken } = useAuth();
 
   const [conditionGetters, setConditionGetters] = useState<{
     [k: string]: () => any[];
@@ -72,20 +78,47 @@ export default function ConditionAdditionalDetail() {
       }
     }
   };
+
   return (
     <View style={styles.container}>
       {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() =>
-            router.replace("/(tabs)/(alert-condition)/alert-condition")
-          }
+          onPress={() => router.back()}
         >
           <Arrow width={22} height={22} />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>조건 알림 추가</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          제목 없는 조건 알림
+        </Text>
+
+        <View style={styles.rightSection}>
+          <Pressable
+            onPress={() => console.log("프리셋으로 추가 버튼")}
+            style={styles.presetAddButton}
+          >
+            <Image
+              source={require("@/assets/images/preset.png")}
+              style={{ width: 12, height: 12, marginRight: 3 }}
+              resizeMode="contain"
+            />
+            <Typography weight="400" size={12} style={{ color: "#4CC53A" }}>
+              프리셋으로 추가
+            </Typography>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push("/(tabs)/(alert-condition-modify)/[id]")} // 원하는 경로로 변경
+            style={styles.modifyButton}
+          >
+            <Image
+              source={require("@/assets/images/alert/modify.png")}
+              style={{ width: 19, height: 19 }}
+            />
+          </Pressable>
+        </View>
       </View>
 
       {/* 탭 */}
@@ -109,6 +142,7 @@ export default function ConditionAdditionalDetail() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContentContainer}
       >
+        {/* 제목*/}
         <TextInput
           style={styles.titleInput}
           placeholder="이 조건을 대표할 수 있는 한 줄 제목"
@@ -118,7 +152,8 @@ export default function ConditionAdditionalDetail() {
         <View style={styles.divider} />
 
         {/* 조건 카드 */}
-        <PriceConditionSimpleCard />
+
+        <ChangeConditionCard onTempSave={handleTempSave} />
         <Week52ConditionCard onTempSave={handleTempSave} />
 
         <VolumeConditionCard onTempSave={handleTempSave} />
@@ -127,20 +162,6 @@ export default function ConditionAdditionalDetail() {
         <RSIConditionCard onTempSave={handleTempSave} />
         <BollingerBandCondition onTempSave={handleTempSave} />
       </ScrollView>
-
-      {/* 하단 버튼 */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.presetButton}
-          onPress={() => setIsPresetOpen(true)}
-        >
-          <Text style={styles.presetText}>프리셋</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveText}>저장</Text>
-        </TouchableOpacity>
-      </View>
 
       {/* 프리셋 */}
       <ConditionBottomSheet
@@ -163,20 +184,45 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
     marginTop: 12,
     marginBottom: 20,
     paddingHorizontal: 16,
   },
   backButton: {
-    position: "absolute",
-    left: 16,
+    width: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
+    flex: 1,
     fontSize: 20,
     fontWeight: "600",
-    textAlign: "center",
     color: "#111",
+    textAlign: "center",
+    marginHorizontal: 16,
+  },
+  rightSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 11,
+    marginLeft: "auto",
+  },
+  presetAddButton: {
+    backgroundColor: "rgba(76, 197, 58, 0.15)",
+    borderRadius: 7,
+    paddingHorizontal: 10,
+    height: 25,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  },
+  modifyButton: {
+    width: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   tabBarContainer: {
