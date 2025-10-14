@@ -1,9 +1,12 @@
-import React from "react";
+import { saveActivatedCompanies } from "@/services/widgetShare";
+import React, { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
+
 import Shinhan from "../../assets/images/companies/logo_12_신한금융그룹.svg";
 import Samsung from "../../assets/images/companies/logo_1_삼성전자.svg";
 import Hynix from "../../assets/images/companies/logo_2_하이닉스.svg";
 import Naver from "../../assets/images/companies/logo_7_네이버.svg";
+
 type CompanyAlert = {
   id: number;
   name: string;
@@ -12,7 +15,6 @@ type CompanyAlert = {
   logo: any;
 };
 
-// 나중에 실제 데이터로 교체 필요
 const sampleCompanies: CompanyAlert[] = [
   {
     id: 1,
@@ -49,6 +51,11 @@ export default function ActivatedCompanyCard({
 }: {
   data?: CompanyAlert[];
 }) {
+  // ✅ 위젯으로 기업 데이터 전달
+  useEffect(() => {
+    saveActivatedCompanies(data);
+  }, [data]);
+
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>활성화 된 기업 알림</Text>
@@ -72,6 +79,7 @@ export default function ActivatedCompanyCard({
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
@@ -105,11 +113,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: "#4CC439",
     marginRight: 8,
-  },
-  logo: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
   },
   name: {
     fontSize: 14,
