@@ -1,8 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Image,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Arrow from "../../../assets/images/arrow.svg";
+import Arrow from "../../../../assets/images/arrow.svg";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
 import PriceConditionSimpleCard from "@/components/add-card/price/price-simple";
@@ -19,9 +17,10 @@ import SMAConditionCard from "@/components/add-card/sma/sma-condition";
 import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
 import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
 
-import { Typography } from "@/components/ui/Typography";
+import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
+import PresetSelect from "@/components/preset/preset-select";
 
-export default function ConditionAlertDetail() {
+export default function ConditionAlertDetailModify() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
 
@@ -33,42 +32,15 @@ export default function ConditionAlertDetail() {
     <View style={styles.container}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Arrow width={22} height={22} />
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>조건 알림 상세 화면</Text>
-
-        <View style={styles.rightButtons}>
-          <Pressable
-            onPress={() => console.log("프리셋으로 추가 버튼")}
-            style={styles.presetHeaderButton}
-          >
-            <Image
-              source={require("@/assets/images/preset.png")}
-              style={{ width: 12, height: 12, marginRight: 3 }}
-              resizeMode="contain"
-            />
-            <Typography weight="400" size={12} style={{ color: "#4CC53A" }}>
-              프리셋으로 추가
-            </Typography>
-          </Pressable>
-
+        <View style={styles.leftSection}>
           <TouchableOpacity
-            onPress={() =>
-              router.push("/(tabs)/condition-alertDetail/modify/[modifyID]")
-            }
-            style={styles.modifyButton}
+            style={styles.backButton}
+            onPress={() => router.back()}
           >
-            <Image
-              source={require("@/assets/images/alert/modify.png")}
-              style={{ width: 16, height: 16 }}
-              resizeMode="contain"
-            />
+            <Arrow width={22} height={22} />
           </TouchableOpacity>
+
+          <Text style={styles.headerTitle}>조건 알림 상세 수정</Text>
         </View>
       </View>
 
@@ -110,6 +82,32 @@ export default function ConditionAlertDetail() {
         <RSIConditionCard />
         <BollingerBandCondition />
       </ScrollView>
+
+      {/* 하단 버튼 - 플로팅 */}
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.presetButton}
+          onPress={() => setIsPresetOpen(true)}
+        >
+          <Text style={styles.presetText}>프리셋</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={() => console.log("조건 저장")}
+        >
+          <Text style={styles.saveText}>저장</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* 프리셋 */}
+      <ConditionBottomSheet
+        visible={isPresetOpen}
+        onClose={() => setIsPresetOpen(false)}
+        ratio={0.8}
+      >
+        <PresetSelect onClose={() => setIsPresetOpen(false)} />
+      </ConditionBottomSheet>
     </View>
   );
 }
@@ -123,7 +121,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     marginTop: 12,
     marginBottom: 20,
     paddingHorizontal: 16,
@@ -131,7 +129,7 @@ const styles = StyleSheet.create({
   leftSection: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 1,
+    gap: 12,
   },
   backButton: {
     width: 24,
@@ -143,26 +141,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "600",
     color: "#111",
-  },
-  rightButtons: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-  },
-  presetHeaderButton: {
-    backgroundColor: "rgba(76, 197, 58, 0.15)",
-    borderRadius: 7,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-  },
-  modifyButton: {
-    width: 24,
-    height: 24,
-    justifyContent: "center",
-    alignItems: "center",
   },
 
   tabBarContainer: {

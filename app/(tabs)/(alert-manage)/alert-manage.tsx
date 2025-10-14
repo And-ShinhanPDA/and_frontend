@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   Animated,
   Image,
+  Pressable,
   StyleSheet,
   Switch,
   Text,
@@ -107,6 +108,7 @@ export default function AlertManage() {
         leftOpenValue={0}
         disableLeftSwipe={false}
         disableRightSwipe={true}
+        closeOnRowPress
         renderItem={({ item, index }) => {
           const fadeAnim = fadeAnimations[item.id] || new Animated.Value(1);
           const filtered = companies.filter((c) =>
@@ -115,42 +117,51 @@ export default function AlertManage() {
           const isLast = index === filtered.length - 1;
 
           return (
-            <View
-              style={[
-                styles.itemRow,
-                isLast && { borderBottomWidth: 1, borderColor: "#F5F6F8" },
-              ]}
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/(tabs)/company-alertDetail/[id]",
+                  params: { id: item.id, name: item.name },
+                })
+              }
             >
-              <item.Logo width={44} height={44} />
-              <View style={styles.itemText}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.subText}>
-                  현재 설정 알림: {item.alerts}개
-                </Text>
-              </View>
-
-              <Animated.View
-                style={{
-                  opacity: fadeAnim,
-                  transform: [
-                    {
-                      scale: fadeAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0.9, 1],
-                      }),
-                    },
-                  ],
-                }}
+              <View
+                style={[
+                  styles.itemRow,
+                  isLast && { borderBottomWidth: 1, borderColor: "#F5F6F8" },
+                ]}
               >
-                <Switch
-                  trackColor={{ false: "#ccc", true: "#4CC439" }}
-                  thumbColor="#fff"
-                  ios_backgroundColor="#E9E9EA"
-                  onValueChange={() => toggleSwitch(item.id)}
-                  value={item.enabled}
-                />
-              </Animated.View>
-            </View>
+                <item.Logo width={44} height={44} />
+                <View style={styles.itemText}>
+                  <Text style={styles.name}>{item.name}</Text>
+                  <Text style={styles.subText}>
+                    현재 설정 알림: {item.alerts}개
+                  </Text>
+                </View>
+
+                <Animated.View
+                  style={{
+                    opacity: fadeAnim,
+                    transform: [
+                      {
+                        scale: fadeAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0.9, 1],
+                        }),
+                      },
+                    ],
+                  }}
+                >
+                  <Switch
+                    trackColor={{ false: "#ccc", true: "#4CC439" }}
+                    thumbColor="#fff"
+                    ios_backgroundColor="#E9E9EA"
+                    onValueChange={() => toggleSwitch(item.id)}
+                    value={item.enabled}
+                  />
+                </Animated.View>
+              </View>
+            </Pressable>
           );
         }}
         renderHiddenItem={({ item }) => (

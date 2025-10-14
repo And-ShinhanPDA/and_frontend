@@ -120,6 +120,21 @@ export default function TabLayout() {
           tabBarStyle: { display: "none" },
         }}
       />
+      <Tabs.Screen
+        name="condition-alertDetail/modify/[modifyID]"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+      <Tabs.Screen
+        name="company-alertDetail/[id]"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
 
       <Tabs.Screen
         name="(alert-manage)"

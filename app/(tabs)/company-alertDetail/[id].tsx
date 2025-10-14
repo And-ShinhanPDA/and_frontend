@@ -3,15 +3,14 @@ import React, { useEffect, useState } from "react";
 import {
   Animated,
   Image,
-  Pressable,
   StyleSheet,
   Switch,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
+import Arrow from "../../../assets/images/arrow.svg";
 
 // TODO: types로 빼기
 type AlertCondition = {
@@ -21,12 +20,16 @@ type AlertCondition = {
   tags: string[];
 };
 
-export default function AlertCondition() {
+export default function CompanyAlertDetail() {
   const [search, setSearch] = useState("");
   const [fadeAnimations, setFadeAnimations] = useState<
     Record<string, Animated.Value>
   >({});
   const [deleteWidth, setDeleteWidth] = useState(80);
+
+  // ✅ 고정 "시가/종가 알림" 스위치 상태
+  const [priceOpenCloseEnabled, setPriceOpenCloseEnabled] =
+    useState<boolean>(true);
 
   // TODO: API 연결
   const [alerts, setAlerts] = useState<AlertCondition[]>([
@@ -109,89 +112,103 @@ export default function AlertCondition() {
     }).start();
   };
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.searchWrapper}>
-        <Image
-          source={require("@/assets/images/alert/search.png")}
-          style={styles.searchIcon}
-        />
-        <TextInput
-          style={styles.searchBar}
-          placeholder="조건을 검색해보세요"
-          value={search}
-          onChangeText={setSearch}
+  // 🔎 검색 필터
+  const filteredAlerts = alerts.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // ✅ 고정 시가/종가 알림 행 (스와이프/삭제 불가)
+  const FixedPriceRow = () => (
+    <>
+      <View style={[styles.itemRow]}>
+        <View style={styles.itemText}>
+          <Text style={styles.name}>시가/종가 알림</Text>
+        </View>
+
+        <Switch
+          trackColor={{ false: "#ccc", true: "#4CC439" }}
+          thumbColor="#fff"
+          ios_backgroundColor="#E9E9EA"
+          onValueChange={() => setPriceOpenCloseEnabled((v) => !v)}
+          value={priceOpenCloseEnabled}
         />
       </View>
 
+      <View style={styles.fixedDivider} />
+    </>
+  );
+
+  return (
+    <View style={styles.container}>
+      {/* 헤더 */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() =>
+            router.replace("/(tabs)/(alert-condition)/alert-condition")
+          }
+        >
+          <Arrow width={22} height={22} />
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>기업 알림 이름으로 바꿔야됨</Text>
+      </View>
+
       <SwipeListView
-        data={alerts.filter((c) =>
-          c.name.toLowerCase().includes(search.toLowerCase())
-        )}
-        showsVerticalScrollIndicator={false}
+        data={filteredAlerts}
         keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
         onRowOpen={handleRowOpen}
         onRowClose={handleRowClose}
         rightOpenValue={-deleteWidth}
         disableRightSwipe
         closeOnRowPress
+        ListHeaderComponent={<FixedPriceRow />}
         renderItem={({ item, index }) => {
           const fadeAnim = fadeAnimations[item.id] || new Animated.Value(1);
-          const filtered = alerts.filter((c) =>
-            c.name.toLowerCase().includes(search.toLowerCase())
-          );
-          const isLast = index === filtered.length - 1;
+          const isLast = index === filteredAlerts.length - 1;
 
           return (
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: "/(tabs)/(alert-condition)/[id]",
-                  params: { id: item.id },
-                })
-              }
+            <View
+              style={[
+                styles.itemRow,
+                isLast && { borderBottomWidth: 1, borderColor: "#F5F6F8" },
+              ]}
             >
-              <View
-                style={[
-                  styles.itemRow,
-                  isLast && { borderBottomWidth: 1, borderColor: "#F5F6F8" },
-                ]}
-              >
-                <View style={styles.itemText}>
-                  <Text style={styles.name}>{item.name}</Text>
+              <View style={styles.itemText}>
+                <Text style={styles.name}>{item.name}</Text>
 
-                  <View style={styles.tagContainer}>
-                    {item.tags.map((tag, index) => (
-                      <View key={index} style={styles.tag}>
-                        <Text style={styles.tagText}>{tag}</Text>
-                      </View>
-                    ))}
-                  </View>
+                <View style={styles.tagContainer}>
+                  {item.tags.map((tag, i) => (
+                    <View key={i} style={styles.tag}>
+                      <Text style={styles.tagText}>{tag}</Text>
+                    </View>
+                  ))}
                 </View>
-
-                <Animated.View
-                  style={{
-                    opacity: fadeAnim,
-                    transform: [
-                      {
-                        scale: fadeAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0.9, 1],
-                        }),
-                      },
-                    ],
-                  }}
-                >
-                  <Switch
-                    trackColor={{ false: "#ccc", true: "#4CC439" }}
-                    thumbColor="#fff"
-                    ios_backgroundColor="#E9E9EA"
-                    onValueChange={() => toggleSwitch(item.id)}
-                    value={item.enabled}
-                  />
-                </Animated.View>
               </View>
-            </Pressable>
+
+              <Animated.View
+                style={{
+                  opacity: fadeAnim,
+                  transform: [
+                    {
+                      scale: fadeAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.9, 1],
+                      }),
+                    },
+                  ],
+                }}
+              >
+                <Switch
+                  trackColor={{ false: "#ccc", true: "#4CC439" }}
+                  thumbColor="#fff"
+                  ios_backgroundColor="#E9E9EA"
+                  onValueChange={() => toggleSwitch(item.id)}
+                  value={item.enabled}
+                />
+              </Animated.View>
+            </View>
           );
         }}
         renderHiddenItem={({ item }) => (
@@ -209,7 +226,7 @@ export default function AlertCondition() {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => router.replace("/(tabs)/condition-additional/[id]")}
+        onPress={() => router.push("/(tabs)/condition-additional/[id]")}
       >
         <Image
           source={require("@/assets/images/alert/condition_alert.png")}
@@ -221,18 +238,31 @@ export default function AlertCondition() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  searchWrapper: {
+  /* 화면 */
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingTop: 60,
+  },
+
+  /* 헤더 */
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F5F5F5",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    marginBottom: 18,
-    height: 40,
-    margin: 22,
+    justifyContent: "center",
+    marginTop: 12,
+    marginBottom: 20,
+    paddingHorizontal: 16,
   },
-  searchBar: { flex: 1, marginLeft: 6 },
+  backButton: { position: "absolute", left: 16 },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    textAlign: "center",
+    color: "#111",
+  },
+
+  /* 리스트 아이템 */
   itemRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -244,6 +274,21 @@ const styles = StyleSheet.create({
   },
   itemText: { flex: 1 },
   name: { fontSize: 15, fontWeight: "600", fontFamily: "Pretendard" },
+
+  /* 태그 */
+  tagContainer: { flexDirection: "row", flexWrap: "wrap", marginTop: 4 },
+  tag: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginRight: 6,
+    marginTop: 4,
+  },
+  tagText: { fontSize: 11, fontFamily: "Pretendard" },
+
+  /* 스와이프 숨김 영역(삭제) */
   hiddenContainer: {
     flex: 1,
     flexDirection: "row",
@@ -262,6 +307,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Pretendard",
   },
+
+  /* FAB */
   fab: {
     position: "absolute",
     right: 30,
@@ -278,33 +325,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  plusIcon: {
-    width: 35,
-    height: 35,
-    resizeMode: "contain",
-  },
-  searchIcon: {
-    width: 15,
-    height: 15,
-    resizeMode: "contain",
-    marginBottom: 2,
-  },
-  tagContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginTop: 4,
-  },
-  tag: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginRight: 6,
-    marginTop: 4,
-  },
-  tagText: {
-    fontSize: 11,
-    fontFamily: "Pretendard",
+  plusIcon: { width: 35, height: 35, resizeMode: "contain" },
+
+  fixedDivider: {
+    height: 8, // 구분용 공간
+    backgroundColor: "#F5F6F8",
+    width: "100%",
   },
 });
