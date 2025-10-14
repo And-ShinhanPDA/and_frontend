@@ -4,7 +4,13 @@ import { Typography } from "@/components/ui/Typography";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import {
+  Keyboard,
+  Pressable,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -18,42 +24,44 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Typography weight="700" size={24} style={styles.title}>
-        로그인
-      </Typography>
-
-      <AuthTextInput
-        label="아이디"
-        icon="email"
-        value={email}
-        onChangeText={setEmail}
-        placeholder="아이디를 입력하세요"
-      />
-
-      <AuthTextInput
-        label="비밀번호"
-        icon="lock"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        placeholder="비밀번호를 입력하세요"
-        isPassword
-      />
-
-      <PrimaryButton title="로그인" onPress={onSubmit} />
-
-      <View style={styles.footer}>
-        <Typography weight="400" size={14}>
-          아직 회원이 아니신가요?
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        <Typography weight="700" size={24} style={styles.title}>
+          로그인
         </Typography>
-        <Pressable onPress={() => router.replace("/signUp")}>
-          <Typography weight="400" size={14} style={styles.link}>
-            회원가입
+
+        <AuthTextInput
+          label="아이디"
+          icon="email"
+          value={email}
+          onChangeText={setEmail}
+          placeholder="아이디를 입력하세요"
+        />
+
+        <AuthTextInput
+          label="비밀번호"
+          icon="lock"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          placeholder="비밀번호를 입력하세요"
+          isPassword
+        />
+
+        <PrimaryButton title="로그인" onPress={onSubmit} />
+
+        <View style={styles.footer}>
+          <Typography weight="400" size={14}>
+            아직 회원이 아니신가요?
           </Typography>
-        </Pressable>
+          <Pressable onPress={() => router.replace("/signUp")}>
+            <Typography weight="400" size={14} style={styles.link}>
+              회원가입
+            </Typography>
+          </Pressable>
+        </View>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 }
 

@@ -3,9 +3,8 @@ import React from "react";
 import { Image, Pressable } from "react-native";
 
 import { HapticTab } from "@/components/haptic-tab";
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import PriceAlertToast from "@/components/home/price-toast-alert";
 import { Typography } from "@/components/ui/Typography";
-import { Colors } from "@/constants/theme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
@@ -18,10 +17,10 @@ export default function TabLayout() {
   }
 
   return (
-    // 전역적으로 상단 스타일 먹이기
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+        tabBarActiveTintColor: "#4CC439",
+        tabBarInactiveTintColor: "#484C52",
         tabBarButton: HapticTab,
         headerTitleAlign: "left",
 
@@ -57,23 +56,109 @@ export default function TabLayout() {
         ),
 
         tabBarLabel: ({ focused, children }) => (
-          <Typography weight={focused ? "600" : "400"} size={12}>
+          <Typography
+            weight={focused ? "600" : "400"}
+            size={12}
+            style={{ color: focused ? "#4CC439" : "#484C52" }}
+          >
             {children}
           </Typography>
         ),
+
+        tabBarStyle: {
+          paddingTop: 8,
+          paddingBottom: 12,
+          borderTopLeftRadius: 30,
+          borderTopRightRadius: 30,
+          borderTopWidth: 1,
+          borderLeftWidth: 1,
+          borderRightWidth: 1,
+          borderColor: "#E5E5E5",
+          backgroundColor: "#fff",
+        },
       }}
     >
       <Tabs.Screen
-        name="(alert-manage)"
+        name="(alert-condition)"
+        options={{
+          title: "조건 검색",
+          tabBarLabel: ({ focused }) => (
+            <Typography
+              weight={focused ? "600" : "400"}
+              size={12}
+              style={{ color: focused ? "#4CC439" : "#484C52" }}
+            >
+              조건 검색
+            </Typography>
+          ),
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={require("@/assets/images/bottomNavigation/condition.png")}
+              style={{
+                width: 24,
+                height: 24,
+                tintColor: focused ? "#4CC439" : "#484C52",
+              }}
+              resizeMode="contain"
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="condition-additional/[id]"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+      <Tabs.Screen
+        name="condition-alertDetail/[id]"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+      <Tabs.Screen
+        name="condition-alertDetail/modify/[modifyID]"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+      <Tabs.Screen
+        name="company-alertDetail/[id]"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
+
+      <Tabs.Screen
+        name="(alert-company)"
         options={{
           title: "기업 알림",
           tabBarLabel: ({ focused }) => (
-            <Typography weight={focused ? "600" : "400"} size={12}>
+            <Typography
+              weight={focused ? "600" : "400"}
+              size={12}
+              style={{ color: focused ? "#4CC439" : "#484C52" }}
+            >
               기업 알림
             </Typography>
           ),
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="bell.fill" color={color} />
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={require("@/assets/images/bottomNavigation/company.png")}
+              style={{
+                width: 24,
+                height: 24,
+                tintColor: focused ? "#4CC439" : "#484C52",
+              }}
+              resizeMode="contain"
+            />
           ),
 
           headerRight: () => (
@@ -113,34 +198,20 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="(alert-condition)"
-        options={{
-          title: "조건 검색",
-          tabBarLabel: ({ focused }) => (
-            <Typography weight={focused ? "600" : "400"} size={12}>
-              조건 검색
-            </Typography>
-          ),
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="clock.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="condition-additional/[id]"
-        options={{
-          href: null,
-          headerShown: false,
-        }}
-      />
-
-      <Tabs.Screen
         name="index"
         options={{
           title: "홈",
-          headerShown: false,
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+          header: () => <PriceAlertToast />,
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={require("@/assets/images/bottomNavigation/home.png")}
+              style={{
+                width: 24,
+                height: 24,
+                tintColor: focused ? "#4CC439" : "#484C52",
+              }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
@@ -150,14 +221,6 @@ export default function TabLayout() {
         options={{
           title: "알림 설정",
           href: null,
-          // tabBarLabel: ({ focused }) => (
-          //   <Typography weight={focused ? "600" : "400"} size={12}>
-          //     추가
-          //   </Typography>
-          // ),
-          // tabBarIcon: ({ color }) => (
-          //   <IconSymbol size={28} name="plus.circle.fill" color={color} />
-          // ),
         }}
       />
       <Tabs.Screen
@@ -169,21 +232,33 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="chart/index"
+        name="(chart)/index"
         options={{
           title: "차트",
           tabBarLabel: ({ focused }) => (
-            <Typography weight={focused ? "600" : "400"} size={12}>
+            <Typography
+              weight={focused ? "600" : "400"}
+              size={12}
+              style={{ color: focused ? "#4CC439" : "#484C52" }}
+            >
               차트
             </Typography>
           ),
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="chart.bar.fill" color={color} />
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={require("@/assets/images/bottomNavigation/chart.png")}
+              style={{
+                width: 24,
+                height: 24,
+                tintColor: focused ? "#4CC439" : "#484C52",
+              }}
+              resizeMode="contain"
+            />
           ),
         }}
       />
       <Tabs.Screen
-        name="chart/[chartId]"
+        name="(chart)/(chart-detail)/[id]"
         options={{
           href: null,
         }}
@@ -194,12 +269,24 @@ export default function TabLayout() {
         options={{
           title: "알림 히스토리",
           tabBarLabel: ({ focused }) => (
-            <Typography weight={focused ? "600" : "400"} size={12}>
+            <Typography
+              weight={focused ? "600" : "400"}
+              size={12}
+              style={{ color: focused ? "#4CC439" : "#484C52" }}
+            >
               기록
             </Typography>
           ),
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="clock.fill" color={color} />
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={require("@/assets/images/bottomNavigation/history.png")}
+              style={{
+                width: 24,
+                height: 24,
+                tintColor: focused ? "#4CC439" : "#484C52",
+              }}
+              resizeMode="contain"
+            />
           ),
         }}
       />

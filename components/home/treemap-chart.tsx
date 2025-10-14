@@ -5,8 +5,8 @@ import Svg, { Rect, Text as SvgText } from "react-native-svg";
 
 type CompanyNode = {
   name: string;
-  value: number; // 알림 갯수
-  percent: number; // 주식 등락률
+  value: number;
+  percent: number;
 };
 type RootNode = { children: CompanyNode[] };
 
@@ -19,7 +19,6 @@ export default function TreemapChart() {
     setCardWidth(width - 25);
   };
 
-  // 나중에 실제 값으로 대체
   const companies: CompanyNode[] = [
     { name: "삼성전자", value: 25, percent: 3.4 },
     { name: "SK하이닉스", value: 20, percent: 5.59 },
@@ -43,15 +42,14 @@ export default function TreemapChart() {
     { name: "CJ제일제당", value: 1, percent: 0.3 },
   ];
 
-  // 7단계 색상 (진한빨강 → 진한파랑)
   const colorBins = [
-    { limit: 3, color: "#F63C3C" }, // 진한 빨강
-    { limit: 1, color: "#9F373A" }, // 중간 빨강
-    { limit: 0.3, color: "#6B3439" }, // 어두운 빨강
-    { limit: -0.3, color: "#32373C" }, // 회색
-    { limit: -1, color: "#263D53" }, // 어두운 파랑
-    { limit: -3, color: "#1F4D75" }, // 중간 파랑
-    { limit: -Infinity, color: "#018DFF" }, // 진한 파랑
+    { limit: 3, color: "#F63C3C" },
+    { limit: 1, color: "#9F373A" },
+    { limit: 0.3, color: "#6B3439" },
+    { limit: -0.3, color: "#32373C" },
+    { limit: -1, color: "#263D53" },
+    { limit: -3, color: "#1F4D75" },
+    { limit: -Infinity, color: "#018DFF" },
   ];
 
   const getColor = (percent: number) => {
@@ -71,7 +69,18 @@ export default function TreemapChart() {
     return yiq > 160 ? "#111" : "#fff";
   };
 
-  // treemap 계산로직
+  const wrapText = (text: string, maxWidth: number, fontSize: number) => {
+    const charWidth = fontSize * 0.65;
+    const maxCharsPerLine = Math.floor(maxWidth / charWidth);
+
+    if (text.length <= maxCharsPerLine) {
+      return [text];
+    }
+
+    const mid = Math.ceil(text.length / 2);
+    return [text.slice(0, mid), text.slice(mid)];
+  };
+
   let leaves: any[] = [];
   if (cardWidth > 0) {
     const root = hierarchy<CompanyNode | RootNode>({ children: companies }).sum(
@@ -84,12 +93,17 @@ export default function TreemapChart() {
     leaves = treemapLayout(root).leaves();
   }
 
+  const top3Values = [...companies]
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 3)
+    .map((c) => c.name);
+
   return (
     <View style={styles.card} onLayout={handleLayout}>
       <Text style={styles.cardTitle}>한 눈에 보기</Text>
 
       {cardWidth > 0 && (
-        <Svg width={cardWidth} height={CARD_HEIGHT}>
+        <Svg width={cardWidth} height={CARD_HEIGHT} pointerEvents="none">
           {leaves.map((leaf, i) => {
             const { x0, y0, x1, y1 } = leaf;
             const w = x1 - x0;
@@ -98,8 +112,51 @@ export default function TreemapChart() {
             const bg = getColor(company.percent);
             const textColor = getTextColor(bg);
 
-            const fontSize = Math.max(6, Math.min(w / 6, 12));
-            const percentSize = Math.max(5, fontSize - 2);
+            const isTop3 = top3Values.includes(company.name);
+
+            // 👇 상위 3개는 더 큰 폰트 크기
+            const baseFontSize = Math.max(
+              9,
+              Math.min(
+                w / (isTop3 ? 4 : 4.5), // 상위 3개: w/4, 나머지: w/4.5
+                h / (isTop3 ? 5 : 5.5), // 상위 3개: h/5, 나머지: h/5.5
+                isTop3 ? 20 : 18 // 상위 3개 최대: 20, 나머지: 18
+              )
+            );
+
+            const nameLines = wrapText(company.name, w - 6, baseFontSize);
+            const isMultiLine = nameLines.length > 1;
+
+            const nameFontSize = baseFontSize;
+            const countFontSize = Math.max(7, baseFontSize * 0.8);
+            const percentFontSize = Math.max(7, baseFontSize * 0.85);
+
+            const nameLineHeight = nameFontSize + 1;
+            const spacing = isTop3 ? 4 : 3; // 👈 상위 3개는 간격도 더 넓게
+
+            let totalHeight = 0;
+            totalHeight += isMultiLine ? nameLineHeight * 2 : nameFontSize;
+            totalHeight += spacing;
+            if (isTop3) {
+              totalHeight += countFontSize;
+              totalHeight += spacing;
+            }
+            totalHeight += percentFontSize;
+
+            let scale = 1;
+            if (totalHeight > h - 8) {
+              scale = (h - 8) / totalHeight;
+            }
+
+            const finalNameFontSize = nameFontSize * scale;
+            const finalCountFontSize = countFontSize * scale;
+            const finalPercentFontSize = percentFontSize * scale;
+            const finalNameLineHeight = nameLineHeight * scale;
+            const finalSpacing = spacing * scale;
+
+            const centerY = y0 + h / 2;
+            const scaledTotalHeight = totalHeight * scale;
+            let currentY = centerY - scaledTotalHeight / 2;
 
             return (
               <React.Fragment key={i}>
@@ -113,21 +170,66 @@ export default function TreemapChart() {
                   strokeWidth={0.4}
                   rx={3}
                 />
+
+                {/* 회사명 */}
+                {nameLines.map((line, idx) => {
+                  const y =
+                    currentY +
+                    (idx === 0
+                      ? finalNameFontSize / 2
+                      : finalNameLineHeight + finalNameFontSize / 2);
+                  return (
+                    <SvgText
+                      key={`name-${idx}`}
+                      x={x0 + w / 2}
+                      y={y}
+                      fontSize={finalNameFontSize}
+                      fontWeight="bold"
+                      fill={textColor}
+                      textAnchor="middle"
+                      alignmentBaseline="middle"
+                    >
+                      {line}
+                    </SvgText>
+                  );
+                })}
+
+                {(() => {
+                  currentY += isMultiLine
+                    ? finalNameLineHeight * 2
+                    : finalNameFontSize;
+                  currentY += finalSpacing * (isTop3 ? 1.5 : 1); // 👈 상위 3개는 간격 1.5배
+                  return null;
+                })()}
+
+                {/* 알림 개수 */}
+                {isTop3 &&
+                  (() => {
+                    const countText = `알림 ${company.value}개`;
+                    const result = (
+                      <SvgText
+                        x={x0 + w / 2}
+                        y={currentY + finalCountFontSize / 2}
+                        fontSize={finalCountFontSize}
+                        fontWeight="600"
+                        fill={textColor}
+                        textAnchor="middle"
+                        alignmentBaseline="middle"
+                        opacity={0.9}
+                      >
+                        {countText}
+                      </SvgText>
+                    );
+                    currentY += finalCountFontSize + finalSpacing * 2;
+                    return result;
+                  })()}
+
+                {/* 등락률 */}
                 <SvgText
                   x={x0 + w / 2}
-                  y={y0 + h / 2 - 4}
-                  fontSize={fontSize}
-                  fontWeight="bold"
-                  fill={textColor}
-                  textAnchor="middle"
-                  alignmentBaseline="middle"
-                >
-                  {company.name}
-                </SvgText>
-                <SvgText
-                  x={x0 + w / 2}
-                  y={y0 + h / 2 + 10}
-                  fontSize={percentSize}
+                  y={currentY + finalPercentFontSize / 2}
+                  fontSize={finalPercentFontSize}
+                  fontWeight="400"
                   fill={textColor}
                   textAnchor="middle"
                   alignmentBaseline="middle"
@@ -150,9 +252,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 16,
     padding: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
+    // shadowColor: "#000",
+    // shadowOpacity: 0.08,
+    // shadowRadius: 6,
     elevation: 3,
     marginBottom: 24,
   },

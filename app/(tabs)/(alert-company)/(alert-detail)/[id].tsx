@@ -1,3 +1,5 @@
+import Arrow from "@/assets/images/arrow.svg";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Animated,
@@ -5,56 +7,87 @@ import {
   StyleSheet,
   Switch,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
 
-import ShinhanLogo from "@/assets/images/companies/logo_12_신한금융그룹.svg";
-import { router } from "expo-router";
-
-type Company = {
+// TODO: types로 빼기
+type AlertCondition = {
   id: string;
   name: string;
-  Logo: React.FC<{ width?: number; height?: number }>;
-  alerts: number;
   enabled: boolean;
+  tags: string[];
 };
 
-export default function AlertManage() {
+export default function CompanyAlertDetail() {
   const [search, setSearch] = useState("");
   const [fadeAnimations, setFadeAnimations] = useState<
     Record<string, Animated.Value>
   >({});
-  const [deleteWidth, setDeleteWidth] = useState(80); // 삭제버튼 실제 폭 측정용 상태값
+  const [deleteWidth, setDeleteWidth] = useState(80);
 
-  const [companies, setCompanies] = useState<Company[]>([
-    { id: "1", name: "신한지주", Logo: ShinhanLogo, alerts: 3, enabled: false },
-    { id: "2", name: "구글", Logo: ShinhanLogo, alerts: 3, enabled: true },
-    { id: "3", name: "삼성전자", Logo: ShinhanLogo, alerts: 3, enabled: true },
-    { id: "4", name: "네이버", Logo: ShinhanLogo, alerts: 3, enabled: true },
+  // 고정 "시가/종가 알림" 스위치 상태
+  const [priceOpenCloseEnabled, setPriceOpenCloseEnabled] =
+    useState<boolean>(true);
+
+  // TODO: API 연결
+  const [alerts, setAlerts] = useState<AlertCondition[]>([
+    {
+      id: "1",
+      name: "SMA량 거래량 조건",
+      enabled: false,
+      tags: [
+        "SMA",
+        "거래량",
+        "52주",
+        "볼린저밴드",
+        "볼린저밴드",
+        "볼린저밴드",
+        "볼린저밴드",
+        "볼린저밴드",
+        "볼린저밴드",
+      ],
+    },
+    {
+      id: "2",
+      name: "가격 설정 조건",
+      enabled: true,
+      tags: ["가격", "RSI", "52주", "SMA"],
+    },
+    {
+      id: "3",
+      name: "SMA 조건",
+      enabled: true,
+      tags: ["SMA", "거래량", "52주", "볼린저밴드"],
+    },
+    {
+      id: "4",
+      name: "볼린저 밴드 조건",
+      enabled: true,
+      tags: ["후행", "RSI", "52주", "SMA"],
+    },
   ]);
 
   // 초기 애니메이션 설정
   useEffect(() => {
     const anims: Record<string, Animated.Value> = {};
-    companies.forEach((company) => {
-      anims[company.id] = new Animated.Value(1);
+    alerts.forEach((alert) => {
+      anims[alert.id] = new Animated.Value(1);
     });
     setFadeAnimations(anims);
-  }, []);
+  }, [alerts]);
 
   // 토글 스위치
   const toggleSwitch = (id: string) => {
-    setCompanies((prev) =>
+    setAlerts((prev) =>
       prev.map((c) => (c.id === id ? { ...c, enabled: !c.enabled } : c))
     );
   };
 
   // 삭제 기능
   const deleteCompany = (id: string) => {
-    setCompanies((prev) => prev.filter((c) => c.id !== id));
+    setAlerts((prev) => prev.filter((c) => c.id !== id));
   };
 
   // 왼쪽 스와이프 시 fade out
@@ -79,37 +112,61 @@ export default function AlertManage() {
     }).start();
   };
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.searchWrapper}>
-        <Image
-          source={require("@/assets/images/alert/search.png")}
-          style={styles.searchIcon}
-        />
-        <TextInput
-          style={styles.searchBar}
-          placeholder="기업을 검색해보세요"
-          value={search}
-          onChangeText={setSearch}
+  // 검색 필터
+  const filteredAlerts = alerts.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // 고정 시가/종가 알림 행 (스와이프/삭제 불가)
+  const FixedPriceRow = () => (
+    <>
+      <View style={[styles.itemRow]}>
+        <View style={styles.itemText}>
+          <Text style={styles.name}>시가/종가 알림</Text>
+        </View>
+
+        <Switch
+          trackColor={{ false: "#ccc", true: "#4CC439" }}
+          thumbColor="#fff"
+          ios_backgroundColor="#E9E9EA"
+          onValueChange={() => setPriceOpenCloseEnabled((v) => !v)}
+          value={priceOpenCloseEnabled}
         />
       </View>
 
-      {/* 리스트 */}
+      <View style={styles.fixedDivider} />
+    </>
+  );
+
+  return (
+    <View style={styles.container}>
+      {/* 헤더 */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() =>
+            router.replace("/(tabs)/(alert-condition)/alert-condition")
+          }
+        >
+          <Arrow width={22} height={22} />
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>기업 알림 이름으로 바꿔야됨</Text>
+      </View>
+
       <SwipeListView
-        data={companies.filter((c) =>
-          c.name.toLowerCase().includes(search.toLowerCase())
-        )}
-        showsVerticalScrollIndicator={false}
+        data={filteredAlerts}
         keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
         onRowOpen={handleRowOpen}
         onRowClose={handleRowClose}
         rightOpenValue={-deleteWidth}
+        disableRightSwipe
+        closeOnRowPress
+        ListHeaderComponent={<FixedPriceRow />}
         renderItem={({ item, index }) => {
           const fadeAnim = fadeAnimations[item.id] || new Animated.Value(1);
-          const filtered = companies.filter((c) =>
-            c.name.toLowerCase().includes(search.toLowerCase())
-          );
-          const isLast = index === filtered.length - 1;
+          const isLast = index === filteredAlerts.length - 1;
 
           return (
             <View
@@ -118,12 +175,16 @@ export default function AlertManage() {
                 isLast && { borderBottomWidth: 1, borderColor: "#F5F6F8" },
               ]}
             >
-              <item.Logo width={44} height={44} />
               <View style={styles.itemText}>
                 <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.subText}>
-                  현재 설정 알림: {item.alerts}개
-                </Text>
+
+                <View style={styles.tagContainer}>
+                  {item.tags.map((tag, i) => (
+                    <View key={i} style={styles.tag}>
+                      <Text style={styles.tagText}>{tag}</Text>
+                    </View>
+                  ))}
+                </View>
               </View>
 
               <Animated.View
@@ -165,10 +226,10 @@ export default function AlertManage() {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => router.push("/alert-additional")}
+        onPress={() => router.push("/(tabs)/condition-additional/[id]")}
       >
         <Image
-          source={require("@/assets/images/alert/company_alert.png")}
+          source={require("@/assets/images/alert/condition_alert.png")}
           style={styles.plusIcon}
         />
       </TouchableOpacity>
@@ -177,18 +238,31 @@ export default function AlertManage() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  searchWrapper: {
+  /* 화면 */
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingTop: 60,
+  },
+
+  /* 헤더 */
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F5F5F5",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    marginBottom: 18,
-    height: 40,
-    margin: 22,
+    justifyContent: "center",
+    marginTop: 12,
+    marginBottom: 20,
+    paddingHorizontal: 16,
   },
-  searchBar: { flex: 1, marginLeft: 6 },
+  backButton: { position: "absolute", left: 16 },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    textAlign: "center",
+    color: "#111",
+  },
+
+  /* 리스트 아이템 */
   itemRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -198,14 +272,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     paddingHorizontal: 28,
   },
-  itemText: { flex: 1, marginLeft: 14 },
+  itemText: { flex: 1 },
   name: { fontSize: 15, fontWeight: "600", fontFamily: "Pretendard" },
-  subText: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 3,
-    fontFamily: "Pretendard",
+
+  /* 태그 */
+  tagContainer: { flexDirection: "row", flexWrap: "wrap", marginTop: 4 },
+  tag: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginRight: 6,
+    marginTop: 4,
   },
+  tagText: { fontSize: 11, fontFamily: "Pretendard" },
+
+  /* 스와이프 숨김 영역(삭제) */
   hiddenContainer: {
     flex: 1,
     flexDirection: "row",
@@ -224,6 +307,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Pretendard",
   },
+
+  /* FAB */
   fab: {
     position: "absolute",
     right: 30,
@@ -240,15 +325,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  plusIcon: {
-    width: 35,
-    height: 35,
-    resizeMode: "contain",
-  },
-  searchIcon: {
-    width: 15,
-    height: 15,
-    resizeMode: "contain",
-    marginBottom: 2,
+  plusIcon: { width: 35, height: 35, resizeMode: "contain" },
+
+  fixedDivider: {
+    height: 8, // 구분용 공간
+    backgroundColor: "#F5F6F8",
+    width: "100%",
   },
 });
