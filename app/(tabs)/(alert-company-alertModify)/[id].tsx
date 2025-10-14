@@ -1,17 +1,3 @@
-import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
-import ChangeConditionCard from "@/components/add-card/change/change-condition";
-import CurrentStatusCard from "@/components/add-card/current-status";
-import PriceConditionCard from "@/components/add-card/price/price-condition";
-import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
-import SMAConditionCard from "@/components/add-card/sma/sma-condition";
-import TrailingConditionCard from "@/components/add-card/trailing/trailing-condition";
-import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
-import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
-import CustomHeader from "@/components/header/header";
-import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
-import PresetSelect from "@/components/preset/preset-select";
-import { useAuth } from "@/contexts/AuthContext";
-import { alertService } from "@/services/alert-service";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -23,24 +9,26 @@ import {
   View,
 } from "react-native";
 
-export default function CompanyAlertDetail() {
-  const { accessToken } = useAuth();
-  const { name } = useLocalSearchParams();
-  const router = useRouter();
-  const [isPresetOpen, setIsPresetOpen] = useState(false);
-  const tabs = [
-    "제목",
-    "가격",
-    "후행",
-    "52주",
-    "거래량",
-    "SMA",
-    "RSI",
-    "볼린저밴드",
-  ];
+import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
+import ChangeConditionCard from "@/components/add-card/change/change-condition";
+import PriceConditionCard from "@/components/add-card/price/price-condition";
+import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
+import SMAConditionCard from "@/components/add-card/sma/sma-condition";
+import TrailingConditionCard from "@/components/add-card/trailing/trailing-condition";
+import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
+import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
+import CustomHeader from "@/components/header/header";
+import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
+import PresetSelect from "@/components/preset/preset-select";
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
 
-  const [title, setTitle] = useState("");
-  const [conditions, setConditions] = useState<any[]>([]);
+export default function ConditionAlertDetail() {
+  const router = useRouter();
+  const { id } = useLocalSearchParams();
+  const [isPresetOpen, setIsPresetOpen] = useState(false);
+  const tabs = ["제목", "가격", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
+  const { accessToken } = useAuth();
 
   const [conditionGetters, setConditionGetters] = useState<{
     [k: string]: () => any[];
@@ -67,7 +55,7 @@ export default function CompanyAlertDetail() {
 
       const payload = {
         stockCode: "005930",
-        title: title || `${name}`,
+        title: "알람1번조건",
         isActive: true,
         isPreset: false,
         conditions: mergedConditions,
@@ -86,11 +74,10 @@ export default function CompanyAlertDetail() {
       }
     }
   };
-
-  const [expanded, setExpanded] = useState(false);
   return (
     <View style={styles.container}>
-      <CustomHeader title={`${name}`} showBackButton={true} />
+      {/* 헤더 */}
+      <CustomHeader title="이거 제목 바꿔야함2" showBackButton={true} />
 
       {/* 탭 */}
       <View style={styles.tabBarContainer}>
@@ -113,33 +100,17 @@ export default function CompanyAlertDetail() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContentContainer}
       >
-        <CurrentStatusCard
-          time="11:38 기준"
-          currentPrice={50000}
-          openPrice={50000}
-          high52w={55000}
-          low52w={45000}
-          volume={50}
-          bollingerUpper={50000}
-          bollingerLower={50000}
-          rsi={50}
-          sma={{
-            "5일": 50000,
-            "10일": 50100,
-            "20일": 50200,
-            "30일": 50300,
-            "50일": 50400,
-            "100일": 50500,
-            "200일": 50600,
-          }}
-        />
-        <View style={styles.divider} />
+        {/* 제목*/}
         <TextInput
           style={styles.titleInput}
           placeholder="이 조건을 대표할 수 있는 한 줄 제목"
           placeholderTextColor="#A4A4A4"
         />
+
         <View style={styles.divider} />
+
+        {/* 조건 카드 */}
+
         <PriceConditionCard onTempSave={handleTempSave} />
         <ChangeConditionCard onTempSave={handleTempSave} />
         <TrailingConditionCard onTempSave={handleTempSave} />
@@ -152,7 +123,7 @@ export default function CompanyAlertDetail() {
         <BollingerBandCondition onTempSave={handleTempSave} />
       </ScrollView>
 
-      {/* 하단 버튼 */}
+      {/* 하단 버튼 - 플로팅 */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.presetButton}
@@ -166,6 +137,7 @@ export default function CompanyAlertDetail() {
         </TouchableOpacity>
       </View>
 
+      {/* 프리셋 */}
       <ConditionBottomSheet
         visible={isPresetOpen}
         onClose={() => setIsPresetOpen(false)}
@@ -182,7 +154,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-
   tabBarContainer: {
     position: "relative",
     marginBottom: 10,
@@ -212,15 +183,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  divider: {
-    height: 7,
-    backgroundColor: "#F5F6F8",
-    marginVertical: 10,
-    marginHorizontal: -16,
-    width: "100%",
-    alignSelf: "stretch",
-  },
-
   titleInput: {
     borderWidth: 1,
     borderColor: "#E5E5E5",
@@ -231,6 +193,15 @@ const styles = StyleSheet.create({
     color: "#333",
     backgroundColor: "#fff",
     marginVertical: 10,
+  },
+
+  divider: {
+    height: 7,
+    backgroundColor: "#F5F6F8",
+    marginVertical: 10,
+    marginHorizontal: -16,
+    width: "100%",
+    alignSelf: "stretch",
   },
 
   scrollContent: {

@@ -14,7 +14,6 @@ export default function HomeScreen() {
         customLeft={<PriceAlertToast />}
         rightButtons="preset-and-mypage"
         onPresetPress={() => console.log("프리셋 열기")}
-        // onMyPagePress={() => router.push("/mypage")}
       />
       <ScrollView
         style={styles.scrollView}

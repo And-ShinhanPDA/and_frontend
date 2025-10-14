@@ -131,6 +131,7 @@ export default function TabLayout() {
         options={{
           headerShown: false,
           href: null,
+          tabBarStyle: { display: "none" },
         }}
       />
 
@@ -152,9 +153,36 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
+        name="(alert-company-alertDetail)/[id]"
+        options={{
+          headerShown: false,
+          href: null,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+
+      <Tabs.Screen
+        name="(alert-company-alertModify)/[id]"
+        options={{
+          headerShown: false,
+          href: null,
+          tabBarStyle: { display: "none" },
+        }}
+      />
+
+      <Tabs.Screen
         name="index"
         options={{
           headerShown: false,
+          tabBarLabel: ({ focused }) => (
+            <Typography
+              weight={focused ? "600" : "400"}
+              size={12}
+              style={{ color: focused ? "#4CC439" : "#484C52" }}
+            >
+              홈
+            </Typography>
+          ),
           tabBarIcon: ({ focused }) => (
             <Image
               source={require("@/assets/images/bottomNavigation/home.png")}

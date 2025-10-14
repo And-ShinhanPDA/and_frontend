@@ -13,6 +13,7 @@ import {
 import { SwipeListView } from "react-native-swipe-list-view";
 
 import ShinhanLogo from "@/assets/images/companies/logo_12_신한금융그룹.svg";
+import CustomHeader from "@/components/header/header";
 import { router } from "expo-router";
 
 type Company = {
@@ -82,6 +83,13 @@ export default function AlertCompany() {
 
   return (
     <View style={styles.container}>
+      <CustomHeader
+        title="기업 알림"
+        showBackButton={false}
+        rightButtons="preset-and-mypage"
+        onPresetPress={() => console.log("프리셋 열기")}
+      />
+
       <View style={styles.searchWrapper}>
         <Image
           source={require("@/assets/images/alert/search.png")}
@@ -179,9 +187,7 @@ export default function AlertCompany() {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() =>
-          router.push("/(tabs)/(alert-company)/(alert-additional)")
-        }
+        onPress={() => router.push("/(tabs)/(alert-company)/chooseCompany")}
       >
         <Image
           source={require("@/assets/images/alert/company_alert.png")}

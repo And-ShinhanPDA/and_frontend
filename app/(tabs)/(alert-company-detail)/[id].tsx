@@ -1,9 +1,10 @@
-import Arrow from "@/assets/images/arrow.svg";
+import CustomHeader from "@/components/header/header";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Animated,
   Image,
+  Pressable,
   StyleSheet,
   Switch,
   Text,
@@ -120,6 +121,7 @@ export default function CompanyAlertDetail() {
   // 고정 시가/종가 알림 행 (스와이프/삭제 불가)
   const FixedPriceRow = () => (
     <>
+      <View style={{ height: 20 }} />
       <View style={[styles.itemRow]}>
         <View style={styles.itemText}>
           <Text style={styles.name}>시가/종가 알림</Text>
@@ -141,18 +143,12 @@ export default function CompanyAlertDetail() {
   return (
     <View style={styles.container}>
       {/* 헤더 */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() =>
-            router.replace("/(tabs)/(alert-condition)/alert-condition")
-          }
-        >
-          <Arrow width={22} height={22} />
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>기업 알림 이름으로 바꿔야됨</Text>
-      </View>
+      <CustomHeader
+        title="기업 이름으로 바꿔야 함"
+        showBackButton={true}
+        rightButtons="preset-and-mypage"
+        onPresetPress={() => console.log("프리셋 열기")}
+      />
 
       <SwipeListView
         data={filteredAlerts}
@@ -169,46 +165,55 @@ export default function CompanyAlertDetail() {
           const isLast = index === filteredAlerts.length - 1;
 
           return (
-            <View
-              style={[
-                styles.itemRow,
-                isLast && { borderBottomWidth: 1, borderColor: "#F5F6F8" },
-              ]}
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/(tabs)/(alert-company-alertDetail)/[id]",
+                  params: { id: item.id },
+                })
+              }
             >
-              <View style={styles.itemText}>
-                <Text style={styles.name}>{item.name}</Text>
-
-                <View style={styles.tagContainer}>
-                  {item.tags.map((tag, i) => (
-                    <View key={i} style={styles.tag}>
-                      <Text style={styles.tagText}>{tag}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-
-              <Animated.View
-                style={{
-                  opacity: fadeAnim,
-                  transform: [
-                    {
-                      scale: fadeAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0.9, 1],
-                      }),
-                    },
-                  ],
-                }}
+              <View
+                style={[
+                  styles.itemRow,
+                  isLast && { borderBottomWidth: 1, borderColor: "#F5F6F8" },
+                ]}
               >
-                <Switch
-                  trackColor={{ false: "#ccc", true: "#4CC439" }}
-                  thumbColor="#fff"
-                  ios_backgroundColor="#E9E9EA"
-                  onValueChange={() => toggleSwitch(item.id)}
-                  value={item.enabled}
-                />
-              </Animated.View>
-            </View>
+                <View style={styles.itemText}>
+                  <Text style={styles.name}>{item.name}</Text>
+
+                  <View style={styles.tagContainer}>
+                    {item.tags.map((tag, i) => (
+                      <View key={i} style={styles.tag}>
+                        <Text style={styles.tagText}>{tag}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+
+                <Animated.View
+                  style={{
+                    opacity: fadeAnim,
+                    transform: [
+                      {
+                        scale: fadeAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0.9, 1],
+                        }),
+                      },
+                    ],
+                  }}
+                >
+                  <Switch
+                    trackColor={{ false: "#ccc", true: "#4CC439" }}
+                    thumbColor="#fff"
+                    ios_backgroundColor="#E9E9EA"
+                    onValueChange={() => toggleSwitch(item.id)}
+                    value={item.enabled}
+                  />
+                </Animated.View>
+              </View>
+            </Pressable>
           );
         }}
         renderHiddenItem={({ item }) => (
@@ -226,7 +231,7 @@ export default function CompanyAlertDetail() {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => router.push("/(tabs)/condition-additional/[id]")}
+        onPress={() => router.push("/(tabs)/(alert-company-additional)/[id]")}
       >
         <Image
           source={require("@/assets/images/alert/condition_alert.png")}
@@ -242,24 +247,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingTop: 60,
-  },
-
-  /* 헤더 */
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 12,
-    marginBottom: 20,
-    paddingHorizontal: 16,
-  },
-  backButton: { position: "absolute", left: 16 },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    textAlign: "center",
-    color: "#111",
   },
 
   /* 리스트 아이템 */

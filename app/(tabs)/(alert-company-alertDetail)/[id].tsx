@@ -1,17 +1,3 @@
-import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
-import ChangeConditionCard from "@/components/add-card/change/change-condition";
-import CurrentStatusCard from "@/components/add-card/current-status";
-import PriceConditionCard from "@/components/add-card/price/price-condition";
-import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
-import SMAConditionCard from "@/components/add-card/sma/sma-condition";
-import TrailingConditionCard from "@/components/add-card/trailing/trailing-condition";
-import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
-import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
-import CustomHeader from "@/components/header/header";
-import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
-import PresetSelect from "@/components/preset/preset-select";
-import { useAuth } from "@/contexts/AuthContext";
-import { alertService } from "@/services/alert-service";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -23,24 +9,28 @@ import {
   View,
 } from "react-native";
 
-export default function CompanyAlertDetail() {
-  const { accessToken } = useAuth();
-  const { name } = useLocalSearchParams();
-  const router = useRouter();
-  const [isPresetOpen, setIsPresetOpen] = useState(false);
-  const tabs = [
-    "제목",
-    "가격",
-    "후행",
-    "52주",
-    "거래량",
-    "SMA",
-    "RSI",
-    "볼린저밴드",
-  ];
+import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
 
-  const [title, setTitle] = useState("");
-  const [conditions, setConditions] = useState<any[]>([]);
+import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
+import SMAConditionCard from "@/components/add-card/sma/sma-condition";
+import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
+import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
+
+import ChangeConditionCard from "@/components/add-card/change/change-condition";
+import PriceConditionCard from "@/components/add-card/price/price-condition";
+import TrailingConditionCard from "@/components/add-card/trailing/trailing-condition";
+import CustomHeader from "@/components/header/header";
+import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
+import PresetSelect from "@/components/preset/preset-select";
+import { useAuth } from "@/contexts/AuthContext";
+
+export default function CompanyAlertDetail() {
+  const router = useRouter();
+  const { id } = useLocalSearchParams();
+
+  const [isPresetOpen, setIsPresetOpen] = useState(false);
+  const tabs = ["제목", "가격", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
+  const { accessToken } = useAuth();
 
   const [conditionGetters, setConditionGetters] = useState<{
     [k: string]: () => any[];
@@ -50,47 +40,18 @@ export default function CompanyAlertDetail() {
     setConditionGetters((prev) => ({ ...prev, [id]: getter }));
   };
 
-  const handleSave = async () => {
-    try {
-      if (!accessToken) {
-        alert("로그인이 필요합니다.");
-        return;
-      }
-
-      const mergedConditions = Object.values(conditionGetters)
-        .map((fn) => fn())
-        .flat()
-        .filter(
-          (c) =>
-            c && c.indicator && (c.threshold === null || !isNaN(c.threshold))
-        );
-
-      const payload = {
-        stockCode: "005930",
-        title: title || `${name}`,
-        isActive: true,
-        isPreset: false,
-        conditions: mergedConditions,
-      };
-
-      const res = await alertService.createAlert(payload, accessToken);
-      console.log("알림 등록 성공:", res);
-      alert("알림이 성공적으로 등록되었습니다!");
-      router.back();
-    } catch (error: any) {
-      console.error("알림 등록 실패:", error);
-      if (error.response?.status === 401) {
-        alert("로그인 세션이 만료되었습니다. 다시 로그인 해주세요.");
-      } else {
-        alert("알림 등록 중 오류가 발생했습니다.");
-      }
-    }
-  };
-
-  const [expanded, setExpanded] = useState(false);
   return (
     <View style={styles.container}>
-      <CustomHeader title={`${name}`} showBackButton={true} />
+      {/* 헤더 */}
+      <CustomHeader
+        title="이거 제목 바꿔야함"
+        showBackButton={true}
+        rightButtons="preset-and-modify"
+        onPresetPress={() => console.log("프리셋으로 추가")}
+        onModifyPress={() =>
+          router.push("/(tabs)/(alert-condition-modify)/[id]")
+        }
+      />
 
       {/* 탭 */}
       <View style={styles.tabBarContainer}>
@@ -113,33 +74,16 @@ export default function CompanyAlertDetail() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContentContainer}
       >
-        <CurrentStatusCard
-          time="11:38 기준"
-          currentPrice={50000}
-          openPrice={50000}
-          high52w={55000}
-          low52w={45000}
-          volume={50}
-          bollingerUpper={50000}
-          bollingerLower={50000}
-          rsi={50}
-          sma={{
-            "5일": 50000,
-            "10일": 50100,
-            "20일": 50200,
-            "30일": 50300,
-            "50일": 50400,
-            "100일": 50500,
-            "200일": 50600,
-          }}
-        />
-        <View style={styles.divider} />
+        {/* 제목*/}
         <TextInput
           style={styles.titleInput}
           placeholder="이 조건을 대표할 수 있는 한 줄 제목"
           placeholderTextColor="#A4A4A4"
         />
+
         <View style={styles.divider} />
+
+        {/* 조건 카드 */}
         <PriceConditionCard onTempSave={handleTempSave} />
         <ChangeConditionCard onTempSave={handleTempSave} />
         <TrailingConditionCard onTempSave={handleTempSave} />
@@ -152,20 +96,7 @@ export default function CompanyAlertDetail() {
         <BollingerBandCondition onTempSave={handleTempSave} />
       </ScrollView>
 
-      {/* 하단 버튼 */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.presetButton}
-          onPress={() => setIsPresetOpen(true)}
-        >
-          <Text style={styles.presetText}>프리셋</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveText}>저장</Text>
-        </TouchableOpacity>
-      </View>
-
+      {/* 프리셋 */}
       <ConditionBottomSheet
         visible={isPresetOpen}
         onClose={() => setIsPresetOpen(false)}
@@ -185,8 +116,8 @@ const styles = StyleSheet.create({
 
   tabBarContainer: {
     position: "relative",
-    marginBottom: 10,
     marginTop: 10,
+    marginBottom: 10,
   },
   tabBarContent: {
     paddingHorizontal: 16,
@@ -212,15 +143,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  divider: {
-    height: 7,
-    backgroundColor: "#F5F6F8",
-    marginVertical: 10,
-    marginHorizontal: -16,
-    width: "100%",
-    alignSelf: "stretch",
-  },
-
   titleInput: {
     borderWidth: 1,
     borderColor: "#E5E5E5",
@@ -231,6 +153,15 @@ const styles = StyleSheet.create({
     color: "#333",
     backgroundColor: "#fff",
     marginVertical: 10,
+  },
+
+  divider: {
+    height: 7,
+    backgroundColor: "#F5F6F8",
+    marginVertical: 10,
+    marginHorizontal: -16,
+    width: "100%",
+    alignSelf: "stretch",
   },
 
   scrollContent: {
