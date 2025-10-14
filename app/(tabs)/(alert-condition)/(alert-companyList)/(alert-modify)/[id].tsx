@@ -10,12 +10,7 @@ import {
   View,
 } from "react-native";
 
-import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
 import PriceConditionSimpleCard from "@/components/add-card/price/price-simple";
-import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
-import SMAConditionCard from "@/components/add-card/sma/sma-condition";
-import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
-import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
 
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
@@ -76,11 +71,11 @@ export default function ConditionAlertDetailModify() {
 
         {/* 조건 카드 */}
         <PriceConditionSimpleCard />
-        <Week52ConditionCard />
+        {/* <Week52ConditionCard />
         <VolumeConditionCard />
         <SMAConditionCard />
         <RSIConditionCard />
-        <BollingerBandCondition />
+        <BollingerBandCondition /> */}
       </ScrollView>
 
       {/* 하단 버튼 - 플로팅 */}

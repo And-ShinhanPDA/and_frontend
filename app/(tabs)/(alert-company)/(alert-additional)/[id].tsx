@@ -1,5 +1,6 @@
 import Arrow from "@/assets/images/arrow.svg";
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
+import ChangeConditionCard from "@/components/add-card/change/change-condition";
 import CurrentStatusCard from "@/components/add-card/current-status";
 import PriceConditionCard from "@/components/add-card/price/price-condition";
 import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
@@ -136,7 +137,8 @@ export default function CompanyAlertDetail() {
         placeholderTextColor="#A4A4A4"
       />
       <View style={styles.divider} />
-      <PriceConditionCard />
+      <PriceConditionCard onTempSave={handleTempSave} />
+      <ChangeConditionCard onTempSave={handleTempSave} />
       <Week52ConditionCard onTempSave={handleTempSave} />
 
       <VolumeConditionCard onTempSave={handleTempSave} />

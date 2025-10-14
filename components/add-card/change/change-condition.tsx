@@ -12,9 +12,9 @@ import {
 import AddIcon from "../../../assets/images/add.svg";
 import EditIcon from "../../../assets/images/edit.svg";
 import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
-import PriceConditionContent, {
-  PriceConditionData,
-} from "./price-condition-content";
+import ChangeConditionContent, {
+  ChangeConditionData,
+} from "./change-condition-content";
 
 if (
   Platform.OS === "android" &&
@@ -23,7 +23,7 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function PriceConditionCard({
+export default function ChangeConditionCard({
   onTempSave,
 }: {
   onTempSave: (id: string, getter: () => any[]) => void;
@@ -31,15 +31,13 @@ export default function PriceConditionCard({
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [conditionData, setConditionData] = useState<PriceConditionData | null>(
-    null
-  );
+  const [conditionData, setConditionData] =
+    useState<ChangeConditionData | null>(null);
 
-  const handleConfirm = (data: PriceConditionData) => {
+  const handleConfirm = (data: ChangeConditionData) => {
     setConditionData(data);
     setHasCondition(true);
     setIsOpen(false);
-
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
   };
@@ -50,51 +48,39 @@ export default function PriceConditionCard({
 
       const list: any[] = [];
 
-      // --- 가격 제한 ---
-      conditionData.limits.forEach((limit) => {
-        const amount = Number(limit.amount);
+      // 오늘 시가 기준
+      conditionData.dailyChanges.forEach((c) => {
+        const amount = Number(c.amount);
         if (!isNaN(amount) && amount > 0) {
           list.push({
             indicator:
-              limit.comparison === "이상" ? "PRICE_ABOVE" : "PRICE_BELOW",
+              c.direction === "+"
+                ? "PRICE_RATE_DAILY_UP"
+                : "PRICE_RATE_DAILY_DOWN",
             threshold: amount,
           });
         }
       });
 
-      // --- 시가 기준 (+ / -) ---
-      conditionData.openChanges.forEach((change) => {
-        const amount = Number(change.amount);
+      // 현재가 기준
+      conditionData.baseChanges.forEach((c) => {
+        const amount = Number(c.amount);
         if (!isNaN(amount) && amount > 0) {
           list.push({
             indicator:
-              change.direction === "+"
-                ? "PRICE_CHANGE_DAILY_UP"
-                : "PRICE_CHANGE_DAILY_DOWN",
+              c.direction === "+"
+                ? "PRICE_RATE_BASE_UP"
+                : "PRICE_RATE_BASE_DOWN",
             threshold: amount,
           });
         }
       });
 
-      // --- 현재가 기준 (+ / -) ---
-      conditionData.currentChanges.forEach((change) => {
-        const amount = Number(change.amount);
-        if (!isNaN(amount) && amount > 0) {
-          list.push({
-            indicator:
-              change.direction === "+"
-                ? "PRICE_CHANGE_BASE_UP"
-                : "PRICE_CHANGE_BASE_DOWN",
-            threshold: amount,
-          });
-        }
-      });
-
-      console.log("최종 PRICE payload:", list);
+      console.log("최종 변동률 payload:", list);
       return list;
     };
 
-    onTempSave("price", getCondition);
+    onTempSave("changeRate", getCondition);
   }, [conditionData]);
 
   const toggleExpand = () => {
@@ -107,7 +93,7 @@ export default function PriceConditionCard({
       <Pressable onPress={hasCondition ? toggleExpand : undefined}>
         <View style={styles.card}>
           <View style={styles.header}>
-            <Text style={styles.title}>가격</Text>
+            <Text style={styles.title}>변동률</Text>
             <TouchableOpacity onPress={() => setIsOpen(true)}>
               {hasCondition ? (
                 <EditIcon width={18} height={18} />
@@ -121,35 +107,18 @@ export default function PriceConditionCard({
             <>
               <View style={styles.divider} />
 
-              {/* 가격 제한 */}
-              {!!conditionData.limits?.length && (
+              {/* 오늘 시가 기준 */}
+              {!!conditionData.dailyChanges?.length && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>가격 제한</Text>
-                  {conditionData.limits.map((r, i) => (
-                    <View key={`limit-${i}`} style={styles.row}>
+                  <Text style={styles.sectionTitle}>오늘 시가 기준</Text>
+                  {conditionData.dailyChanges.map((r, i) => (
+                    <View key={`daily-${i}`} style={styles.row}>
                       <Text style={styles.label}>
-                        현재가 {r.comparison}일 때
-                      </Text>
-                      <Text style={styles.value}>
-                        {r.amount ? `${r.amount}원` : "-"}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-
-              {/* 시가 기준 */}
-              {!!conditionData.openChanges?.length && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>가격 변경 (시가)</Text>
-                  {conditionData.openChanges.map((r, i) => (
-                    <View key={`open-${i}`} style={styles.row}>
-                      <Text style={styles.label}>
-                        시가 대비 {r.direction === "+" ? "상승" : "하락"} 금액
+                        오늘 시가 대비 {r.direction === "+" ? "상승" : "하락"}률
                         이상
                       </Text>
                       <Text style={styles.value}>
-                        {r.amount ? `${r.amount}원` : "-"}
+                        {r.amount ? `${r.amount}%` : "-"}
                       </Text>
                     </View>
                   ))}
@@ -157,17 +126,17 @@ export default function PriceConditionCard({
               )}
 
               {/* 현재가 기준 */}
-              {!!conditionData.currentChanges?.length && (
+              {!!conditionData.baseChanges?.length && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>가격 변경 (현재가)</Text>
-                  {conditionData.currentChanges.map((r, i) => (
-                    <View key={`curr-${i}`} style={styles.row}>
+                  <Text style={styles.sectionTitle}>현재가 기준</Text>
+                  {conditionData.baseChanges.map((r, i) => (
+                    <View key={`base-${i}`} style={styles.row}>
                       <Text style={styles.label}>
-                        현재가 기준 {r.direction === "+" ? "상승" : "하락"} 금액
+                        현재가 대비 {r.direction === "+" ? "상승" : "하락"}률
                         이상
                       </Text>
                       <Text style={styles.value}>
-                        {r.amount ? `${r.amount}원` : "-"}
+                        {r.amount ? `${r.amount}%` : "-"}
                       </Text>
                     </View>
                   ))}
@@ -181,9 +150,9 @@ export default function PriceConditionCard({
       <ConditionBottomSheet
         visible={isOpen}
         onClose={() => setIsOpen(false)}
-        ratio={0.65}
+        ratio={0.6}
       >
-        <PriceConditionContent
+        <ChangeConditionContent
           onConfirm={handleConfirm}
           initialValue={conditionData || undefined}
         />
