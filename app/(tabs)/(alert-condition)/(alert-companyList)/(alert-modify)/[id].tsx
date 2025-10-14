@@ -10,19 +10,69 @@ import {
   View,
 } from "react-native";
 
-import PriceConditionSimpleCard from "@/components/add-card/price/price-simple";
-
+import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
+import ChangeConditionCard from "@/components/add-card/change/change-condition";
+import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
+import SMAConditionCard from "@/components/add-card/sma/sma-condition";
+import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
+import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
 
 export default function ConditionAlertDetailModify() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-
+  const { accessToken } = useAuth();
   const [isPresetOpen, setIsPresetOpen] = useState(false);
 
   const tabs = ["제목", "가격", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
 
+  const [conditionGetters, setConditionGetters] = useState<{
+    [k: string]: () => any[];
+  }>({});
+
+  const handleTempSave = (id: string, getter: () => any[]) => {
+    setConditionGetters((prev) => ({ ...prev, [id]: getter }));
+  };
+
+  const handleSave = async () => {
+    try {
+      if (!accessToken) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+
+      const mergedConditions = Object.values(conditionGetters)
+        .map((fn) => fn())
+        .flat()
+        .filter(
+          (c) =>
+            c && c.indicator && (c.threshold === null || !isNaN(c.threshold))
+        );
+
+      const payload = {
+        stockCode: "005930",
+        title: "알람1번조건",
+        isActive: true,
+        isPreset: false,
+        conditions: mergedConditions,
+      };
+
+      const res = await alertService.createAlert(payload, accessToken);
+      console.log("알림 등록 성공:", res);
+      alert("알림이 성공적으로 등록되었습니다!");
+      router.back();
+    } catch (error: any) {
+      console.error("알림 등록 실패:", error);
+      if (error.response?.status === 401) {
+        alert("로그인 세션이 만료되었습니다. 다시 로그인 해주세요.");
+      } else {
+        alert("알림 등록 중 오류가 발생했습니다.");
+      }
+    }
+  };
   return (
     <View style={styles.container}>
       {/* 헤더 */}
@@ -70,12 +120,15 @@ export default function ConditionAlertDetailModify() {
         <View style={styles.divider} />
 
         {/* 조건 카드 */}
-        <PriceConditionSimpleCard />
-        {/* <Week52ConditionCard />
-        <VolumeConditionCard />
-        <SMAConditionCard />
-        <RSIConditionCard />
-        <BollingerBandCondition /> */}
+
+        <ChangeConditionCard onTempSave={handleTempSave} />
+        <Week52ConditionCard onTempSave={handleTempSave} />
+
+        <VolumeConditionCard onTempSave={handleTempSave} />
+        <SMAConditionCard onTempSave={handleTempSave} />
+
+        <RSIConditionCard onTempSave={handleTempSave} />
+        <BollingerBandCondition onTempSave={handleTempSave} />
       </ScrollView>
 
       {/* 하단 버튼 - 플로팅 */}
@@ -87,10 +140,7 @@ export default function ConditionAlertDetailModify() {
           <Text style={styles.presetText}>프리셋</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={() => console.log("조건 저장")}
-        >
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveText}>저장</Text>
         </TouchableOpacity>
       </View>

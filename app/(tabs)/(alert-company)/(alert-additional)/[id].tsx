@@ -5,6 +5,7 @@ import CurrentStatusCard from "@/components/add-card/current-status";
 import PriceConditionCard from "@/components/add-card/price/price-condition";
 import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
 import SMAConditionCard from "@/components/add-card/sma/sma-condition";
+import TrailingConditionCard from "@/components/add-card/trailing/trailing-condition";
 import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
 import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
@@ -139,6 +140,7 @@ export default function CompanyAlertDetail() {
       <View style={styles.divider} />
       <PriceConditionCard onTempSave={handleTempSave} />
       <ChangeConditionCard onTempSave={handleTempSave} />
+      <TrailingConditionCard onTempSave={handleTempSave} />
       <Week52ConditionCard onTempSave={handleTempSave} />
 
       <VolumeConditionCard onTempSave={handleTempSave} />

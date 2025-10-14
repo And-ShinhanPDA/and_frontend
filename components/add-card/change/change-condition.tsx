@@ -114,8 +114,7 @@ export default function ChangeConditionCard({
                   {conditionData.dailyChanges.map((r, i) => (
                     <View key={`daily-${i}`} style={styles.row}>
                       <Text style={styles.label}>
-                        오늘 시가 대비 {r.direction === "+" ? "상승" : "하락"}률
-                        이상
+                        시가 대비 {r.direction === "+" ? "상승" : "하락"}률 이상
                       </Text>
                       <Text style={styles.value}>
                         {r.amount ? `${r.amount}%` : "-"}

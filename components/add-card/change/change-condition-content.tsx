@@ -125,10 +125,10 @@ export default function ChangeConditionContent({
       <View style={styles.container}>
         <Text style={styles.sectionTitle}>변동률 (%)</Text>
 
-        {/* 오늘 시가 기준 */}
+        {/* 시가 기준 */}
         <ConditionSection
-          title="오늘 시가 기준 변동률"
-          description="오늘 시가 대비 상승 / 하락 시 알림"
+          title="시가 기준 변동률"
+          description="시가 대비 상승 / 하락 시 알림"
           value={toggles.daily}
           onToggle={() => toggle("daily")}
           rows={dailyChanges}
@@ -147,7 +147,7 @@ export default function ChangeConditionContent({
                 </Text>
                 <ConditionInput
                   value={r.amount}
-                  placeholder={`오늘 시가 대비 ${
+                  placeholder={`시가 대비 ${
                     r.direction === "+" ? "상승" : "하락"
                   }률`}
                   unit="%"
