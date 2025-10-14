@@ -1,4 +1,3 @@
-import Arrow from "@/assets/images/arrow.svg";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -16,6 +15,7 @@ import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
 import SMAConditionCard from "@/components/add-card/sma/sma-condition";
 import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
 import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
+import CustomHeader from "@/components/header/header";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
@@ -75,18 +75,7 @@ export default function ConditionAlertDetail() {
   return (
     <View style={styles.container}>
       {/* 헤더 */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Arrow width={22} height={22} />
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          제목 없는 조건 알림 수정
-        </Text>
-      </View>
+      <CustomHeader title="이거 제목 바꿔야함2" showBackButton={true} />
 
       {/* 탭 */}
       <View style={styles.tabBarContainer}>
@@ -160,55 +149,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingTop: 60,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 12,
-    marginBottom: 20,
-    paddingHorizontal: 16,
-  },
-  backButton: {
-    width: 24,
-    height: 24,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#111",
-    textAlign: "center",
-    marginHorizontal: 16,
-  },
-  rightSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 11,
-    marginLeft: "auto",
-  },
-  presetAddButton: {
-    backgroundColor: "rgba(76, 197, 58, 0.15)",
-    borderRadius: 7,
-    paddingHorizontal: 10,
-    height: 25,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-  },
-  modifyButton: {
-    width: 24,
-    height: 24,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
   tabBarContainer: {
     position: "relative",
     marginBottom: 10,
+    marginTop: 10,
   },
   tabBarContent: {
     paddingHorizontal: 16,

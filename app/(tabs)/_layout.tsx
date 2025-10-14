@@ -1,9 +1,8 @@
 import { Redirect, Tabs } from "expo-router";
 import React from "react";
-import { Image, Pressable } from "react-native";
+import { Image } from "react-native";
 
 import { HapticTab } from "@/components/haptic-tab";
-import PriceAlertToast from "@/components/home/price-toast-alert";
 import { Typography } from "@/components/ui/Typography";
 import { useAuth } from "@/contexts/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -23,37 +22,6 @@ export default function TabLayout() {
         tabBarInactiveTintColor: "#484C52",
         tabBarButton: HapticTab,
         headerTitleAlign: "left",
-
-        headerStyle: {
-          shadowOpacity: 0,
-          elevation: 0,
-          borderBottomWidth: 0,
-        },
-
-        headerTitle: ({ children }) => (
-          <Typography weight="600" size={20}>
-            {children}
-          </Typography>
-        ),
-
-        headerTitleContainerStyle: {
-          left: 0,
-          paddingLeft: 10,
-        },
-
-        headerRightContainerStyle: {
-          paddingRight: 20,
-        },
-
-        headerRight: () => (
-          <Pressable onPress={() => console.log("마이페이지 이동")}>
-            <Image
-              source={require("@/assets/images/mypage.png")}
-              style={{ width: 28, height: 28 }}
-              resizeMode="contain"
-            />
-          </Pressable>
-        ),
 
         tabBarLabel: ({ focused, children }) => (
           <Typography
@@ -81,7 +49,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="(alert-condition)"
         options={{
-          title: "조건 검색",
+          headerShown: false,
           tabBarLabel: ({ focused }) => (
             <Typography
               weight={focused ? "600" : "400"}
@@ -101,39 +69,6 @@ export default function TabLayout() {
               }}
               resizeMode="contain"
             />
-          ),
-          headerRight: () => (
-            <>
-              <Pressable
-                onPress={() => console.log("프리셋 버튼")}
-                style={{
-                  backgroundColor: "rgba(76, 197, 58, 0.15)",
-                  borderRadius: 7,
-                  width: 62,
-                  height: 25,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexDirection: "row",
-                  marginRight: 11,
-                }}
-              >
-                <Image
-                  source={require("@/assets/images/preset.png")}
-                  style={{ width: 12, height: 12, marginRight: 3 }}
-                  resizeMode="contain"
-                />
-                <Typography weight="400" size={12} style={{ color: "#4CC53A" }}>
-                  프리셋
-                </Typography>
-              </Pressable>
-              <Pressable onPress={() => console.log("마이페이지 이동")}>
-                <Image
-                  source={require("@/assets/images/mypage.png")}
-                  style={{ width: 28, height: 28 }}
-                  resizeMode="contain"
-                />
-              </Pressable>
-            </>
           ),
         }}
       />
@@ -157,9 +92,17 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
+        name="(alert-condition-companyList)/[id]"
+        options={{
+          href: null,
+          headerShown: false, // 헤더 숨김
+        }}
+      />
+
+      <Tabs.Screen
         name="(alert-company)"
         options={{
-          title: "기업 알림",
+          headerShown: false,
           tabBarLabel: ({ focused }) => (
             <Typography
               weight={focused ? "600" : "400"}
@@ -180,46 +123,13 @@ export default function TabLayout() {
               resizeMode="contain"
             />
           ),
-
-          headerRight: () => (
-            <>
-              <Pressable
-                onPress={() => console.log("프리셋 버튼")}
-                style={{
-                  backgroundColor: "rgba(76, 197, 58, 0.15)",
-                  borderRadius: 7,
-                  width: 62,
-                  height: 25,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexDirection: "row",
-                  marginRight: 11,
-                }}
-              >
-                <Image
-                  source={require("@/assets/images/preset.png")}
-                  style={{ width: 12, height: 12, marginRight: 3 }}
-                  resizeMode="contain"
-                />
-                <Typography weight="400" size={12} style={{ color: "#4CC53A" }}>
-                  프리셋
-                </Typography>
-              </Pressable>
-              <Pressable onPress={() => console.log("마이페이지 이동")}>
-                <Image
-                  source={require("@/assets/images/mypage.png")}
-                  style={{ width: 28, height: 28 }}
-                  resizeMode="contain"
-                />
-              </Pressable>
-            </>
-          ),
         }}
       />
 
       <Tabs.Screen
         name="(alert-company-additional)/[id]"
         options={{
+          headerShown: false,
           href: null,
         }}
       />
@@ -227,6 +137,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="(alert-company-detail)/[id]"
         options={{
+          headerShown: false,
           href: null,
         }}
       />
@@ -234,15 +145,16 @@ export default function TabLayout() {
       <Tabs.Screen
         name="(alert-condition-additional)/[id]"
         options={{
+          headerShown: false,
           href: null,
+          tabBarStyle: { display: "none" },
         }}
       />
 
       <Tabs.Screen
         name="index"
         options={{
-          title: "홈",
-          header: () => <PriceAlertToast />,
+          headerShown: false,
           tabBarIcon: ({ focused }) => (
             <Image
               source={require("@/assets/images/bottomNavigation/home.png")}
@@ -260,7 +172,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="(chart)/index"
         options={{
-          title: "차트",
+          headerShown: false,
           tabBarLabel: ({ focused }) => (
             <Typography
               weight={focused ? "600" : "400"}
@@ -293,7 +205,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="(alert-history)/index"
         options={{
-          title: "알림 히스토리",
+          headerShown: false,
           tabBarLabel: ({ focused }) => (
             <Typography
               weight={focused ? "600" : "400"}
