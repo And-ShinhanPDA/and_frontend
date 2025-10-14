@@ -146,9 +146,8 @@ export default function AlertCondition() {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname:
-                    "/(tabs)/(alert-condition)/(alert-companyList)/[id]",
-                  params: { id: item.id },
+                  pathname: "/(tabs)/(alert-condition)/[alertId]",
+                  params: { alertId: item.id },
                 })
               }
             >
@@ -210,7 +209,7 @@ export default function AlertCondition() {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => router.replace("/(tabs)/condition-additional/[id]")}
+        onPress={() => router.push("/(tabs)/(alert-condition-additional)/[id]")}
       >
         <Image
           source={require("@/assets/images/alert/condition_alert.png")}

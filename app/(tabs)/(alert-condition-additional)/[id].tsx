@@ -1,3 +1,4 @@
+import Arrow from "@/assets/images/arrow.svg";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -8,7 +9,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Arrow from "../../../assets/images/arrow.svg";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
 import PriceConditionSimpleCard from "@/components/add-card/price/price-simple";
@@ -20,7 +20,7 @@ import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
-export default function ConditionAdditionalDetail() {
+export default function ConditionAdditional() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { accessToken } = useAuth();
@@ -62,7 +62,7 @@ export default function ConditionAdditionalDetail() {
       const res = await alertService.createAlert(payload, accessToken);
       console.log("알림 등록 성공:", res);
       alert("알림이 성공적으로 등록되었습니다!");
-      router.back();
+      router.replace("/(tabs)/(alert-condition)");
     } catch (error: any) {
       console.error("알림 등록 실패:", error);
       if (error.response?.status === 401) {
@@ -79,7 +79,7 @@ export default function ConditionAdditionalDetail() {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() =>
-            router.replace("/(tabs)/(alert-condition)/alert-condition")
+            router.replace("/(tabs)/(alert-condition)/alertCondition")
           }
         >
           <Arrow width={22} height={22} />

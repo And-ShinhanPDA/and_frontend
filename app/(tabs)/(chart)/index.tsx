@@ -130,8 +130,8 @@ export default function AlertAdditional() {
       style={styles.item}
       onPress={() =>
         router.push({
-          pathname: `/(tabs)/(chart)/(chart-detail)/[id]`,
-          params: { id: item.id, name: item.name },
+          pathname: `/(tabs)/(chart)/[chartId]`,
+          params: { chartId: item.id, name: item.name },
         })
       }
       activeOpacity={0.7}

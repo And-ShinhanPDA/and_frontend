@@ -102,37 +102,57 @@ export default function TabLayout() {
               resizeMode="contain"
             />
           ),
+          headerRight: () => (
+            <>
+              <Pressable
+                onPress={() => console.log("프리셋 버튼")}
+                style={{
+                  backgroundColor: "rgba(76, 197, 58, 0.15)",
+                  borderRadius: 7,
+                  width: 62,
+                  height: 25,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "row",
+                  marginRight: 11,
+                }}
+              >
+                <Image
+                  source={require("@/assets/images/preset.png")}
+                  style={{ width: 12, height: 12, marginRight: 3 }}
+                  resizeMode="contain"
+                />
+                <Typography weight="400" size={12} style={{ color: "#4CC53A" }}>
+                  프리셋
+                </Typography>
+              </Pressable>
+              <Pressable onPress={() => console.log("마이페이지 이동")}>
+                <Image
+                  source={require("@/assets/images/mypage.png")}
+                  style={{ width: 28, height: 28 }}
+                  resizeMode="contain"
+                />
+              </Pressable>
+            </>
+          ),
         }}
       />
+
       <Tabs.Screen
-        name="condition-additional/[id]"
+        name="(alert-condition-detail)/[id]"
         options={{
           href: null,
-          headerShown: false,
-          tabBarStyle: { display: "none" },
+          tabBarStyle: { display: "none" }, // 바텀 네비게이션 숨김
+          headerShown: false, // 헤더 숨김
         }}
       />
+
       <Tabs.Screen
-        name="condition-alertDetail/[id]"
+        name="(alert-condition-modify)/[id]"
         options={{
           href: null,
-          headerShown: false,
-          tabBarStyle: { display: "none" },
-        }}
-      />
-      <Tabs.Screen
-        name="condition-alertDetail/modify/[modifyID]"
-        options={{
-          href: null,
-          headerShown: false,
-          tabBarStyle: { display: "none" },
-        }}
-      />
-      <Tabs.Screen
-        name="company-alertDetail/[id]"
-        options={{
-          href: null,
-          headerShown: false,
+          tabBarStyle: { display: "none" }, // 바텀 네비게이션 숨김
+          headerShown: false, // 헤더 숨김
         }}
       />
 
@@ -198,6 +218,27 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
+        name="(alert-company-additional)/[id]"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="(alert-company-detail)/[id]"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="(alert-condition-additional)/[id]"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
         name="index"
         options={{
           title: "홈",
@@ -213,21 +254,6 @@ export default function TabLayout() {
               resizeMode="contain"
             />
           ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="alert-additional/index"
-        options={{
-          title: "알림 설정",
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="alert-additional/[companyId]"
-        options={{
-          href: null,
-          headerShown: false,
         }}
       />
 
@@ -258,14 +284,14 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="(chart)/(chart-detail)/[id]"
+        name="(chart)/[chartId]"
         options={{
           href: null,
         }}
       />
 
       <Tabs.Screen
-        name="alert-history"
+        name="(alert-history)/index"
         options={{
           title: "알림 히스토리",
           tabBarLabel: ({ focused }) => (

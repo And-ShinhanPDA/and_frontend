@@ -19,29 +19,76 @@ import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
 
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
 
-export default function ConditionAlertDetailModify() {
+export default function ConditionAlertDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
 
   const [isPresetOpen, setIsPresetOpen] = useState(false);
-
   const tabs = ["제목", "가격", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
+  const { accessToken } = useAuth();
+
+  const [conditionGetters, setConditionGetters] = useState<{
+    [k: string]: () => any[];
+  }>({});
+
+  const handleTempSave = (id: string, getter: () => any[]) => {
+    setConditionGetters((prev) => ({ ...prev, [id]: getter }));
+  };
+
+  const handleSave = async () => {
+    try {
+      if (!accessToken) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+
+      const mergedConditions = Object.values(conditionGetters)
+        .map((fn) => fn())
+        .flat()
+        .filter(
+          (c) =>
+            c && c.indicator && (c.threshold === null || !isNaN(c.threshold))
+        );
+
+      const payload = {
+        stockCode: "005930",
+        title: "알람1번조건",
+        isActive: true,
+        isPreset: false,
+        conditions: mergedConditions,
+      };
+
+      const res = await alertService.createAlert(payload, accessToken);
+      console.log("알림 등록 성공:", res);
+      alert("알림이 성공적으로 등록되었습니다!");
+      router.back();
+    } catch (error: any) {
+      console.error("알림 등록 실패:", error);
+      if (error.response?.status === 401) {
+        alert("로그인 세션이 만료되었습니다. 다시 로그인 해주세요.");
+      } else {
+        alert("알림 등록 중 오류가 발생했습니다.");
+      }
+    }
+  };
 
   return (
     <View style={styles.container}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <View style={styles.leftSection}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Arrow width={22} height={22} />
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Arrow width={22} height={22} />
+        </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>조건 알림 상세 수정</Text>
-        </View>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          제목 없는 조건 알림 수정
+        </Text>
       </View>
 
       {/* 탭 */}
@@ -76,11 +123,13 @@ export default function ConditionAlertDetailModify() {
 
         {/* 조건 카드 */}
         <PriceConditionSimpleCard />
-        <Week52ConditionCard />
-        <VolumeConditionCard />
-        <SMAConditionCard />
-        <RSIConditionCard />
-        <BollingerBandCondition />
+        <Week52ConditionCard onTempSave={handleTempSave} />
+
+        <VolumeConditionCard onTempSave={handleTempSave} />
+        <SMAConditionCard onTempSave={handleTempSave} />
+
+        <RSIConditionCard onTempSave={handleTempSave} />
+        <BollingerBandCondition onTempSave={handleTempSave} />
       </ScrollView>
 
       {/* 하단 버튼 - 플로팅 */}
@@ -92,10 +141,7 @@ export default function ConditionAlertDetailModify() {
           <Text style={styles.presetText}>프리셋</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={() => console.log("조건 저장")}
-        >
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveText}>저장</Text>
         </TouchableOpacity>
       </View>
@@ -121,15 +167,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "space-between",
     marginTop: 12,
     marginBottom: 20,
     paddingHorizontal: 16,
-  },
-  leftSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
   },
   backButton: {
     width: 24,
@@ -138,9 +179,33 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
+    flex: 1,
     fontSize: 20,
     fontWeight: "600",
     color: "#111",
+    textAlign: "center",
+    marginHorizontal: 16,
+  },
+  rightSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 11,
+    marginLeft: "auto",
+  },
+  presetAddButton: {
+    backgroundColor: "rgba(76, 197, 58, 0.15)",
+    borderRadius: 7,
+    paddingHorizontal: 10,
+    height: 25,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  },
+  modifyButton: {
+    width: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   tabBarContainer: {
