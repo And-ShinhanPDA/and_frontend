@@ -1,3 +1,4 @@
+import CustomHeader from "@/components/header/header";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -111,6 +112,14 @@ export default function AlertCondition() {
 
   return (
     <View style={styles.container}>
+      <CustomHeader
+        title="조건 검색"
+        showBackButton={false}
+        rightButtons="preset-and-mypage"
+        onPresetPress={() => console.log("프리셋 열기")}
+        // onMyPagePress={() => router.push("/mypage")}
+      />
+
       <View style={styles.searchWrapper}>
         <Image
           source={require("@/assets/images/alert/search.png")}
@@ -146,8 +155,8 @@ export default function AlertCondition() {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: "/(tabs)/(alert-condition)/[alertId]",
-                  params: { alertId: item.id },
+                  pathname: "/(tabs)/(alert-condition-companyList)/[id]",
+                  params: { id: item.id },
                 })
               }
             >

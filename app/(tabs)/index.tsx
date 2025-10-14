@@ -1,16 +1,23 @@
+import CustomHeader from "@/components/header/header";
 import ActivatedCompanyCard from "@/components/home/active-company";
 import ActivatedConditionCard from "@/components/home/active-condition";
+import PriceAlertToast from "@/components/home/price-toast-alert";
 import TreemapChart from "@/components/home/treemap-chart";
 import { ScrollView, StyleSheet, View } from "react-native";
 
 export default function HomeScreen() {
   return (
     <View style={styles.wrapper}>
+      <CustomHeader
+        leftContent="custom"
+        showBackButton={false}
+        customLeft={<PriceAlertToast />}
+        rightButtons="preset-and-mypage"
+        onPresetPress={() => console.log("프리셋 열기")}
+      />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-        bounces={true}
       >
         <ActivatedConditionCard />
         <ActivatedCompanyCard />

@@ -1,39 +1,32 @@
-// PriceAlertToast.tsx
 import { Typography } from "@/components/ui/Typography";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Pressable, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import Kakao from "../../assets/images/companies/logo_13_카카오.svg";
-import Samsung from "../../assets/images/companies/logo_1_삼성전자.svg";
-import Hynix from "../../assets/images/companies/logo_2_하이닉스.svg";
-import Naver from "../../assets/images/companies/logo_7_네이버.svg";
-import Mypage from "../../assets/images/mypage.svg";
+import { Animated, Image, StyleSheet } from "react-native";
 
 const alerts = [
   {
     id: 1,
     name: "삼성전자",
-    message: "삼성전자 설정 가격에 도달했습니다!",
-    logo: Samsung,
+    message: "삼성전자 설정 가격 도달!",
+    logo: require("@/assets/images/companies/logo_1_삼성전자.png"),
   },
   {
     id: 2,
     name: "SK하이닉스",
-    message: "SK하이닉스 조건이 충족되었습니다!",
-    logo: Hynix,
+    message: "SK하이닉스 조건 충족!",
+    logo: require("@/assets/images/companies/logo_2_하이닉스.png"),
   },
   {
     id: 3,
     name: "NAVER",
-    message: "NAVER 설정 조건을 달성했습니다!",
-    logo: Naver,
+    message: "NAVER 조건 달성!",
+    logo: require("@/assets/images/companies/logo_7_네이버.png"),
   },
   {
     id: 4,
     name: "KAKAO",
-    message: "카카오가 설정 조건을 달성했습니다!",
-    logo: Kakao,
+    message: "카카오 조건 달성!",
+    logo: require("@/assets/images/companies/logo_13_카카오.png"),
   },
 ];
 
@@ -83,55 +76,36 @@ export default function PriceAlertToast() {
   const Logo = current.logo;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      <View style={styles.container}>
-        <Animated.View
-          style={[
-            styles.left,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY }],
-            },
-          ]}
-        >
-          <Logo width={22} height={22} />
-          <Typography weight="400" size={14} style={styles.text}>
-            {current.message}
-          </Typography>
-        </Animated.View>
-
-        <Pressable onPress={() => console.log("마이페이지 이동")} hitSlop={8}>
-          <Mypage width={28} height={28} />
-        </Pressable>
-      </View>
-    </SafeAreaView>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY }],
+        },
+      ]}
+    >
+      <Image
+        source={current.logo}
+        style={{ width: 24, height: 24, borderRadius: 6 }}
+        resizeMode="contain"
+      />
+      <Typography weight="500" size={15} style={styles.text} numberOfLines={1}>
+        {current.message}
+      </Typography>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    backgroundColor: "#fff",
-  },
   container: {
-    backgroundColor: "#fff",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    shadowOpacity: 0,
-    elevation: 0,
-    borderBottomWidth: 0,
-  },
-  left: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    flex: 1,
-    marginRight: 10,
+    maxWidth: 250,
+    marginLeft: 10,
   },
   text: {
-    color: "#444",
-    flex: 1,
+    color: "#333",
   },
 });

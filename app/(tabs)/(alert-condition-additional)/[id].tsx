@@ -1,4 +1,3 @@
-import Arrow from "@/assets/images/arrow.svg";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -16,6 +15,7 @@ import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
 import SMAConditionCard from "@/components/add-card/sma/sma-condition";
 import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
 import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
+import CustomHeader from "@/components/header/header";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
@@ -76,18 +76,7 @@ export default function ConditionAdditional() {
   return (
     <View style={styles.container}>
       {/* 헤더 */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() =>
-            router.replace("/(tabs)/(alert-condition)/alertCondition")
-          }
-        >
-          <Arrow width={22} height={22} />
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>조건 알림 추가</Text>
-      </View>
+      <CustomHeader title="조건 알림 추가" showBackButton={true} />
 
       {/* 탭 */}
       <View style={styles.tabBarContainer}>
@@ -159,30 +148,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingTop: 60,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 12,
-    marginBottom: 20,
-    paddingHorizontal: 16,
-  },
-  backButton: {
-    position: "absolute",
-    left: 16,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    textAlign: "center",
-    color: "#111",
   },
 
   tabBarContainer: {
     position: "relative",
     marginBottom: 10,
+    marginTop: 10,
   },
   tabBarContent: {
     paddingHorizontal: 16,

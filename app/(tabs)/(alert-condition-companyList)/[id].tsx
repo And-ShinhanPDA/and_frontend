@@ -13,6 +13,7 @@ import {
 } from "react-native";
 
 import ShinhanLogo from "@/assets/images/companies/logo_12_신한금융그룹.svg";
+import CustomHeader from "@/components/header/header";
 
 type Company = {
   id: string;
@@ -197,7 +198,12 @@ export default function AlertConditionDetail() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}></View>
+      <CustomHeader
+        title="조건 검색"
+        showBackButton={true}
+        rightButtons="preset-and-mypage"
+        onPresetPress={() => console.log("프리셋으로 추가")}
+      />
 
       <View style={styles.conditionBox}>
         <View style={styles.conditionLeft}>
@@ -277,7 +283,6 @@ export default function AlertConditionDetail() {
           horizontal
           ref={dataScrollRef}
           showsHorizontalScrollIndicator={false}
-          // scrollEventThrottle={3}
           onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
             syncScroll(e.nativeEvent.contentOffset.x);
           }}
@@ -318,9 +323,16 @@ export default function AlertConditionDetail() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  header: { paddingTop: 20 },
-
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  backButton: {
+    width: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   conditionBox: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -330,6 +342,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginHorizontal: 22,
     marginBottom: 20,
+    marginTop: 20,
     paddingVertical: 12,
     paddingHorizontal: 17,
   },

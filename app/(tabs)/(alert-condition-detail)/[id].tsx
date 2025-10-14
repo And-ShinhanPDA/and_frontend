@@ -1,9 +1,6 @@
-import Arrow from "@/assets/images/arrow.svg";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Image,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,11 +17,10 @@ import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
 import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
 
 import ChangeConditionCard from "@/components/add-card/change/change-condition";
+import CustomHeader from "@/components/header/header";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
-import { Typography } from "@/components/ui/Typography";
 import { useAuth } from "@/contexts/AuthContext";
-import { alertService } from "@/services/alert-service";
 
 export default function ConditionAlertDetailModify() {
   const router = useRouter();
@@ -42,84 +38,18 @@ export default function ConditionAlertDetailModify() {
     setConditionGetters((prev) => ({ ...prev, [id]: getter }));
   };
 
-  const handleSave = async () => {
-    try {
-      if (!accessToken) {
-        alert("로그인이 필요합니다.");
-        return;
-      }
-
-      const mergedConditions = Object.values(conditionGetters)
-        .map((fn) => fn())
-        .flat()
-        .filter(
-          (c) =>
-            c && c.indicator && (c.threshold === null || !isNaN(c.threshold))
-        );
-
-      const payload = {
-        stockCode: "005930",
-        title: "알람1번조건",
-        isActive: true,
-        isPreset: false,
-        conditions: mergedConditions,
-      };
-
-      const res = await alertService.createAlert(payload, accessToken);
-      console.log("알림 등록 성공:", res);
-      alert("알림이 성공적으로 등록되었습니다!");
-      router.back();
-    } catch (error: any) {
-      console.error("알림 등록 실패:", error);
-      if (error.response?.status === 401) {
-        alert("로그인 세션이 만료되었습니다. 다시 로그인 해주세요.");
-      } else {
-        alert("알림 등록 중 오류가 발생했습니다.");
-      }
-    }
-  };
-
   return (
     <View style={styles.container}>
       {/* 헤더 */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Arrow width={22} height={22} />
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          제목 없는 조건 알림
-        </Text>
-
-        <View style={styles.rightSection}>
-          <Pressable
-            onPress={() => console.log("프리셋으로 추가 버튼")}
-            style={styles.presetAddButton}
-          >
-            <Image
-              source={require("@/assets/images/preset.png")}
-              style={{ width: 12, height: 12, marginRight: 3 }}
-              resizeMode="contain"
-            />
-            <Typography weight="400" size={12} style={{ color: "#4CC53A" }}>
-              프리셋으로 추가
-            </Typography>
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push("/(tabs)/(alert-condition-modify)/[id]")} // 원하는 경로로 변경
-            style={styles.modifyButton}
-          >
-            <Image
-              source={require("@/assets/images/alert/modify.png")}
-              style={{ width: 19, height: 19 }}
-            />
-          </Pressable>
-        </View>
-      </View>
+      <CustomHeader
+        title="이거 제목 바꿔야함"
+        showBackButton={true}
+        rightButtons="preset-and-modify"
+        onPresetPress={() => console.log("프리셋으로 추가")}
+        onModifyPress={() =>
+          router.push("/(tabs)/(alert-condition-modify)/[id]")
+        }
+      />
 
       {/* 탭 */}
       <View style={styles.tabBarContainer}>
@@ -152,7 +82,6 @@ export default function ConditionAlertDetailModify() {
         <View style={styles.divider} />
 
         {/* 조건 카드 */}
-
         <ChangeConditionCard onTempSave={handleTempSave} />
         <Week52ConditionCard onTempSave={handleTempSave} />
 
@@ -179,54 +108,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingTop: 60,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 12,
-    marginBottom: 20,
-    paddingHorizontal: 16,
-  },
-  backButton: {
-    width: 24,
-    height: 24,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#111",
-    textAlign: "center",
-    marginHorizontal: 16,
-  },
-  rightSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 11,
-    marginLeft: "auto",
-  },
-  presetAddButton: {
-    backgroundColor: "rgba(76, 197, 58, 0.15)",
-    borderRadius: 7,
-    paddingHorizontal: 10,
-    height: 25,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-  },
-  modifyButton: {
-    width: 24,
-    height: 24,
-    justifyContent: "center",
-    alignItems: "center",
   },
 
   tabBarContainer: {
     position: "relative",
+    marginTop: 10,
     marginBottom: 10,
   },
   tabBarContent: {

@@ -11,8 +11,10 @@ import {
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
 import ChangeConditionCard from "@/components/add-card/change/change-condition";
+import PriceConditionCard from "@/components/add-card/price/price-condition";
 import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
 import SMAConditionCard from "@/components/add-card/sma/sma-condition";
+import TrailingConditionCard from "@/components/add-card/trailing/trailing-condition";
 import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
 import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
 import CustomHeader from "@/components/header/header";
@@ -109,7 +111,9 @@ export default function ConditionAlertDetail() {
 
         {/* 조건 카드 */}
 
+        <PriceConditionCard onTempSave={handleTempSave} />
         <ChangeConditionCard onTempSave={handleTempSave} />
+        <TrailingConditionCard onTempSave={handleTempSave} />
         <Week52ConditionCard onTempSave={handleTempSave} />
 
         <VolumeConditionCard onTempSave={handleTempSave} />

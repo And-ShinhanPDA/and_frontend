@@ -1,3 +1,4 @@
+import CustomHeader from "@/components/header/header";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -139,6 +140,12 @@ export default function AlertAdditional() {
 
   return (
     <View style={styles.container}>
+      <CustomHeader
+        title="기업 선택"
+        showBackButton={true}
+        rightButtons="mypage"
+      />
+
       {/* 검색 바 */}
       <View style={styles.searchWrapper}>
         <Image
