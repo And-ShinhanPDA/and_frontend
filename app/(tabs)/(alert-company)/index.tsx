@@ -23,7 +23,7 @@ type Company = {
   enabled: boolean;
 };
 
-export default function AlertManage() {
+export default function AlertCompany() {
   const [search, setSearch] = useState("");
   const [fadeAnimations, setFadeAnimations] = useState<
     Record<string, Animated.Value>
@@ -120,7 +120,7 @@ export default function AlertManage() {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: "/(tabs)/company-alertDetail/[id]",
+                  pathname: "/(tabs)/(alert-company)/(alert-detail)/[id]",
                   params: { id: item.id, name: item.name },
                 })
               }
@@ -179,7 +179,9 @@ export default function AlertManage() {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => router.push("/alert-additional")}
+        onPress={() =>
+          router.push("/(tabs)/(alert-company)/(alert-additional)")
+        }
       >
         <Image
           source={require("@/assets/images/alert/company_alert.png")}

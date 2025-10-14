@@ -1,3 +1,4 @@
+import Arrow from "@/assets/images/arrow.svg";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -10,7 +11,6 @@ import {
   View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
-import Arrow from "../../../assets/images/arrow.svg";
 
 // TODO: types로 빼기
 type AlertCondition = {
@@ -27,7 +27,7 @@ export default function CompanyAlertDetail() {
   >({});
   const [deleteWidth, setDeleteWidth] = useState(80);
 
-  // ✅ 고정 "시가/종가 알림" 스위치 상태
+  // 고정 "시가/종가 알림" 스위치 상태
   const [priceOpenCloseEnabled, setPriceOpenCloseEnabled] =
     useState<boolean>(true);
 
@@ -112,12 +112,12 @@ export default function CompanyAlertDetail() {
     }).start();
   };
 
-  // 🔎 검색 필터
+  // 검색 필터
   const filteredAlerts = alerts.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // ✅ 고정 시가/종가 알림 행 (스와이프/삭제 불가)
+  // 고정 시가/종가 알림 행 (스와이프/삭제 불가)
   const FixedPriceRow = () => (
     <>
       <View style={[styles.itemRow]}>

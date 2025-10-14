@@ -126,7 +126,7 @@ export default function AlertAdditional() {
       style={styles.item}
       onPress={() =>
         router.push({
-          pathname: "/alert-additional/[companyId]",
+          pathname: "/(tabs)/(alert-company)/(alert-additional)/[companyId]",
           params: { companyId: item.id, name: item.name },
         })
       }

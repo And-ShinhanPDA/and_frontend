@@ -146,7 +146,8 @@ export default function AlertCondition() {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: "/(tabs)/(alert-condition)/[id]",
+                  pathname:
+                    "/(tabs)/(alert-condition)/(alert-companyList)/[id]",
                   params: { id: item.id },
                 })
               }

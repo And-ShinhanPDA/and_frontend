@@ -1,3 +1,4 @@
+import Arrow from "@/assets/images/arrow.svg";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -8,7 +9,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Arrow from "../../../../assets/images/arrow.svg";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
 import PriceConditionSimpleCard from "@/components/add-card/price/price-simple";

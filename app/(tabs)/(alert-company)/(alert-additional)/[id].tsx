@@ -1,3 +1,4 @@
+import Arrow from "@/assets/images/arrow.svg";
 import BasePriceConditionCard from "@/components/add-card/baseprice/base-price-condition";
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
 import CurrentStatusCard from "@/components/add-card/current-status";
@@ -18,7 +19,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Arrow from "../../../assets/images/arrow.svg";
 export default function CompanyAlertDetail() {
   const { name } = useLocalSearchParams();
   const router = useRouter();

@@ -137,7 +137,7 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="(alert-manage)"
+        name="(alert-company)"
         options={{
           title: "기업 알림",
           tabBarLabel: ({ focused }) => (
