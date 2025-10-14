@@ -2,8 +2,7 @@ import ConditionDescription from "@/components/condition/condition-description";
 import ConditionOrSeparator from "@/components/condition/condition-or-seperator";
 import ConditionSwitch from "@/components/condition/condition-switch";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import ConditionPlus from "../../assets/images/condition-plus.svg";
+import { StyleSheet, Text, View } from "react-native";
 
 interface ConditionSectionProps<T> {
   title: string;
@@ -42,12 +41,6 @@ export default function ConditionSection<T>({
             {idx < rows.length - 1 && <ConditionOrSeparator />}
           </React.Fragment>
         ))}
-
-      {hasFilled && (
-        <TouchableOpacity style={styles.addButton} onPress={onAdd}>
-          <ConditionPlus width={20} height={20} />
-        </TouchableOpacity>
-      )}
     </View>
   );
 }

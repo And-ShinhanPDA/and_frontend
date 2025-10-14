@@ -1,5 +1,8 @@
+<<<<<<< HEAD:app/(tabs)/(alert-company)/(alert-additional)/[id].tsx
 import Arrow from "@/assets/images/arrow.svg";
 import BasePriceConditionCard from "@/components/add-card/baseprice/base-price-condition";
+=======
+>>>>>>> dev:app/(tabs)/alert-additional/[companyId].tsx
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
 import CurrentStatusCard from "@/components/add-card/current-status";
 import PriceConditionCard from "@/components/add-card/price/price-condition";
@@ -9,6 +12,8 @@ import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
 import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -19,7 +24,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+<<<<<<< HEAD:app/(tabs)/(alert-company)/(alert-additional)/[id].tsx
+=======
+import Arrow from "../../../assets/images/arrow.svg";
+
+>>>>>>> dev:app/(tabs)/alert-additional/[companyId].tsx
 export default function CompanyAlertDetail() {
+  const { accessToken } = useAuth();
   const { name } = useLocalSearchParams();
   const router = useRouter();
   const [isPresetOpen, setIsPresetOpen] = useState(false);
@@ -33,6 +44,54 @@ export default function CompanyAlertDetail() {
     "RSI",
     "볼린저밴드",
   ];
+
+  const [title, setTitle] = useState("");
+  const [conditions, setConditions] = useState<any[]>([]);
+
+  const [conditionGetters, setConditionGetters] = useState<{
+    [k: string]: () => any[];
+  }>({});
+
+  const handleTempSave = (id: string, getter: () => any[]) => {
+    setConditionGetters((prev) => ({ ...prev, [id]: getter }));
+  };
+
+  const handleSave = async () => {
+    try {
+      if (!accessToken) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+
+      const mergedConditions = Object.values(conditionGetters)
+        .map((fn) => fn())
+        .flat()
+        .filter(
+          (c) =>
+            c && c.indicator && (c.threshold === null || !isNaN(c.threshold))
+        );
+
+      const payload = {
+        stockCode: "005930",
+        title: title || `${name}`,
+        isActive: true,
+        isPreset: false,
+        conditions: mergedConditions,
+      };
+
+      const res = await alertService.createAlert(payload, accessToken);
+      console.log("알림 등록 성공:", res);
+      alert("알림이 성공적으로 등록되었습니다!");
+      router.back();
+    } catch (error: any) {
+      console.error("알림 등록 실패:", error);
+      if (error.response?.status === 401) {
+        alert("로그인 세션이 만료되었습니다. 다시 로그인 해주세요.");
+      } else {
+        alert("알림 등록 중 오류가 발생했습니다.");
+      }
+    }
+  };
 
   const [expanded, setExpanded] = useState(false);
   return (
@@ -86,12 +145,14 @@ export default function CompanyAlertDetail() {
       />
       <View style={styles.divider} />
       <PriceConditionCard />
-      <Week52ConditionCard />
-      <BasePriceConditionCard />
-      <VolumeConditionCard />
-      <SMAConditionCard />
-      <RSIConditionCard />
-      <BollingerBandCondition />
+      <Week52ConditionCard onTempSave={handleTempSave} />
+
+      <VolumeConditionCard onTempSave={handleTempSave} />
+      <SMAConditionCard onTempSave={handleTempSave} />
+
+      <RSIConditionCard onTempSave={handleTempSave} />
+      <BollingerBandCondition onTempSave={handleTempSave} />
+
       {/* 하단 버튼 */}
       <View style={styles.footer}>
         <TouchableOpacity
@@ -101,10 +162,7 @@ export default function CompanyAlertDetail() {
           <Text style={styles.presetText}>프리셋</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={() => console.log("조건 저장")}
-        >
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveText}>저장</Text>
         </TouchableOpacity>
       </View>

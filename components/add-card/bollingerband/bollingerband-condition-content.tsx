@@ -1,6 +1,6 @@
 import ConditionSection from "@/components/condition/condition-section";
 import { BOLLINGER_SECTION_DESCRIPTIONS } from "@/components/condition/constants";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   LayoutAnimation,
   ScrollView,
@@ -12,13 +12,26 @@ import {
 
 export default function BollingerBandConditionContent({
   onConfirm,
+  initialValue,
 }: {
   onConfirm: (data: any) => void;
+  initialValue?: { upper: boolean; lower: boolean } | null;
 }) {
   const [toggles, setToggles] = useState({
     upper: false,
     lower: false,
   });
+
+  useEffect(() => {
+    if (initialValue) {
+      setToggles({
+        upper: !!initialValue.upper,
+        lower: !!initialValue.lower,
+      });
+    } else {
+      setToggles({ upper: false, lower: false });
+    }
+  }, [initialValue]);
 
   const toggle = (key: keyof typeof toggles) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -26,10 +39,7 @@ export default function BollingerBandConditionContent({
   };
 
   const handleConfirmPress = () => {
-    onConfirm({
-      upper: toggles.upper,
-      lower: toggles.lower,
-    });
+    onConfirm({ ...toggles });
   };
 
   return (

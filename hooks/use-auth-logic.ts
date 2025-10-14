@@ -3,86 +3,77 @@ import { SignInPayload, SignUpPayload, User } from "@/types/auth";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-const TOKEN_KEY = "auth_token";
+const ACCESS_TOKEN_KEY = "access_token";
+const REFRESH_ID_KEY = "refresh_token_id";
 
 export function useAuthLogic() {
   const [isReady, setIsReady] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [refreshTokenId, setRefreshTokenId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        // DEV-MODE
-        const IS_DEV = true;
+        const savedAccess = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+        const savedRefresh = await SecureStore.getItemAsync(REFRESH_ID_KEY);
 
-        if (IS_DEV) {
-          await SecureStore.deleteItemAsync(TOKEN_KEY);
-          setToken(null);
-          setUser(null);
-          return;
-        }
-
-        const saved = await SecureStore.getItemAsync(TOKEN_KEY);
-        if (saved) {
-          const me = await authService.me(saved);
-          if (me) {
-            setToken(saved);
-            setUser(me);
-          } else {
-            await SecureStore.deleteItemAsync(TOKEN_KEY);
-          }
+        if (savedAccess && savedRefresh) {
+          setAccessToken(savedAccess);
+          setRefreshTokenId(savedRefresh);
         }
       } catch (e) {
         console.warn("Auth restore error", e);
-        setToken(null);
-        setUser(null);
       } finally {
         setIsReady(true);
       }
     })();
   }, []);
 
+  // 로그인
   const signIn = useCallback(async ({ email, password }: SignInPayload) => {
-    const { token: newToken, user: me } = await authService.signIn(
+    const { user, accessToken, refreshTokenId } = await authService.signIn({
       email,
-      password
-    );
-    setToken(newToken);
-    await SecureStore.setItemAsync(TOKEN_KEY, newToken);
-    setUser(me);
+      password,
+    });
+
+    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, String(accessToken));
+    await SecureStore.setItemAsync(REFRESH_ID_KEY, String(refreshTokenId));
+
+    setAccessToken(accessToken);
+    setRefreshTokenId(refreshTokenId);
+    setUser(user);
   }, []);
 
+  // 회원가입
   const signUp = useCallback(
     async ({ name, email, password }: SignUpPayload) => {
-      const { token: newToken, user: me } = await authService.signUp({
-        name,
-        email,
-        password,
-      });
-      setToken(newToken);
-      await SecureStore.setItemAsync(TOKEN_KEY, newToken);
-      setUser(me);
+      const user = await authService.signUp({ name, email, password });
+      setUser(user);
     },
     []
   );
 
+  // 로그아웃
   const signOut = useCallback(async () => {
+    await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+    await SecureStore.deleteItemAsync(REFRESH_ID_KEY);
     setUser(null);
-    setToken(null);
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
+    setAccessToken(null);
+    setRefreshTokenId(null);
   }, []);
 
   return useMemo(
     () => ({
       isReady,
-      isLoggedIn: Boolean(token && user),
-      token,
+      isLoggedIn: Boolean(user && accessToken),
+      accessToken,
+      refreshTokenId,
       user,
       signIn,
       signUp,
       signOut,
     }),
-    [isReady, token, user, signIn, signUp, signOut]
+    [isReady, user, accessToken, refreshTokenId, signIn, signUp, signOut]
   );
 }

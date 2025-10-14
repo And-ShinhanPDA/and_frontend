@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   LayoutAnimation,
   Platform,
@@ -21,13 +21,20 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function RSIConditionCard() {
+export default function RSIConditionCard({
+  onTempSave,
+}: {
+  onTempSave: (id: string, getter: () => any[]) => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
-  const [conditionData, setConditionData] = useState<any>(null);
+  const [conditionData, setConditionData] = useState<{
+    overbought: boolean;
+    oversold: boolean;
+  } | null>(null);
   const [expanded, setExpanded] = useState(false);
 
-  const handleConfirm = (data: any) => {
+  const handleConfirm = (data: { overbought: boolean; oversold: boolean }) => {
     console.log("RSI 조건 입력:", data);
     setConditionData(data);
     setHasCondition(true);
@@ -36,6 +43,28 @@ export default function RSIConditionCard() {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
   };
+
+  useEffect(() => {
+    const getCondition = () => {
+      if (!conditionData) return [];
+
+      const list: any[] = [];
+      if (conditionData.overbought)
+        list.push({
+          indicator: "RSI_OVER",
+          threshold: 70,
+          threshold2: null,
+        });
+      if (conditionData.oversold)
+        list.push({
+          indicator: "RSI_UNDER",
+          threshold: 30,
+          threshold2: null,
+        });
+      return list;
+    };
+    onTempSave("rsi", getCondition);
+  }, [conditionData]);
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -61,28 +90,6 @@ export default function RSIConditionCard() {
             <>
               <View style={styles.divider} />
 
-              {/* RSI 목표 지수 도달 경고 */}
-              {Array.isArray(conditionData.target) &&
-                conditionData.target.length > 0 && (
-                  <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>
-                      RSI 목표 지수 도달 시 경고
-                    </Text>
-                    {conditionData.target.map(
-                      (
-                        item: { value: string; comparison: string },
-                        idx: number
-                      ) => (
-                        <View key={idx} style={styles.row}>
-                          <Text style={styles.label}>
-                            {`RSI ${item.value} ${item.comparison}`}
-                          </Text>
-                        </View>
-                      )
-                    )}
-                  </View>
-                )}
-
               {/* 과매수 */}
               {conditionData.overbought && (
                 <View style={styles.section}>
@@ -106,9 +113,12 @@ export default function RSIConditionCard() {
       <ConditionBottomSheet
         visible={isOpen}
         onClose={() => setIsOpen(false)}
-        ratio={0.55}
+        ratio={0.45}
       >
-        <RSIConditionContent onConfirm={handleConfirm} />
+        <RSIConditionContent
+          onConfirm={handleConfirm}
+          initialValue={conditionData}
+        />
       </ConditionBottomSheet>
     </>
   );

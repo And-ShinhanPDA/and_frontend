@@ -1,22 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   LayoutAnimation,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 
 import ConditionSection from "@/components/condition/condition-section";
 import { WEEK52_SECTION_DESCRIPTIONS } from "@/components/condition/constants";
-import useConditionRows from "@/hooks/use-condition-rows";
-import Week52HighProximityRow from "./week52-high-proximity-row";
-import Week52LowProximityRow from "./week52-low-proximity-row";
 export default function Week52ConditionContent({
   onConfirm,
+  initialValue,
 }: {
   onConfirm: (data: any) => void;
+  initialValue?: any;
 }) {
   const [sectionToggles, setSectionToggles] = useState({
     highAlert: false,
@@ -25,71 +25,62 @@ export default function Week52ConditionContent({
     lowProximity: false,
   });
 
+  const [highProximity, setHighProximity] = useState({ value: "" });
+  const [lowProximity, setLowProximity] = useState({ value: "" });
+
+  const inited = useRef(false);
+
+  useEffect(() => {
+    if (!inited.current) {
+      if (initialValue && Object.keys(initialValue).length > 0) {
+        setSectionToggles({
+          highAlert: !!initialValue.highAlert,
+          highProximity: !!initialValue.highProximity?.value,
+          lowAlert: !!initialValue.lowAlert,
+          lowProximity: !!initialValue.lowProximity?.value,
+        });
+
+        if (initialValue.highProximity?.value) {
+          setHighProximity({ value: initialValue.highProximity.value });
+        }
+        if (initialValue.lowProximity?.value) {
+          setLowProximity({ value: initialValue.lowProximity.value });
+        }
+      }
+      inited.current = true;
+    }
+  }, [initialValue]);
+
   const toggleSection = (key: keyof typeof sectionToggles) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setSectionToggles((prev) => {
-      const newVal = !prev[key];
-      if (!newVal) resetSectionState(key);
-      return { ...prev, [key]: newVal };
-    });
-  };
-
-  const resetSectionState = (key: keyof typeof sectionToggles) => {
-    switch (key) {
-      case "highProximity":
-        highProximityRows.resetRow();
-        break;
-      case "lowProximity":
-        lowProximityRows.resetRow();
-        break;
-    }
+    setSectionToggles((prev) => ({ ...prev, [key]: !prev[key] }));
   };
   const handleConfirmPress = () => {
     onConfirm({
       highAlert: sectionToggles.highAlert,
       lowAlert: sectionToggles.lowAlert,
-      highProximity: sectionToggles.highProximity
-        ? highProximityRows.rows
-            .filter((r) => r.filled)
-            .map((r) => ({
-              value: r.value,
-            }))
-        : [],
-      lowProximity: sectionToggles.lowProximity
-        ? lowProximityRows.rows
-            .filter((r) => r.filled)
-            .map((r) => ({
-              value: r.value,
-            }))
-        : [],
+      highProximity:
+        sectionToggles.highProximity && highProximity.value.trim() !== ""
+          ? { value: highProximity.value }
+          : null,
+      lowProximity:
+        sectionToggles.lowProximity && lowProximity.value.trim() !== ""
+          ? { value: lowProximity.value }
+          : null,
     });
   };
 
-  // 최고가 근접 상태관리
-  const highProximityRows = useConditionRows<
-    { id: number; filled: boolean; value: string },
-    { value: string }
-  >({
-    initial: { filled: false, value: "" },
-    updateFn: (prev, data) => ({
-      ...prev,
-      filled: data.value.trim() !== "",
-      value: data.value,
-    }),
-  });
+  const handleReset = () => {
+    setSectionToggles({
+      highAlert: false,
+      highProximity: false,
+      lowAlert: false,
+      lowProximity: false,
+    });
+    setHighProximity({ value: "" });
+    setLowProximity({ value: "" });
+  };
 
-  // 최저가 근접 상태관리
-  const lowProximityRows = useConditionRows<
-    { id: number; filled: boolean; value: string },
-    { value: string }
-  >({
-    initial: { filled: false, value: "" },
-    updateFn: (prev, data) => ({
-      ...prev,
-      filled: data.value.trim() !== "",
-      value: data.value,
-    }),
-  });
   return (
     <ScrollView style={styles.wrapper}>
       <View style={styles.container}>
@@ -113,18 +104,23 @@ export default function Week52ConditionContent({
           description={WEEK52_SECTION_DESCRIPTIONS.HIGH_PROXIMITY}
           value={sectionToggles.highProximity}
           onToggle={() => toggleSection("highProximity")}
-          rows={highProximityRows.rows}
-          hasFilled={highProximityRows.hasFilled}
-          onAdd={highProximityRows.addRow}
-          renderRow={(r) => (
-            <Week52HighProximityRow
-              key={r.id}
-              onRemove={() => highProximityRows.removeRow(r.id)}
-              onReset={() => highProximityRows.resetRow(r.id)}
-              onValueChange={(data) => highProximityRows.updateRow(r.id, data)}
-              isSingleRow={highProximityRows.rows.length === 1}
-            />
-          )}
+          rows={[{}]}
+          hasFilled={highProximity.value.trim() !== ""}
+          onAdd={() => {}}
+          renderRow={() =>
+            sectionToggles.highProximity && (
+              <View style={styles.rowContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="근접 비율을 입력해주세요"
+                  keyboardType="numeric"
+                  value={highProximity.value}
+                  onChangeText={(v) => setHighProximity({ value: v })}
+                />
+                <Text style={styles.unit}>%</Text>
+              </View>
+            )
+          }
         />
 
         {/* 최저가 경보 */}
@@ -145,36 +141,29 @@ export default function Week52ConditionContent({
           description={WEEK52_SECTION_DESCRIPTIONS.LOW_PROXIMITY}
           value={sectionToggles.lowProximity}
           onToggle={() => toggleSection("lowProximity")}
-          rows={lowProximityRows.rows}
-          hasFilled={lowProximityRows.hasFilled}
-          onAdd={lowProximityRows.addRow}
-          renderRow={(r) => (
-            <Week52LowProximityRow
-              key={r.id}
-              onRemove={() => lowProximityRows.removeRow(r.id)}
-              onReset={() => lowProximityRows.resetRow(r.id)}
-              onValueChange={(data) => lowProximityRows.updateRow(r.id, data)}
-              isSingleRow={lowProximityRows.rows.length === 1}
-            />
-          )}
+          rows={[{}]}
+          hasFilled={lowProximity.value.trim() !== ""}
+          onAdd={() => {}}
+          renderRow={() =>
+            sectionToggles.lowProximity && (
+              <View style={styles.rowContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="근접 비율을 입력해주세요"
+                  keyboardType="numeric"
+                  value={lowProximity.value}
+                  onChangeText={(v) => setLowProximity({ value: v })}
+                />
+                <Text style={styles.unit}>%</Text>
+              </View>
+            )
+          }
         />
       </View>
 
+      {/* 하단 버튼 */}
       <View style={styles.footerFixed}>
-        <TouchableOpacity
-          style={styles.resetButton}
-          onPress={() => {
-            Object.keys(sectionToggles).forEach((k) =>
-              resetSectionState(k as keyof typeof sectionToggles)
-            );
-            setSectionToggles({
-              highAlert: false,
-              highProximity: false,
-              lowAlert: false,
-              lowProximity: false,
-            });
-          }}
-        >
+        <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
           <Text style={styles.resetText}>초기화</Text>
         </TouchableOpacity>
 
@@ -188,10 +177,32 @@ export default function Week52ConditionContent({
     </ScrollView>
   );
 }
+
 const styles = StyleSheet.create({
   wrapper: { flex: 1, backgroundColor: "#fff" },
   container: { paddingHorizontal: 16, paddingVertical: 10 },
   sectionTitle: { fontSize: 15, fontWeight: "600", marginBottom: 10 },
+  rowContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    fontSize: 14,
+    backgroundColor: "#fff",
+  },
+  unit: {
+    marginLeft: 6,
+    fontSize: 13,
+    color: "#555",
+  },
   footerFixed: {
     flexDirection: "row",
     justifyContent: "space-between",
