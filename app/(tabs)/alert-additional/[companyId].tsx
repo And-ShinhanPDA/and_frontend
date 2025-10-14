@@ -139,7 +139,7 @@ export default function CompanyAlertDetail() {
       <PriceConditionCard />
       <Week52ConditionCard onTempSave={handleTempSave} />
 
-      <VolumeConditionCard />
+      <VolumeConditionCard onTempSave={handleTempSave} />
       <SMAConditionCard onTempSave={handleTempSave} />
 
       <RSIConditionCard onTempSave={handleTempSave} />
