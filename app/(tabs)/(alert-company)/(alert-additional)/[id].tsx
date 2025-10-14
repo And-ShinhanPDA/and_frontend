@@ -1,8 +1,4 @@
-<<<<<<< HEAD:app/(tabs)/(alert-company)/(alert-additional)/[id].tsx
 import Arrow from "@/assets/images/arrow.svg";
-import BasePriceConditionCard from "@/components/add-card/baseprice/base-price-condition";
-=======
->>>>>>> dev:app/(tabs)/alert-additional/[companyId].tsx
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
 import CurrentStatusCard from "@/components/add-card/current-status";
 import PriceConditionCard from "@/components/add-card/price/price-condition";
@@ -24,11 +20,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-<<<<<<< HEAD:app/(tabs)/(alert-company)/(alert-additional)/[id].tsx
-=======
-import Arrow from "../../../assets/images/arrow.svg";
 
->>>>>>> dev:app/(tabs)/alert-additional/[companyId].tsx
 export default function CompanyAlertDetail() {
   const { accessToken } = useAuth();
   const { name } = useLocalSearchParams();
