@@ -20,36 +20,29 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export type PriceConditionData = {
-  limits: { comparison: "이상" | "이하"; amount: string }[];
-  openChanges: { direction: "+" | "-"; amount: string }[];
-  currentChanges: { direction: "+" | "-"; amount: string }[];
+export type ChangeConditionData = {
+  dailyChanges: { direction: "+" | "-"; amount: string }[];
+  baseChanges: { direction: "+" | "-"; amount: string }[];
 };
 
-export default function PriceConditionContent({
+export default function ChangeConditionContent({
   onConfirm,
   initialValue,
 }: {
-  onConfirm: (data: PriceConditionData) => void;
-  initialValue?: PriceConditionData | null;
+  onConfirm: (data: ChangeConditionData) => void;
+  initialValue?: ChangeConditionData | null;
 }) {
   const [toggles, setToggles] = useState({
-    limit: false,
-    open: false,
-    current: false,
+    daily: false,
+    base: false,
   });
 
-  const [limits, setLimits] = useState([
-    { id: 1, comparison: "이상" as "이상" | "이하", amount: "" },
-    { id: 2, comparison: "이하" as "이상" | "이하", amount: "" },
-  ]);
-
-  const [openChanges, setOpenChanges] = useState([
+  const [dailyChanges, setDailyChanges] = useState([
     { id: 1, direction: "+" as "+" | "-", amount: "" },
     { id: 2, direction: "-" as "+" | "-", amount: "" },
   ]);
 
-  const [currentChanges, setCurrentChanges] = useState([
+  const [baseChanges, setBaseChanges] = useState([
     { id: 1, direction: "+" as "+" | "-", amount: "" },
     { id: 2, direction: "-" as "+" | "-", amount: "" },
   ]);
@@ -58,56 +51,41 @@ export default function PriceConditionContent({
   useEffect(() => {
     if (inited.current) return;
     if (initialValue) {
-      if (initialValue.limits?.length === 2) {
-        setLimits([
-          {
-            id: 1,
-            comparison: "이상",
-            amount: initialValue.limits[0].amount ?? "",
-          },
-          {
-            id: 2,
-            comparison: "이하",
-            amount: initialValue.limits[1].amount ?? "",
-          },
-        ]);
-      }
-      if (initialValue.openChanges?.length === 2) {
-        setOpenChanges([
+      if (initialValue.dailyChanges?.length === 2) {
+        setDailyChanges([
           {
             id: 1,
             direction: "+",
-            amount: initialValue.openChanges[0].amount ?? "",
+            amount: initialValue.dailyChanges[0].amount ?? "",
           },
           {
             id: 2,
             direction: "-",
-            amount: initialValue.openChanges[1].amount ?? "",
+            amount: initialValue.dailyChanges[1].amount ?? "",
           },
         ]);
       }
-      if (initialValue.currentChanges?.length === 2) {
-        setCurrentChanges([
+      if (initialValue.baseChanges?.length === 2) {
+        setBaseChanges([
           {
             id: 1,
             direction: "+",
-            amount: initialValue.currentChanges[0].amount ?? "",
+            amount: initialValue.baseChanges[0].amount ?? "",
           },
           {
             id: 2,
             direction: "-",
-            amount: initialValue.currentChanges[1].amount ?? "",
+            amount: initialValue.baseChanges[1].amount ?? "",
           },
         ]);
       }
+
       setToggles({
-        limit:
-          initialValue.limits?.some((v) => v.amount.trim() !== "") ?? false,
-        open:
-          initialValue.openChanges?.some((v) => v.amount.trim() !== "") ??
+        daily:
+          initialValue.dailyChanges?.some((v) => v.amount.trim() !== "") ??
           false,
-        current:
-          initialValue.currentChanges?.some((v) => v.amount.trim() !== "") ??
+        base:
+          initialValue.baseChanges?.some((v) => v.amount.trim() !== "") ??
           false,
       });
     }
@@ -121,105 +99,47 @@ export default function PriceConditionContent({
 
   const handleConfirm = () => {
     onConfirm({
-      limits: toggles.limit
-        ? limits.map(({ comparison, amount }) => ({ comparison, amount }))
+      dailyChanges: toggles.daily
+        ? dailyChanges.map(({ direction, amount }) => ({ direction, amount }))
         : [],
-      openChanges: toggles.open
-        ? openChanges.map(({ direction, amount }) => ({ direction, amount }))
-        : [],
-      currentChanges: toggles.current
-        ? currentChanges.map(({ direction, amount }) => ({ direction, amount }))
+      baseChanges: toggles.base
+        ? baseChanges.map(({ direction, amount }) => ({ direction, amount }))
         : [],
     });
   };
 
   const handleReset = () => {
-    setLimits([
-      { id: 1, comparison: "이상", amount: "" },
-      { id: 2, comparison: "이하", amount: "" },
-    ]);
-    setOpenChanges([
+    setDailyChanges([
       { id: 1, direction: "+", amount: "" },
       { id: 2, direction: "-", amount: "" },
     ]);
-    setCurrentChanges([
+    setBaseChanges([
       { id: 1, direction: "+", amount: "" },
       { id: 2, direction: "-", amount: "" },
     ]);
-    setToggles({ limit: false, open: false, current: false });
+    setToggles({ daily: false, base: false });
   };
 
   return (
     <ScrollView style={styles.wrapper}>
       <View style={styles.container}>
-        <Text style={styles.sectionTitle}>가격</Text>
-
-        {/* 가격 제한 */}
-        <ConditionSection
-          title="가격 제한"
-          description="특정 금액 이상 / 이하일 때 알림"
-          value={toggles.limit}
-          onToggle={() => toggle("limit")}
-          rows={limits}
-          hasFilled={limits.some((v) => v.amount.trim() !== "")}
-          onAdd={() => {}}
-          renderRow={(r) =>
-            toggles.limit && (
-              <View key={r.id} style={styles.rowContainer}>
-                <ConditionInput
-                  value={r.amount}
-                  placeholder={`${r.comparison} 금액`}
-                  unit="원"
-                  onChange={(v) =>
-                    setLimits((prev) =>
-                      prev.map((p) => (p.id === r.id ? { ...p, amount: v } : p))
-                    )
-                  }
-                />
-                <Text
-                  style={[
-                    styles.compareBadge,
-                    r.comparison === "이상"
-                      ? styles.plusBadge
-                      : styles.minusBadge,
-                  ]}
-                >
-                  {r.comparison}
-                </Text>
-                {r.amount.trim() !== "" && (
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() =>
-                      setLimits((prev) =>
-                        prev.map((p) =>
-                          p.id === r.id ? { ...p, amount: "" } : p
-                        )
-                      )
-                    }
-                  >
-                    <ConditionMinus width={18} height={18} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            )
-          }
-        />
+        <Text style={styles.sectionTitle}>변동률 (%)</Text>
 
         {/* 시가 기준 */}
         <ConditionSection
-          title="가격 변경 (시가)"
+          title="시가 기준 변동률"
           description="시가 대비 상승 / 하락 시 알림"
-          value={toggles.open}
-          onToggle={() => toggle("open")}
-          rows={openChanges}
-          hasFilled={openChanges.some((v) => v.amount.trim() !== "")}
+          value={toggles.daily}
+          onToggle={() => toggle("daily")}
+          rows={dailyChanges}
+          hasFilled={dailyChanges.some((v) => v.amount.trim() !== "")}
           onAdd={() => {}}
           renderRow={(r) =>
-            toggles.open && (
+            toggles.daily && (
               <View key={r.id} style={styles.rowContainer}>
                 <Text
                   style={[
-                    styles.compareBadgePM,
+                    styles.compareBadge,
                     r.direction === "+" ? styles.plusBadge : styles.minusBadge,
                   ]}
                 >
@@ -229,10 +149,10 @@ export default function PriceConditionContent({
                   value={r.amount}
                   placeholder={`시가 대비 ${
                     r.direction === "+" ? "상승" : "하락"
-                  } 금액`}
-                  unit="원"
+                  }률`}
+                  unit="%"
                   onChange={(v) =>
-                    setOpenChanges((prev) =>
+                    setDailyChanges((prev) =>
                       prev.map((p) => (p.id === r.id ? { ...p, amount: v } : p))
                     )
                   }
@@ -241,7 +161,7 @@ export default function PriceConditionContent({
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() =>
-                      setOpenChanges((prev) =>
+                      setDailyChanges((prev) =>
                         prev.map((p) =>
                           p.id === r.id ? { ...p, amount: "" } : p
                         )
@@ -258,19 +178,19 @@ export default function PriceConditionContent({
 
         {/* 현재가 기준 */}
         <ConditionSection
-          title="가격 변경 (현재가)"
+          title="현재가 기준 변동률"
           description="현재가 대비 상승 / 하락 시 알림"
-          value={toggles.current}
-          onToggle={() => toggle("current")}
-          rows={currentChanges}
-          hasFilled={currentChanges.some((v) => v.amount.trim() !== "")}
+          value={toggles.base}
+          onToggle={() => toggle("base")}
+          rows={baseChanges}
+          hasFilled={baseChanges.some((v) => v.amount.trim() !== "")}
           onAdd={() => {}}
           renderRow={(r) =>
-            toggles.current && (
+            toggles.base && (
               <View key={r.id} style={styles.rowContainer}>
                 <Text
                   style={[
-                    styles.compareBadgePM,
+                    styles.compareBadge,
                     r.direction === "+" ? styles.plusBadge : styles.minusBadge,
                   ]}
                 >
@@ -280,20 +200,19 @@ export default function PriceConditionContent({
                   value={r.amount}
                   placeholder={`현재가 대비 ${
                     r.direction === "+" ? "상승" : "하락"
-                  } 금액`}
-                  unit="원"
+                  }률`}
+                  unit="%"
                   onChange={(v) =>
-                    setCurrentChanges((prev) =>
+                    setBaseChanges((prev) =>
                       prev.map((p) => (p.id === r.id ? { ...p, amount: v } : p))
                     )
                   }
                 />
-
                 {r.amount.trim() !== "" && (
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() =>
-                      setCurrentChanges((prev) =>
+                      setBaseChanges((prev) =>
                         prev.map((p) =>
                           p.id === r.id ? { ...p, amount: "" } : p
                         )
@@ -331,27 +250,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
-
   compareBadge: {
     marginLeft: 8,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    borderWidth: 1.3,
-    fontSize: 13,
-    fontWeight: "600",
-    overflow: "hidden",
-  },
-  compareBadgePM: {
-    marginLeft: 8,
-    paddingVertical: 4,
     marginRight: 8,
+    paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 8,
     borderWidth: 1.3,
     fontSize: 13,
     fontWeight: "600",
-    overflow: "hidden",
   },
   plusBadge: {
     color: "#4CC439",
@@ -361,7 +268,6 @@ const styles = StyleSheet.create({
     color: "#FF3B30",
     borderColor: "#FF3B30",
   },
-
   removeButton: { marginLeft: 8 },
   footer: {
     flexDirection: "row",

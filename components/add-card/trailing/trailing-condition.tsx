@@ -12,9 +12,9 @@ import {
 import AddIcon from "../../../assets/images/add.svg";
 import EditIcon from "../../../assets/images/edit.svg";
 import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
-import PriceConditionContent, {
-  PriceConditionData,
-} from "./price-condition-content";
+import TrailingConditionContent, {
+  TrailingConditionData,
+} from "./trailing-condition-content";
 
 if (
   Platform.OS === "android" &&
@@ -23,7 +23,7 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function PriceConditionCard({
+export default function TrailingConditionCard({
   onTempSave,
 }: {
   onTempSave: (id: string, getter: () => any[]) => void;
@@ -31,15 +31,13 @@ export default function PriceConditionCard({
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [conditionData, setConditionData] = useState<PriceConditionData | null>(
-    null
-  );
+  const [conditionData, setConditionData] =
+    useState<TrailingConditionData | null>(null);
 
-  const handleConfirm = (data: PriceConditionData) => {
+  const handleConfirm = (data: TrailingConditionData) => {
     setConditionData(data);
     setHasCondition(true);
     setIsOpen(false);
-
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded(true);
   };
@@ -50,51 +48,35 @@ export default function PriceConditionCard({
 
       const list: any[] = [];
 
-      // --- 가격 제한 ---
-      conditionData.limits.forEach((limit) => {
-        const amount = Number(limit.amount);
-        if (!isNaN(amount) && amount > 0) {
-          list.push({
-            indicator:
-              limit.comparison === "이상" ? "PRICE_ABOVE" : "PRICE_BELOW",
-            threshold: amount,
-          });
-        }
-      });
+      // 손절매 (하락)
+      if (conditionData.stopPrice.trim() !== "")
+        list.push({
+          indicator: "TRAILING_STOP_PRICE",
+          threshold: Number(conditionData.stopPrice),
+        });
+      if (conditionData.stopPercent.trim() !== "")
+        list.push({
+          indicator: "TRAILING_STOP_PERCENT",
+          threshold: Number(conditionData.stopPercent),
+        });
 
-      // --- 시가 기준 (+ / -) ---
-      conditionData.openChanges.forEach((change) => {
-        const amount = Number(change.amount);
-        if (!isNaN(amount) && amount > 0) {
-          list.push({
-            indicator:
-              change.direction === "+"
-                ? "PRICE_CHANGE_DAILY_UP"
-                : "PRICE_CHANGE_DAILY_DOWN",
-            threshold: amount,
-          });
-        }
-      });
+      // 매수 (상승)
+      if (conditionData.buyPrice.trim() !== "")
+        list.push({
+          indicator: "TRAILING_BUY_PRICE",
+          threshold: Number(conditionData.buyPrice),
+        });
+      if (conditionData.buyPercent.trim() !== "")
+        list.push({
+          indicator: "TRAILING_BUY_PERCENT",
+          threshold: Number(conditionData.buyPercent),
+        });
 
-      // --- 현재가 기준 (+ / -) ---
-      conditionData.currentChanges.forEach((change) => {
-        const amount = Number(change.amount);
-        if (!isNaN(amount) && amount > 0) {
-          list.push({
-            indicator:
-              change.direction === "+"
-                ? "PRICE_CHANGE_BASE_UP"
-                : "PRICE_CHANGE_BASE_DOWN",
-            threshold: amount,
-          });
-        }
-      });
-
-      console.log("최종 PRICE payload:", list);
+      console.log("최종 TRAILING payload:", list);
       return list;
     };
 
-    onTempSave("price", getCondition);
+    onTempSave("trailing", getCondition);
   }, [conditionData]);
 
   const toggleExpand = () => {
@@ -107,7 +89,7 @@ export default function PriceConditionCard({
       <Pressable onPress={hasCondition ? toggleExpand : undefined}>
         <View style={styles.card}>
           <View style={styles.header}>
-            <Text style={styles.title}>가격</Text>
+            <Text style={styles.title}>후행</Text>
             <TouchableOpacity onPress={() => setIsOpen(true)}>
               {hasCondition ? (
                 <EditIcon width={18} height={18} />
@@ -121,56 +103,49 @@ export default function PriceConditionCard({
             <>
               <View style={styles.divider} />
 
-              {/* 가격 제한 */}
-              {!!conditionData.limits?.length && (
+              {/* 하락 조건 */}
+              {(conditionData.stopPrice || conditionData.stopPercent) && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>가격 제한</Text>
-                  {conditionData.limits.map((r, i) => (
-                    <View key={`limit-${i}`} style={styles.row}>
-                      <Text style={styles.label}>
-                        현재가 {r.comparison}일 때
-                      </Text>
+                  <Text style={styles.sectionTitle}>추적 손절매 (하락)</Text>
+                  {conditionData.stopPrice && (
+                    <View style={styles.row}>
+                      <Text style={styles.label}>최근 고가 대비 하락 금액</Text>
                       <Text style={styles.value}>
-                        {r.amount ? `${r.amount}원` : "-"}
+                        {conditionData.stopPrice}원
                       </Text>
                     </View>
-                  ))}
+                  )}
+                  {conditionData.stopPercent && (
+                    <View style={styles.row}>
+                      <Text style={styles.label}>최근 고가 대비 하락 비율</Text>
+                      <Text style={styles.value}>
+                        {conditionData.stopPercent}%
+                      </Text>
+                    </View>
+                  )}
                 </View>
               )}
 
-              {/* 시가 기준 */}
-              {!!conditionData.openChanges?.length && (
+              {/* 상승 조건 */}
+              {(conditionData.buyPrice || conditionData.buyPercent) && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>가격 변경 (시가)</Text>
-                  {conditionData.openChanges.map((r, i) => (
-                    <View key={`open-${i}`} style={styles.row}>
-                      <Text style={styles.label}>
-                        시가 대비 {r.direction === "+" ? "상승" : "하락"} 금액
-                        이상
-                      </Text>
+                  <Text style={styles.sectionTitle}>추적 매수 (상승)</Text>
+                  {conditionData.buyPrice && (
+                    <View style={styles.row}>
+                      <Text style={styles.label}>최근 고가 대비 상승 금액</Text>
                       <Text style={styles.value}>
-                        {r.amount ? `${r.amount}원` : "-"}
+                        {conditionData.buyPrice}원
                       </Text>
                     </View>
-                  ))}
-                </View>
-              )}
-
-              {/* 현재가 기준 */}
-              {!!conditionData.currentChanges?.length && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>가격 변경 (현재가)</Text>
-                  {conditionData.currentChanges.map((r, i) => (
-                    <View key={`curr-${i}`} style={styles.row}>
-                      <Text style={styles.label}>
-                        현재가 기준 {r.direction === "+" ? "상승" : "하락"} 금액
-                        이상
-                      </Text>
+                  )}
+                  {conditionData.buyPercent && (
+                    <View style={styles.row}>
+                      <Text style={styles.label}>최근 고가 대비 상승 비율</Text>
                       <Text style={styles.value}>
-                        {r.amount ? `${r.amount}원` : "-"}
+                        {conditionData.buyPercent}%
                       </Text>
                     </View>
-                  ))}
+                  )}
                 </View>
               )}
             </>
@@ -183,7 +158,7 @@ export default function PriceConditionCard({
         onClose={() => setIsOpen(false)}
         ratio={0.65}
       >
-        <PriceConditionContent
+        <TrailingConditionContent
           onConfirm={handleConfirm}
           initialValue={conditionData || undefined}
         />

@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
-import PriceConditionSimpleCard from "@/components/add-card/price/price-simple";
+import ChangeConditionCard from "@/components/add-card/change/change-condition";
 import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
 import SMAConditionCard from "@/components/add-card/sma/sma-condition";
 import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
@@ -20,6 +20,7 @@ import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+
 export default function ConditionAdditional() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
@@ -118,7 +119,7 @@ export default function ConditionAdditional() {
         <View style={styles.divider} />
 
         {/* 조건 카드 */}
-        <PriceConditionSimpleCard />
+        <ChangeConditionCard onTempSave={handleTempSave} />
         <Week52ConditionCard onTempSave={handleTempSave} />
 
         <VolumeConditionCard onTempSave={handleTempSave} />

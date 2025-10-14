@@ -11,12 +11,11 @@ import {
 } from "react-native";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
-import PriceConditionSimpleCard from "@/components/add-card/price/price-simple";
+import ChangeConditionCard from "@/components/add-card/change/change-condition";
 import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
 import SMAConditionCard from "@/components/add-card/sma/sma-condition";
 import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
 import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
-
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,7 +24,6 @@ import { alertService } from "@/services/alert-service";
 export default function ConditionAlertDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-
   const [isPresetOpen, setIsPresetOpen] = useState(false);
   const tabs = ["제목", "가격", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
   const { accessToken } = useAuth();
@@ -74,7 +72,6 @@ export default function ConditionAlertDetail() {
       }
     }
   };
-
   return (
     <View style={styles.container}>
       {/* 헤더 */}
@@ -122,7 +119,8 @@ export default function ConditionAlertDetail() {
         <View style={styles.divider} />
 
         {/* 조건 카드 */}
-        <PriceConditionSimpleCard />
+
+        <ChangeConditionCard onTempSave={handleTempSave} />
         <Week52ConditionCard onTempSave={handleTempSave} />
 
         <VolumeConditionCard onTempSave={handleTempSave} />
