@@ -4,7 +4,8 @@ import { Stack } from "expo-router";
 export default function AlertConditionLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="alert-condition" />
+      <Stack.Screen name="index" />
+      <Stack.Screen name="[alertId]" />
     </Stack>
   );
 }

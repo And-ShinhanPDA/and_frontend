@@ -120,7 +120,7 @@ export default function AlertCompany() {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: "/(tabs)/(alert-company)/(alert-detail)/[id]",
+                  pathname: "/(tabs)/(alert-company-detail)/[id]",
                   params: { id: item.id, name: item.name },
                 })
               }
