@@ -51,43 +51,43 @@ export default function ChangeConditionContent({
   useEffect(() => {
     if (inited.current) return;
     if (initialValue) {
-      if (initialValue.dailyChanges?.length === 2) {
-        setDailyChanges([
-          {
-            id: 1,
-            direction: "+",
-            amount: initialValue.dailyChanges[0].amount ?? "",
-          },
-          {
-            id: 2,
-            direction: "-",
-            amount: initialValue.dailyChanges[1].amount ?? "",
-          },
-        ]);
-      }
-      if (initialValue.baseChanges?.length === 2) {
-        setBaseChanges([
-          {
-            id: 1,
-            direction: "+",
-            amount: initialValue.baseChanges[0].amount ?? "",
-          },
-          {
-            id: 2,
-            direction: "-",
-            amount: initialValue.baseChanges[1].amount ?? "",
-          },
-        ]);
+      // dailyChanges 처리
+      if (initialValue.dailyChanges && initialValue.dailyChanges.length > 0) {
+        const newDailyChanges = [
+          { id: 1, direction: "+" as "+" | "-", amount: "" },
+          { id: 2, direction: "-" as "+" | "-", amount: "" },
+        ];
+
+        initialValue.dailyChanges.forEach((change) => {
+          if (change.direction === "+") {
+            newDailyChanges[0].amount = String(change.amount ?? "");
+          } else {
+            newDailyChanges[1].amount = String(change.amount ?? "");
+          }
+        });
+
+        setDailyChanges(newDailyChanges);
+        setToggles((prev) => ({ ...prev, daily: true }));
       }
 
-      setToggles({
-        daily:
-          initialValue.dailyChanges?.some((v) => v.amount.trim() !== "") ??
-          false,
-        base:
-          initialValue.baseChanges?.some((v) => v.amount.trim() !== "") ??
-          false,
-      });
+      // baseChanges 처리
+      if (initialValue.baseChanges && initialValue.baseChanges.length > 0) {
+        const newBaseChanges = [
+          { id: 1, direction: "+" as "+" | "-", amount: "" },
+          { id: 2, direction: "-" as "+" | "-", amount: "" },
+        ];
+
+        initialValue.baseChanges.forEach((change) => {
+          if (change.direction === "+") {
+            newBaseChanges[0].amount = String(change.amount ?? "");
+          } else {
+            newBaseChanges[1].amount = String(change.amount ?? "");
+          }
+        });
+
+        setBaseChanges(newBaseChanges);
+        setToggles((prev) => ({ ...prev, base: true }));
+      }
     }
     inited.current = true;
   }, [initialValue]);
@@ -132,7 +132,7 @@ export default function ChangeConditionContent({
           value={toggles.daily}
           onToggle={() => toggle("daily")}
           rows={dailyChanges}
-          hasFilled={dailyChanges.some((v) => v.amount.trim() !== "")}
+          hasFilled={dailyChanges.some((v) => String(v.amount).trim() !== "")}
           onAdd={() => {}}
           renderRow={(r) =>
             toggles.daily && (
@@ -157,7 +157,7 @@ export default function ChangeConditionContent({
                     )
                   }
                 />
-                {r.amount.trim() !== "" && (
+                {String(r.amount).trim() !== "" && (
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() =>
@@ -183,7 +183,7 @@ export default function ChangeConditionContent({
           value={toggles.base}
           onToggle={() => toggle("base")}
           rows={baseChanges}
-          hasFilled={baseChanges.some((v) => v.amount.trim() !== "")}
+          hasFilled={baseChanges.some((v) => String(v.amount).trim() !== "")}
           onAdd={() => {}}
           renderRow={(r) =>
             toggles.base && (
@@ -208,7 +208,7 @@ export default function ChangeConditionContent({
                     )
                   }
                 />
-                {r.amount.trim() !== "" && (
+                {String(r.amount).trim() !== "" && (
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() =>

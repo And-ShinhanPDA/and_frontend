@@ -16,15 +16,15 @@ import {
   View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
-
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import { COMPANIES } from "@/constants/companies";
 type CompanyAlert = {
   alertId: string;
   name: string;
   logo: ImageSourcePropType;
-  alerts: number;
-  enabled: boolean;
+  // 나중에 알림 갯수랑 알림 활성화 여부 반영된 후 반영하기
+  alerts?: number;
+  enabled?: boolean;
 };
 
 export default function AlertCompany() {
@@ -34,47 +34,45 @@ export default function AlertCompany() {
     Record<string, Animated.Value>
   >({});
   const [deleteWidth, setDeleteWidth] = useState(80);
-
   const [companies, setCompanies] = useState<CompanyAlert[]>([]);
 
+  // 기업 리스트 조회
   useEffect(() => {
-    const fetchAlerts = async () => {
+    const fetchAlertedCompanies = async () => {
       if (!accessToken) {
         console.log("accessToken 없음");
         return;
       }
       try {
-        const res = await alertService.getUserAlerts(accessToken);
-        console.log("[알림 응답]:", res);
+        const res = await alertService.getAlertedCompanies(accessToken);
+        console.log("[알림 기업 응답]:", res);
         const rawList = Array.isArray(res.data) ? res.data : res.data?.data;
 
         if (Array.isArray(rawList)) {
-          const formatted = rawList.map((a: any) => {
+          const formatted = rawList.map((c: any) => {
             const matchedCompany = COMPANIES.find(
-              (c) => c.code === a.stockCode
+              (comp) => comp.code === c.stockCode
             );
 
             return {
-              alertId: String(a.alertId ?? a.id),
-              name: matchedCompany?.name ?? a.title ?? "제목 없음",
+              alertId: c.stockCode,
+              name: c.name,
               logo: matchedCompany!.logo,
-
-              alerts: a.conditions?.length ?? 0,
-              enabled: a.isActive ?? false,
+              // 추후에 알림 갯수랑 알림 활성화 여부 반영된 후 반영하기
+              alerts: c.alertCount ?? 0,
+              enabled: c.isActive ?? true, // 일단 기본 true (나중에 실제값반영필요함)
             };
           });
 
           setCompanies(formatted);
           console.log(`변환된 알림 개수: ${formatted.length}`);
-        } else {
-          console.warn("알림 리스트 데이터 구조:", res.data);
         }
       } catch (err) {
         console.error("[알림 조회 실패]:");
       }
     };
 
-    fetchAlerts();
+    fetchAlertedCompanies();
   }, [accessToken]);
 
   // 초기 애니메이션 설정
@@ -84,18 +82,43 @@ export default function AlertCompany() {
       anims[company.alertId] = new Animated.Value(1);
     });
     setFadeAnimations(anims);
-  }, []);
+  }, [companies]);
 
   // 토글 스위치
-  const toggleSwitch = (id: string) => {
-    setCompanies((prev) =>
-      prev.map((c) => (c.alertId === id ? { ...c, enabled: !c.enabled } : c))
-    );
+  const toggleSwitch = async (id: string) => {
+    if (!accessToken) return;
+    const target = companies.find((c) => c.alertId === id);
+    if (!target) return;
+    const newActive = !target.enabled;
+    try {
+      await alertService.toggleCompanyAlerts(accessToken, id, newActive);
+      setCompanies((prev) =>
+        prev.map((c) => (c.alertId === id ? { ...c, enabled: newActive } : c))
+      );
+      console.log(
+        `${target.name} 기업 알림 ${newActive ? "활성화" : "비활성화"} 완료`
+      );
+    } catch (err) {
+      console.error("[기업 알림 토글 실패]:", err);
+    }
+    // API 수정되면 토글 기능 반영하기
+    // setCompanies((prev) =>
+    //   prev.map((c) => (c.alertId === id ? { ...c, enabled: !c.enabled } : c))
+    // );
   };
 
   // 삭제 기능
-  const deleteCompany = (id: string) => {
-    setCompanies((prev) => prev.filter((c) => c.alertId !== id));
+  const deleteCompany = async (id: string) => {
+    if (!accessToken) return;
+    const target = companies.find((c) => c.alertId === id);
+    if (!target) return;
+    try {
+      await alertService.deleteCompanyAlerts(accessToken, id);
+      setCompanies((prev) => prev.filter((c) => c.alertId !== id));
+      console.log(`${target.name} 기업 알림 삭제 완료`);
+    } catch (err) {
+      console.error("[기업 알림 삭제 실패]:", err);
+    }
   };
 
   // 왼쪽 스와이프 시 fade out
@@ -188,8 +211,9 @@ export default function AlertCompany() {
 
                 <View style={styles.itemText}>
                   <Text style={styles.name}>{item.name}</Text>
+                  {/* 나중에 현재 설정 알림 갯수 API 수정 후 반영하기 */}
                   <Text style={styles.subText}>
-                    현재 설정 알림: {item.alerts}개
+                    현재 설정 알림: {item.alerts ?? 0}개
                   </Text>
                 </View>
 

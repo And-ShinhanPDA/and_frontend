@@ -25,15 +25,26 @@ if (
 
 export default function PriceConditionCard({
   onTempSave,
+  initialValue,
 }: {
   onTempSave: (id: string, getter: () => any[]) => void;
+  initialValue?: PriceConditionData;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [conditionData, setConditionData] = useState<PriceConditionData | null>(
-    null
+    initialValue || null
   );
+
+  // initialValue가 있으면 초기 설정
+  useEffect(() => {
+    if (initialValue) {
+      setConditionData(initialValue);
+      setHasCondition(true);
+      setExpanded(true);
+    }
+  }, [initialValue]);
 
   const handleConfirm = (data: PriceConditionData) => {
     setConditionData(data);
@@ -95,7 +106,7 @@ export default function PriceConditionCard({
     };
 
     onTempSave("price", getCondition);
-  }, [conditionData]);
+  }, [conditionData, onTempSave]);
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);

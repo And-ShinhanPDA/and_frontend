@@ -77,7 +77,8 @@ export default function TrailingConditionContent({
           onToggle={() => {}}
           rows={[{ id: 1 }]}
           hasFilled={
-            values.stopPrice.trim() !== "" || values.stopPercent.trim() !== ""
+            String(values.stopPrice).trim() !== "" ||
+            String(values.stopPercent).trim() !== ""
           }
           renderRow={() => (
             <View>
@@ -89,7 +90,7 @@ export default function TrailingConditionContent({
                   unit="원"
                   onChange={(v) => handleChange("stopPrice", v)}
                 />
-                {values.stopPrice.trim() !== "" && (
+                {String(values.stopPrice).trim() !== "" && (
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() => handleChange("stopPrice", "")}
@@ -107,7 +108,7 @@ export default function TrailingConditionContent({
                   unit="%"
                   onChange={(v) => handleChange("stopPercent", v)}
                 />
-                {values.stopPercent.trim() !== "" && (
+                {String(values.stopPercent).trim() !== "" && (
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() => handleChange("stopPercent", "")}
@@ -129,7 +130,8 @@ export default function TrailingConditionContent({
           onToggle={() => {}}
           rows={[{ id: 1 }]}
           hasFilled={
-            values.buyPrice.trim() !== "" || values.buyPercent.trim() !== ""
+            String(values.buyPrice).trim() !== "" ||
+            String(values.buyPercent).trim() !== ""
           }
           renderRow={() => (
             <View>
@@ -141,7 +143,7 @@ export default function TrailingConditionContent({
                   unit="원"
                   onChange={(v) => handleChange("buyPrice", v)}
                 />
-                {values.buyPrice.trim() !== "" && (
+                {String(values.buyPrice).trim() !== "" && (
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() => handleChange("buyPrice", "")}
@@ -159,7 +161,7 @@ export default function TrailingConditionContent({
                   unit="%"
                   onChange={(v) => handleChange("buyPercent", v)}
                 />
-                {values.buyPercent.trim() !== "" && (
+                {String(values.buyPercent).trim() !== "" && (
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() => handleChange("buyPercent", "")}
