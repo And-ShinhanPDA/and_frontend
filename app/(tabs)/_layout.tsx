@@ -13,6 +13,7 @@ export default function TabLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
+      <Stack.Screen name="(home)/index" />
       <Stack.Screen name="(alert-condition)" />
       <Stack.Screen name="(alert-condition-detail)/[id]" />
       <Stack.Screen name="(alert-condition-modify)/[id]" />

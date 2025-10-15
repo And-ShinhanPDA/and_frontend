@@ -27,7 +27,7 @@ export function CustomBottomTab({ activeTab }: CustomBottomTabProps) {
     },
     {
       name: "홈" as TabName,
-      path: "/",
+      path: "/(tabs)/(home)",
       icon: require("@/assets/images/bottomNavigation/home.png"),
     },
     {
@@ -50,8 +50,8 @@ export function CustomBottomTab({ activeTab }: CustomBottomTabProps) {
     // 홈 특별 처리
     if (tab.name === "홈") {
       return (
-        pathname === "/" ||
         pathname === "/(tabs)" ||
+        pathname === "/(tabs)/" ||
         pathname === "/(tabs)/index"
       );
     }
@@ -62,7 +62,7 @@ export function CustomBottomTab({ activeTab }: CustomBottomTabProps) {
   const handleTabPress = (tab: (typeof tabs)[0]) => {
     // 홈은 무조건 이동
     if (tab.name === "홈") {
-      router.replace({ pathname: "/(tabs)/index" as any });
+      router.replace({ pathname: "/(tabs)/(home)" as any });
       return;
     }
 
