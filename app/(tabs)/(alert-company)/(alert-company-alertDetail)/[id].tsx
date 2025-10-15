@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -23,6 +24,8 @@ import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import { presetService } from "@/services/preset-service";
+import { parseConditionsForCards } from "@/utils/parseConditions";
 
 export default function CompanyAlertDetail() {
   const router = useRouter();
@@ -36,203 +39,6 @@ export default function CompanyAlertDetail() {
   const [loading, setLoading] = useState(true);
   const [alertData, setAlertData] = useState<any>(null);
   const [title, setTitle] = useState("");
-
-  // 조건 데이터를 각 카드 컴포넌트가 이해할 수 있는 형태로 파싱
-  const parseConditionsForCards = (conditions: any[]) => {
-    const parsed: any = {
-      price: null,
-      change: null,
-      trailing: null,
-      week52: null,
-      volume: null,
-      sma: null,
-      rsi: null,
-      bollinger: null,
-    };
-
-    // Price 조건 파싱
-    const priceLimits: any[] = [];
-    const openChanges: any[] = [];
-    const currentChanges: any[] = [];
-
-    // Change 조건 파싱
-    const dailyChanges: any[] = [];
-    const baseChanges: any[] = [];
-
-    // Trailing 조건 파싱
-    let trailingData: any = {
-      stopPrice: "",
-      stopPercent: "",
-      buyPrice: "",
-      buyPercent: "",
-    };
-
-    // Week52 조건 파싱
-    let week52Data: any = {
-      highAlert: false,
-      lowAlert: false,
-      highProximity: null,
-      lowProximity: null,
-    };
-
-    // Volume 조건 파싱
-    let volumeData: any = {
-      avgRise: "",
-      avgDrop: "",
-      spike: false,
-      drop: false,
-    };
-
-    // SMA 조건 파싱
-    let smaData: any = { target: null, shortCross: false, longCross: false };
-
-    // Bollinger 조건 파싱
-    let bollingerData: any = { upper: false, lower: false };
-
-    conditions.forEach((cond) => {
-      const { indicator, threshold, threshold2 } = cond;
-
-      // 가격 조건
-      if (indicator === "PRICE_ABOVE") {
-        priceLimits.push({ comparison: "이상", amount: threshold });
-      } else if (indicator === "PRICE_BELOW") {
-        priceLimits.push({ comparison: "이하", amount: threshold });
-      } else if (indicator === "PRICE_CHANGE_DAILY_UP") {
-        openChanges.push({ direction: "+", amount: threshold });
-      } else if (indicator === "PRICE_CHANGE_DAILY_DOWN") {
-        openChanges.push({ direction: "-", amount: threshold });
-      } else if (indicator === "PRICE_CHANGE_BASE_UP") {
-        currentChanges.push({ direction: "+", amount: threshold });
-      } else if (indicator === "PRICE_CHANGE_BASE_DOWN") {
-        currentChanges.push({ direction: "-", amount: threshold });
-      }
-      // 변동률 조건
-      else if (indicator === "PRICE_RATE_DAILY_UP") {
-        dailyChanges.push({ direction: "+", amount: threshold });
-      } else if (indicator === "PRICE_RATE_DAILY_DOWN") {
-        dailyChanges.push({ direction: "-", amount: threshold });
-      } else if (indicator === "PRICE_RATE_BASE_UP") {
-        baseChanges.push({ direction: "+", amount: threshold });
-      } else if (indicator === "PRICE_RATE_BASE_DOWN") {
-        baseChanges.push({ direction: "-", amount: threshold });
-      }
-      // 후행 조건
-      else if (indicator === "TRAILING_STOP_PRICE") {
-        trailingData.stopPrice = String(threshold || "");
-      } else if (indicator === "TRAILING_STOP_PERCENT") {
-        trailingData.stopPercent = String(threshold || "");
-      } else if (indicator === "TRAILING_BUY_PRICE") {
-        trailingData.buyPrice = String(threshold || "");
-      } else if (indicator === "TRAILING_BUY_PERCENT") {
-        trailingData.buyPercent = String(threshold || "");
-      }
-      // 52주 조건
-      else if (indicator === "HIGH_52W") {
-        week52Data.highAlert = true;
-      } else if (indicator === "LOW_52W") {
-        week52Data.lowAlert = true;
-      } else if (indicator === "NEAR_HIGH_52W") {
-        week52Data.highProximity = { value: threshold };
-      } else if (indicator === "NEAR_LOW_52W") {
-        week52Data.lowProximity = { value: threshold };
-      }
-      // 거래량 조건
-      else if (indicator === "VOLUME_AVG_DEV_UP") {
-        volumeData.avgRise = String(threshold || "");
-      } else if (indicator === "VOLUME_AVG_DEV_DOWN") {
-        volumeData.avgDrop = String(threshold || "");
-      } else if (indicator === "VOLUME_CHANGE_PERCENT_UP") {
-        volumeData.spike = true;
-      } else if (indicator === "VOLUME_CHANGE_PERCENT_DOWN") {
-        volumeData.drop = true;
-      }
-      // SMA 조건
-      else if (indicator === "GOLDEN_CROSS") {
-        smaData.shortCross = true;
-      } else if (indicator === "DEAD_CROSS") {
-        smaData.longCross = true;
-      } else if (indicator.startsWith("SMA_")) {
-        smaData.target = { indicator, threshold };
-      }
-      // RSI 조건
-      else if (indicator === "RSI_OVER") {
-        if (!parsed.rsi) parsed.rsi = { overbought: false, oversold: false };
-        parsed.rsi.overbought = true;
-      } else if (indicator === "RSI_UNDER") {
-        if (!parsed.rsi) parsed.rsi = { overbought: false, oversold: false };
-        parsed.rsi.oversold = true;
-      }
-      // 볼린저밴드 조건
-      else if (indicator === "BOLLINGER_UPPER_TOUCH") {
-        bollingerData.upper = true;
-      } else if (indicator === "BOLLINGER_LOWER_TOUCH") {
-        bollingerData.lower = true;
-      }
-    });
-
-    // 가격 조건 설정
-    if (
-      priceLimits.length > 0 ||
-      openChanges.length > 0 ||
-      currentChanges.length > 0
-    ) {
-      parsed.price = {
-        limits: priceLimits,
-        openChanges: openChanges,
-        currentChanges: currentChanges,
-      };
-    }
-
-    // 변동률 조건 설정
-    if (dailyChanges.length > 0 || baseChanges.length > 0) {
-      parsed.change = {
-        dailyChanges: dailyChanges,
-        baseChanges: baseChanges,
-      };
-    }
-
-    // 후행 조건 설정
-    if (
-      trailingData.stopPrice ||
-      trailingData.stopPercent ||
-      trailingData.buyPrice ||
-      trailingData.buyPercent
-    ) {
-      parsed.trailing = trailingData;
-    }
-
-    // 52주 조건 설정
-    if (
-      week52Data.highAlert ||
-      week52Data.lowAlert ||
-      week52Data.highProximity ||
-      week52Data.lowProximity
-    ) {
-      parsed.week52 = week52Data;
-    }
-
-    // 거래량 조건 설정
-    if (
-      volumeData.avgRise ||
-      volumeData.avgDrop ||
-      volumeData.spike ||
-      volumeData.drop
-    ) {
-      parsed.volume = volumeData;
-    }
-
-    // SMA 조건 설정
-    if (smaData.target || smaData.shortCross || smaData.longCross) {
-      parsed.sma = smaData;
-    }
-
-    // 볼린저밴드 조건 설정
-    if (bollingerData.upper || bollingerData.lower) {
-      parsed.bollinger = bollingerData;
-    }
-
-    return parsed;
-  };
 
   // 알림 상세 조회
   useEffect(() => {
@@ -267,6 +73,41 @@ export default function CompanyAlertDetail() {
     ? parseConditionsForCards(alertData.conditions)
     : null;
 
+  const handlePresetAdd = () => {
+    Alert.alert("프리셋 추가", "이 조건을 프리셋으로 추가하시겠습니까?", [
+      {
+        text: "취소",
+        style: "cancel",
+      },
+      {
+        text: "추가",
+        onPress: async () => {
+          if (!accessToken || !alertData) return;
+
+          try {
+            const payload = {
+              title: alertData.title,
+              conditions: alertData.conditions,
+              category: "custom", // 사용자 프리셋으로 추가
+            };
+
+            console.log("[프리셋 추가] payload:", payload);
+            const response = await presetService.createPreset(
+              accessToken,
+              payload
+            );
+            console.log("[프리셋 추가 성공]:", response);
+
+            Alert.alert("성공", "프리셋이 추가되었습니다.");
+          } catch (error) {
+            console.error("[프리셋 추가 실패]:", error);
+            Alert.alert("실패", "프리셋 추가에 실패했습니다.");
+          }
+        },
+      },
+    ]);
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
@@ -291,7 +132,7 @@ export default function CompanyAlertDetail() {
         title={alertData.title || "알림 상세"}
         showBackButton={true}
         rightButtons="preset-and-modify"
-        onPresetPress={() => console.log("프리셋으로 추가")}
+        onPresetPress={handlePresetAdd}
         onModifyPress={() =>
           router.push(
             `/(tabs)/(alert-company)/(alert-company-alertModify)/${id}`

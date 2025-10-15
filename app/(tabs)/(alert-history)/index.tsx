@@ -3,6 +3,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useMemo, useState } from "react";
 import {
   FlatList,
+  Image,
   Modal,
   ScrollView,
   StyleSheet,
@@ -11,10 +12,10 @@ import {
   View,
 } from "react-native";
 
-import DoosanLogo from "@/assets/images/companies/logo_10_두산.svg";
-import KiaLogo from "@/assets/images/companies/logo_11_기아.svg";
-import ShinhanLogo from "@/assets/images/companies/logo_12_신한금융그룹.svg";
-import KakaoLogo from "@/assets/images/companies/logo_13_카카오.svg";
+const DoosanLogo = require("@/assets/images/companies/logo_10_두산.png");
+const KiaLogo = require("@/assets/images/companies/logo_11_기아.png");
+const ShinhanLogo = require("@/assets/images/companies/logo_12_신한금융그룹.png");
+const KakaoLogo = require("@/assets/images/companies/logo_13_카카오.png");
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -27,10 +28,10 @@ export default function AlertHistory() {
 
   // TODO: companies랑 alertsByDate 나중에 바꿔야함
   const companies = [
-    { id: "shinhan", name: "신한지주", Logo: ShinhanLogo },
-    { id: "kia", name: "기아", Logo: KiaLogo },
-    { id: "doosan", name: "두산", Logo: DoosanLogo },
-    { id: "kakao", name: "카카오", Logo: KakaoLogo },
+    { id: "shinhan", name: "신한지주", logo: ShinhanLogo },
+    { id: "kia", name: "기아", logo: KiaLogo },
+    { id: "doosan", name: "두산", logo: DoosanLogo },
+    { id: "kakao", name: "카카오", logo: KakaoLogo },
   ];
 
   const alertsByDate = [
@@ -114,7 +115,7 @@ export default function AlertHistory() {
             showsHorizontalScrollIndicator={false}
             style={styles.companyScroll}
           >
-            {companies.map(({ id, Logo }) => (
+            {companies.map(({ id, logo }) => (
               <TouchableOpacity
                 key={id}
                 onPress={() =>
@@ -125,7 +126,7 @@ export default function AlertHistory() {
                   selectedCompany === id && styles.activeCompany,
                 ]}
               >
-                <Logo width={58} height={58} />
+                <Image source={logo} style={styles.companyLogo} />
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -276,6 +277,11 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   activeCompany: { borderWidth: 2, borderColor: "#4CC53A" },
+  companyLogo: {
+    width: 62,
+    height: 62,
+    borderRadius: 29,
+  },
 
   dateButtonSingle: {
     flexDirection: "row",

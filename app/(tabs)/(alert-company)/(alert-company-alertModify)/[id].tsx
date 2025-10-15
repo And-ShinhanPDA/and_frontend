@@ -24,6 +24,7 @@ import PresetSelect from "@/components/preset/preset-select";
 import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import { parseConditionsForCards } from "@/utils/parseConditions";
 
 export default function ConditionAlertDetail() {
   const router = useRouter();
@@ -42,203 +43,6 @@ export default function ConditionAlertDetail() {
   const handleTempSave = useCallback((id: string, getter: () => any[]) => {
     setConditionGetters((prev) => ({ ...prev, [id]: getter }));
   }, []);
-
-  // 조건 데이터를 각 카드 컴포넌트가 이해할 수 있는 형태로 파싱
-  const parseConditionsForCards = (conditions: any[]) => {
-    const parsed: any = {
-      price: null,
-      change: null,
-      trailing: null,
-      week52: null,
-      volume: null,
-      sma: null,
-      rsi: null,
-      bollinger: null,
-    };
-
-    // Price 조건 파싱
-    const priceLimits: any[] = [];
-    const openChanges: any[] = [];
-    const currentChanges: any[] = [];
-
-    // Change 조건 파싱
-    const dailyChanges: any[] = [];
-    const baseChanges: any[] = [];
-
-    // Trailing 조건 파싱
-    let trailingData: any = {
-      stopPrice: "",
-      stopPercent: "",
-      buyPrice: "",
-      buyPercent: "",
-    };
-
-    // Week52 조건 파싱
-    let week52Data: any = {
-      highAlert: false,
-      lowAlert: false,
-      highProximity: null,
-      lowProximity: null,
-    };
-
-    // Volume 조건 파싱
-    let volumeData: any = {
-      avgRise: "",
-      avgDrop: "",
-      spike: false,
-      drop: false,
-    };
-
-    // SMA 조건 파싱
-    let smaData: any = { target: null, shortCross: false, longCross: false };
-
-    // Bollinger 조건 파싱
-    let bollingerData: any = { upper: false, lower: false };
-
-    conditions.forEach((cond) => {
-      const { indicator, threshold, threshold2 } = cond;
-
-      // 가격 조건
-      if (indicator === "PRICE_ABOVE") {
-        priceLimits.push({ comparison: "이상", amount: threshold });
-      } else if (indicator === "PRICE_BELOW") {
-        priceLimits.push({ comparison: "이하", amount: threshold });
-      } else if (indicator === "PRICE_CHANGE_DAILY_UP") {
-        openChanges.push({ direction: "+", amount: threshold });
-      } else if (indicator === "PRICE_CHANGE_DAILY_DOWN") {
-        openChanges.push({ direction: "-", amount: threshold });
-      } else if (indicator === "PRICE_CHANGE_BASE_UP") {
-        currentChanges.push({ direction: "+", amount: threshold });
-      } else if (indicator === "PRICE_CHANGE_BASE_DOWN") {
-        currentChanges.push({ direction: "-", amount: threshold });
-      }
-      // 변동률 조건
-      else if (indicator === "PRICE_RATE_DAILY_UP") {
-        dailyChanges.push({ direction: "+", amount: threshold });
-      } else if (indicator === "PRICE_RATE_DAILY_DOWN") {
-        dailyChanges.push({ direction: "-", amount: threshold });
-      } else if (indicator === "PRICE_RATE_BASE_UP") {
-        baseChanges.push({ direction: "+", amount: threshold });
-      } else if (indicator === "PRICE_RATE_BASE_DOWN") {
-        baseChanges.push({ direction: "-", amount: threshold });
-      }
-      // 후행 조건
-      else if (indicator === "TRAILING_STOP_PRICE") {
-        trailingData.stopPrice = String(threshold || "");
-      } else if (indicator === "TRAILING_STOP_PERCENT") {
-        trailingData.stopPercent = String(threshold || "");
-      } else if (indicator === "TRAILING_BUY_PRICE") {
-        trailingData.buyPrice = String(threshold || "");
-      } else if (indicator === "TRAILING_BUY_PERCENT") {
-        trailingData.buyPercent = String(threshold || "");
-      }
-      // 52주 조건
-      else if (indicator === "HIGH_52W") {
-        week52Data.highAlert = true;
-      } else if (indicator === "LOW_52W") {
-        week52Data.lowAlert = true;
-      } else if (indicator === "NEAR_HIGH_52W") {
-        week52Data.highProximity = { value: threshold };
-      } else if (indicator === "NEAR_LOW_52W") {
-        week52Data.lowProximity = { value: threshold };
-      }
-      // 거래량 조건
-      else if (indicator === "VOLUME_AVG_DEV_UP") {
-        volumeData.avgRise = String(threshold || "");
-      } else if (indicator === "VOLUME_AVG_DEV_DOWN") {
-        volumeData.avgDrop = String(threshold || "");
-      } else if (indicator === "VOLUME_CHANGE_PERCENT_UP") {
-        volumeData.spike = true;
-      } else if (indicator === "VOLUME_CHANGE_PERCENT_DOWN") {
-        volumeData.drop = true;
-      }
-      // SMA 조건
-      else if (indicator === "GOLDEN_CROSS") {
-        smaData.shortCross = true;
-      } else if (indicator === "DEAD_CROSS") {
-        smaData.longCross = true;
-      } else if (indicator.startsWith("SMA_")) {
-        smaData.target = { indicator, threshold };
-      }
-      // RSI 조건
-      else if (indicator === "RSI_OVER") {
-        if (!parsed.rsi) parsed.rsi = { overbought: false, oversold: false };
-        parsed.rsi.overbought = true;
-      } else if (indicator === "RSI_UNDER") {
-        if (!parsed.rsi) parsed.rsi = { overbought: false, oversold: false };
-        parsed.rsi.oversold = true;
-      }
-      // 볼린저밴드 조건
-      else if (indicator === "BOLLINGER_UPPER_TOUCH") {
-        bollingerData.upper = true;
-      } else if (indicator === "BOLLINGER_LOWER_TOUCH") {
-        bollingerData.lower = true;
-      }
-    });
-
-    // 가격 조건 설정
-    if (
-      priceLimits.length > 0 ||
-      openChanges.length > 0 ||
-      currentChanges.length > 0
-    ) {
-      parsed.price = {
-        limits: priceLimits,
-        openChanges: openChanges,
-        currentChanges: currentChanges,
-      };
-    }
-
-    // 변동률 조건 설정
-    if (dailyChanges.length > 0 || baseChanges.length > 0) {
-      parsed.change = {
-        dailyChanges: dailyChanges,
-        baseChanges: baseChanges,
-      };
-    }
-
-    // 후행 조건 설정
-    if (
-      trailingData.stopPrice ||
-      trailingData.stopPercent ||
-      trailingData.buyPrice ||
-      trailingData.buyPercent
-    ) {
-      parsed.trailing = trailingData;
-    }
-
-    // 52주 조건 설정
-    if (
-      week52Data.highAlert ||
-      week52Data.lowAlert ||
-      week52Data.highProximity ||
-      week52Data.lowProximity
-    ) {
-      parsed.week52 = week52Data;
-    }
-
-    // 거래량 조건 설정
-    if (
-      volumeData.avgRise ||
-      volumeData.avgDrop ||
-      volumeData.spike ||
-      volumeData.drop
-    ) {
-      parsed.volume = volumeData;
-    }
-
-    // SMA 조건 설정
-    if (smaData.target || smaData.shortCross || smaData.longCross) {
-      parsed.sma = smaData;
-    }
-
-    // 볼린저밴드 조건 설정
-    if (bollingerData.upper || bollingerData.lower) {
-      parsed.bollinger = bollingerData;
-    }
-
-    return parsed;
-  };
 
   // 알림 상세 조회
   useEffect(() => {
@@ -268,7 +72,7 @@ export default function ConditionAlertDetail() {
     fetchAlertDetail();
   }, [id, accessToken]);
 
-  // 파싱된 조건 데이터 (useMemo로 최적화)
+  // 파싱된 조건 데이터
   const parsedConditions = useMemo(() => {
     return alertData?.conditions
       ? parseConditionsForCards(alertData.conditions)
@@ -311,7 +115,6 @@ export default function ConditionAlertDetail() {
       console.log("알림 수정 성공:", res);
       alert("알림이 성공적으로 수정되었습니다!");
 
-      // 기업 상세 페이지로 돌아가기 (2번 뒤로가기: 수정페이지 → 알림상세 → 기업상세)
       router.back(); // 수정 페이지 닫기
       router.back(); // 알림 상세 페이지 닫기 (기업 상세 페이지로)
       router.back(); // 기업 상세 페이지 닫기 (기업 목록으로)

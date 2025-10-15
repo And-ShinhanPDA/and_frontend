@@ -15,6 +15,9 @@ import {
 import { SwipeListView } from "react-native-swipe-list-view";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
+import PresetSelect from "@/components/preset/preset-select";
+import { getIndicatorCategoriesArray } from "@/utils/parseConditions";
 
 // TODO: types로 빼기
 type AlertCondition = {
@@ -40,6 +43,9 @@ export default function CompanyAlertDetail() {
   const [priceOpenCloseEnabled, setPriceOpenCloseEnabled] =
     useState<boolean>(true);
 
+  // 프리셋 모달 상태
+  const [isPresetOpen, setIsPresetOpen] = useState(false);
+
   // TODO: API 연결
   const [alerts, setAlerts] = useState<AlertCondition[]>([]);
 
@@ -56,14 +62,14 @@ export default function CompanyAlertDetail() {
         console.log("[알림 응답]:", res);
 
         if (res?.data && Array.isArray(res.data)) {
-          // TODO: 실제 구조에 맞게 변환 필요 (일단 mock 형태로 변환)
+          // TODO: 실제 구조에 맞게 변환 필요
           const formatted = res.data.map((a: any) => ({
             id: a.alertId?.toString() ?? "0",
             name: a.title ?? "알림 이름 없음",
             enabled: a.isActive ?? true,
-            tags: a.conditions?.map((c: any) => c.indicator ?? "조건") ?? [
-              "조건",
-            ],
+            tags: a.conditions
+              ? getIndicatorCategoriesArray(a.conditions)
+              : ["조건"],
           }));
           setAlerts(formatted);
           console.log(`변환된 알림 수: ${formatted.length}`);
@@ -175,7 +181,7 @@ export default function CompanyAlertDetail() {
         title={name ?? "기업 이름"}
         showBackButton={true}
         rightButtons="preset-and-mypage"
-        onPresetPress={() => console.log("프리셋 열기")}
+        onPresetPress={() => setIsPresetOpen(true)}
       />
 
       <SwipeListView
@@ -272,6 +278,16 @@ export default function CompanyAlertDetail() {
           style={styles.plusIcon}
         />
       </TouchableOpacity>
+
+      {/* 프리셋 모달 */}
+      <ConditionBottomSheet
+        visible={isPresetOpen}
+        onClose={() => setIsPresetOpen(false)}
+        ratio={0.8}
+      >
+        <PresetSelect onClose={() => setIsPresetOpen(false)} />
+      </ConditionBottomSheet>
+
       <CustomBottomTab activeTab="기업 알림" />
     </View>
   );
