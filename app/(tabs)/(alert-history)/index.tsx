@@ -263,6 +263,7 @@ const styles = StyleSheet.create({
     paddingTop: 5,
   },
   companyScroll: {
+    marginTop: 15,
     marginBottom: 20,
   },
   companyCircle: {
