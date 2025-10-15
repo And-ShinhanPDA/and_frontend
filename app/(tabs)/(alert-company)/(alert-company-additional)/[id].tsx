@@ -13,7 +13,7 @@ import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -25,7 +25,7 @@ import {
 
 export default function CompanyAlertDetail() {
   const { accessToken } = useAuth();
-  const { name } = useLocalSearchParams();
+  const { id, name } = useLocalSearchParams();
   const router = useRouter();
   const [isPresetOpen, setIsPresetOpen] = useState(false);
   const tabs = [
@@ -46,9 +46,9 @@ export default function CompanyAlertDetail() {
     [k: string]: () => any[];
   }>({});
 
-  const handleTempSave = (id: string, getter: () => any[]) => {
+  const handleTempSave = useCallback((id: string, getter: () => any[]) => {
     setConditionGetters((prev) => ({ ...prev, [id]: getter }));
-  };
+  }, []);
 
   const handleSave = async () => {
     try {
@@ -66,7 +66,7 @@ export default function CompanyAlertDetail() {
         );
 
       const payload = {
-        stockCode: "005930",
+        stockCode: String(id) || "005930",
         title: title || `${name}`,
         isActive: true,
         isPreset: false,
@@ -76,7 +76,12 @@ export default function CompanyAlertDetail() {
       const res = await alertService.createAlert(payload, accessToken);
       console.log("알림 등록 성공:", res);
       alert("알림이 성공적으로 등록되었습니다!");
-      router.back();
+
+      // 기업 상세 페이지로 이동 
+      router.replace({
+        pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+        params: { id: String(id), name: String(name) },
+      });
     } catch (error: any) {
       console.error("알림 등록 실패:", error);
       if (error.response?.status === 401) {
@@ -138,6 +143,8 @@ export default function CompanyAlertDetail() {
           style={styles.titleInput}
           placeholder="이 조건을 대표할 수 있는 한 줄 제목"
           placeholderTextColor="#A4A4A4"
+          value={title}
+          onChangeText={setTitle}
         />
         <View style={styles.divider} />
         <PriceConditionCard onTempSave={handleTempSave} />

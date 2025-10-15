@@ -25,14 +25,25 @@ if (
 
 export default function TrailingConditionCard({
   onTempSave,
+  initialValue,
 }: {
   onTempSave: (id: string, getter: () => any[]) => void;
+  initialValue?: TrailingConditionData;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [conditionData, setConditionData] =
-    useState<TrailingConditionData | null>(null);
+    useState<TrailingConditionData | null>(initialValue || null);
+
+  // initialValue가 있으면 초기 설정
+  useEffect(() => {
+    if (initialValue) {
+      setConditionData(initialValue);
+      setHasCondition(true);
+      setExpanded(true);
+    }
+  }, [initialValue]);
 
   const handleConfirm = (data: TrailingConditionData) => {
     setConditionData(data);
@@ -49,24 +60,24 @@ export default function TrailingConditionCard({
       const list: any[] = [];
 
       // 손절매 (하락)
-      if (conditionData.stopPrice.trim() !== "")
+      if (String(conditionData.stopPrice).trim() !== "")
         list.push({
           indicator: "TRAILING_STOP_PRICE",
           threshold: Number(conditionData.stopPrice),
         });
-      if (conditionData.stopPercent.trim() !== "")
+      if (String(conditionData.stopPercent).trim() !== "")
         list.push({
           indicator: "TRAILING_STOP_PERCENT",
           threshold: Number(conditionData.stopPercent),
         });
 
       // 매수 (상승)
-      if (conditionData.buyPrice.trim() !== "")
+      if (String(conditionData.buyPrice).trim() !== "")
         list.push({
           indicator: "TRAILING_BUY_PRICE",
           threshold: Number(conditionData.buyPrice),
         });
-      if (conditionData.buyPercent.trim() !== "")
+      if (String(conditionData.buyPercent).trim() !== "")
         list.push({
           indicator: "TRAILING_BUY_PERCENT",
           threshold: Number(conditionData.buyPercent),
@@ -77,7 +88,7 @@ export default function TrailingConditionCard({
     };
 
     onTempSave("trailing", getCondition);
-  }, [conditionData]);
+  }, [conditionData, onTempSave]);
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);

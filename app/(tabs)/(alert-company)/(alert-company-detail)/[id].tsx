@@ -261,7 +261,10 @@ export default function CompanyAlertDetail() {
       <TouchableOpacity
         style={styles.fab}
         onPress={() =>
-          router.push("/(tabs)/(alert-company)/(alert-company-additional)/[id]")
+          router.push({
+            pathname: "/(tabs)/(alert-company)/(alert-company-additional)/[id]",
+            params: { id: id, name: name },
+          })
         }
       >
         <Image
