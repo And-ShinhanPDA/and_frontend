@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,12 +21,14 @@ import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import { presetService } from "@/services/preset-service";
 
 export default function ConditionAdditional() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { accessToken } = useAuth();
   const [isPresetOpen, setIsPresetOpen] = useState(false);
+  const [title, setTitle] = useState("");
 
   const tabs = ["제목", "가격", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
 
@@ -54,7 +57,7 @@ export default function ConditionAdditional() {
 
       const payload = {
         stockCode: "005930",
-        title: "알람1번조건",
+        title: title || "조건 알림",
         isActive: true,
         isPreset: false,
         conditions: mergedConditions,
@@ -62,8 +65,42 @@ export default function ConditionAdditional() {
 
       const res = await alertService.createAlert(payload, accessToken);
       console.log("알림 등록 성공:", res);
-      alert("알림이 성공적으로 등록되었습니다!");
-      router.replace("/(tabs)/(alert-condition)");
+
+      // 프리셋 등록 여부 확인
+      Alert.alert("프리셋 등록", "프리셋으로도 등록하시겠습니까?", [
+        {
+          text: "아니오",
+          style: "cancel",
+          onPress: () => {
+            alert("알림이 성공적으로 등록되었습니다!");
+            router.replace("/(tabs)/(alert-condition)");
+          },
+        },
+        {
+          text: "네",
+          onPress: async () => {
+            try {
+              // 프리셋으로 저장
+              const presetPayload = {
+                title: title || "조건 알림",
+                conditions: mergedConditions,
+                category: "custom",
+              };
+
+              console.log("[프리셋 추가] payload:", presetPayload);
+              await presetService.createPreset(accessToken, presetPayload);
+              console.log("[프리셋 추가 성공]");
+
+              alert("알림과 프리셋이 모두 등록되었습니다!");
+            } catch (presetError) {
+              console.error("[프리셋 추가 실패]:", presetError);
+              alert("알림은 등록되었으나 프리셋 등록에 실패했습니다.");
+            } finally {
+              router.replace("/(tabs)/(alert-condition)");
+            }
+          },
+        },
+      ]);
     } catch (error: any) {
       console.error("알림 등록 실패:", error);
       if (error.response?.status === 401) {
@@ -103,6 +140,8 @@ export default function ConditionAdditional() {
           style={styles.titleInput}
           placeholder="이 조건을 대표할 수 있는 한 줄 제목"
           placeholderTextColor="#A4A4A4"
+          value={title}
+          onChangeText={setTitle}
         />
 
         <View style={styles.divider} />

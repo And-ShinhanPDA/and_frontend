@@ -12,9 +12,11 @@ import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import { presetService } from "@/services/preset-service";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -75,13 +77,50 @@ export default function CompanyAlertDetail() {
 
       const res = await alertService.createAlert(payload, accessToken);
       console.log("알림 등록 성공:", res);
-      alert("알림이 성공적으로 등록되었습니다!");
 
-      // 기업 상세 페이지로 이동 
-      router.replace({
-        pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
-        params: { id: String(id), name: String(name) },
-      });
+      // 프리셋 등록 여부 확인
+      Alert.alert("프리셋 등록", "프리셋으로도 등록하시겠습니까?", [
+        {
+          text: "아니오",
+          style: "cancel",
+          onPress: () => {
+            alert("알림이 성공적으로 등록되었습니다!");
+            // 기업 상세 페이지로 이동
+            router.replace({
+              pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+              params: { id: String(id), name: String(name) },
+            });
+          },
+        },
+        {
+          text: "네",
+          onPress: async () => {
+            try {
+              // 프리셋으로 저장
+              const presetPayload = {
+                title: title || `${name} 조건`,
+                conditions: mergedConditions,
+                category: "custom",
+              };
+
+              console.log("[프리셋 추가] payload:", presetPayload);
+              await presetService.createPreset(accessToken, presetPayload);
+              console.log("[프리셋 추가 성공]");
+
+              alert("알림과 프리셋이 모두 등록되었습니다!");
+            } catch (presetError) {
+              console.error("[프리셋 추가 실패]:", presetError);
+              alert("알림은 등록되었으나 프리셋 등록에 실패했습니다.");
+            } finally {
+              // 기업 상세 페이지로 이동
+              router.replace({
+                pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+                params: { id: String(id), name: String(name) },
+              });
+            }
+          },
+        },
+      ]);
     } catch (error: any) {
       console.error("알림 등록 실패:", error);
       if (error.response?.status === 401) {
