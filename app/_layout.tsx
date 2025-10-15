@@ -6,7 +6,7 @@ import "react-native-reanimated";
 
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { setWidgetViewType } from "@/services/widgetShare";
+// import { setWidgetViewType } from "@/services/widgetShare"; // ✅ 위젯 관련 주석처리
 // import messaging from "@react-native-firebase/messaging"; // ✅ 임시 주석처리
 import {
   DarkTheme,
@@ -16,7 +16,7 @@ import {
 import Constants from "expo-constants";
 import * as Device from "expo-device";
 import { useFonts } from "expo-font";
-import * as Linking from "expo-linking";
+// import * as Linking from "expo-linking"; // ✅ 위젯 관련 주석처리
 import { useEffect } from "react";
 
 SplashScreen.preventAutoHideAsync();
@@ -138,41 +138,41 @@ export default function RootLayout() {
   //   return unsubscribe;
   // }, []);
 
-  // 위젯에서 넘어오는 딥링크 감지
-  useEffect(() => {
-    const handleDeepLink = (event: Linking.EventType) => {
-      const { path, queryParams } = Linking.parse(event.url);
+  // ✅ 위젯 관련 딥링크 처리 - 전체 주석처리
+  // useEffect(() => {
+  //   const handleDeepLink = (event: Linking.EventType) => {
+  //     const { path, queryParams } = Linking.parse(event.url);
 
-      if (
-        queryParams?.view === "companies" ||
-        queryParams?.view === "conditions"
-      ) {
-        const viewType = queryParams.view as "companies" | "conditions";
-        console.log("📲 위젯에서 받은 요청:", viewType);
+  //     if (
+  //       queryParams?.view === "companies" ||
+  //       queryParams?.view === "conditions"
+  //     ) {
+  //       const viewType = queryParams.view as "companies" | "conditions";
+  //       console.log("📲 위젯에서 받은 요청:", viewType);
 
-        // App Group에 viewType 저장 → Swift 위젯이 읽어서 전환
-        setWidgetViewType(viewType);
-      }
-    };
+  //       // App Group에 viewType 저장 → Swift 위젯이 읽어서 전환
+  //       setWidgetViewType(viewType);
+  //     }
+  //   };
 
-    // 앱 실행 중 수신되는 URL
-    const sub = Linking.addEventListener("url", handleDeepLink);
+  //   // 앱 실행 중 수신되는 URL
+  //   const sub = Linking.addEventListener("url", handleDeepLink);
 
-    // 앱 처음 켜질 때 URL이 있었는지 확인
-    Linking.getInitialURL().then((url) => {
-      if (!url) return;
-      const { queryParams } = Linking.parse(url);
-      if (
-        queryParams?.view === "companies" ||
-        queryParams?.view === "conditions"
-      ) {
-        const viewType = queryParams.view as "companies" | "conditions";
-        setWidgetViewType(viewType);
-      }
-    });
+  //   // 앱 처음 켜질 때 URL이 있었는지 확인
+  //   Linking.getInitialURL().then((url) => {
+  //     if (!url) return;
+  //     const { queryParams } = Linking.parse(url);
+  //     if (
+  //       queryParams?.view === "companies" ||
+  //       queryParams?.view === "conditions"
+  //     ) {
+  //       const viewType = queryParams.view as "companies" | "conditions";
+  //       setWidgetViewType(viewType);
+  //     }
+  //   });
 
-    return () => sub.remove();
-  }, []);
+  //   return () => sub.remove();
+  // }, []);
 
   // 글꼴 로딩 후 스플래시 종료
   useEffect(() => {
