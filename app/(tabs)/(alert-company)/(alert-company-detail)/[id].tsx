@@ -1,3 +1,4 @@
+import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -168,7 +169,8 @@ export default function CompanyAlertDetail() {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: "/(tabs)/(alert-company-alertDetail)/[id]",
+                  pathname:
+                    "/(tabs)/(alert-company)/(alert-company-alertDetail)/[id]",
                   params: { id: item.id },
                 })
               }
@@ -231,13 +233,16 @@ export default function CompanyAlertDetail() {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => router.push("/(tabs)/(alert-company-additional)/[id]")}
+        onPress={() =>
+          router.push("/(tabs)/(alert-company)/(alert-company-additional)/[id]")
+        }
       >
         <Image
           source={require("@/assets/images/alert/condition_alert.png")}
           style={styles.plusIcon}
         />
       </TouchableOpacity>
+      <CustomBottomTab activeTab="기업 알림" />
     </View>
   );
 }
@@ -299,7 +304,7 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 30,
-    bottom: 40,
+    bottom: 110,
     width: 56,
     height: 56,
     borderRadius: 28,

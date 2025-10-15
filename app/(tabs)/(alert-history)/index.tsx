@@ -4,7 +4,6 @@ import React, { useMemo, useState } from "react";
 import {
   FlatList,
   Modal,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +15,9 @@ import DoosanLogo from "@/assets/images/companies/logo_10_두산.svg";
 import KiaLogo from "@/assets/images/companies/logo_11_기아.svg";
 import ShinhanLogo from "@/assets/images/companies/logo_12_신한금융그룹.svg";
 import KakaoLogo from "@/assets/images/companies/logo_13_카카오.svg";
+import { CustomBottomTab } from "@/components/bottom/bottom";
+import CustomHeader from "@/components/header/header";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AlertHistory() {
   const [showPicker, setShowPicker] = useState(false);
@@ -97,155 +99,172 @@ export default function AlertHistory() {
     date ? date.toLocaleDateString("ko-KR") : "전체";
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* 기업 리스트 */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.companyScroll}
-        >
-          {companies.map(({ id, Logo }) => (
-            <TouchableOpacity
-              key={id}
-              onPress={() =>
-                setSelectedCompany((prev) => (prev === id ? null : id))
-              }
-              style={[
-                styles.companyCircle,
-                selectedCompany === id && styles.activeCompany,
-              ]}
-            >
-              <Logo width={58} height={58} />
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+    <View style={styles.container}>
+      <CustomHeader
+        title="알림 히스토리"
+        showBackButton={false}
+        rightButtons="mypage"
+      />
 
-        {/* 날짜 버튼 */}
-        <TouchableOpacity
-          style={styles.dateButtonSingle}
-          onPress={() => setShowPicker(true)}
-        >
-          <Ionicons name="calendar-outline" size={20} color="#4CC53A" />
-          <Text style={styles.dateButtonText}>
-            {formatDate(startDate)} ~ {formatDate(endDate)}
-          </Text>
-        </TouchableOpacity>
-
-        {/* 알림 리스트 */}
-        <FlatList
-          data={filteredAlerts}
-          keyExtractor={(item) => item.date}
-          contentContainerStyle={{ paddingBottom: 60 }}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <View style={styles.dateSection}>
-              {/* 날짜 + 가로선 */}
-              <View style={styles.dateHeaderRow}>
-                <Text style={styles.dateTextHeader}>{item.date}</Text>
-                <View style={styles.dateDivider} />
-              </View>
-
-              {/* 타임라인 알림 */}
-              {item.items.map((alert, index) => {
-                const companyName =
-                  companies.find((c) => c.id === alert.company)?.name ??
-                  alert.company;
-                return (
-                  <View key={index} style={styles.timelineRow}>
-                    <View style={styles.timeline}>
-                      {index === 0 ? (
-                        <View style={styles.outerCircle}>
-                          <View style={styles.innerDot} />
-                        </View>
-                      ) : (
-                        <View style={styles.singleCircle} />
-                      )}
-                      {index !== item.items.length - 1 && (
-                        <View style={styles.line} />
-                      )}
-                    </View>
-
-                    <View style={styles.alertContent}>
-                      <View style={styles.alertHeader}>
-                        <Text style={styles.alertTitle}>
-                          {companyName} | {alert.title}
-                        </Text>
-                        <Text style={styles.alertTime}>{alert.time}</Text>
-                      </View>
-                      <Text style={styles.alertDesc}>{alert.desc}</Text>
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-          ListEmptyComponent={
-            <Text style={styles.noAlert}>기록이 없습니다.</Text>
-          }
-        />
-
-        {/* 날짜 설정 모달 */}
-        <Modal
-          visible={showPicker}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowPicker(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>조회 기간 설정</Text>
-
-              <View style={styles.datePickerRow}>
-                <View style={styles.pickerColumn}>
-                  <Text style={styles.pickerLabel}>시작일</Text>
-                  <DateTimePicker
-                    value={startDate || new Date()}
-                    mode="date"
-                    display="spinner"
-                    locale="ko-KR"
-                    onChange={(e, d) => d && setStartDate(d)}
-                    style={styles.datePicker}
-                  />
-                </View>
-                <View style={styles.pickerColumn}>
-                  <Text style={styles.pickerLabel}>종료일</Text>
-                  <DateTimePicker
-                    value={endDate || new Date()}
-                    mode="date"
-                    display="spinner"
-                    locale="ko-KR"
-                    onChange={(e, d) => d && setEndDate(d)}
-                    style={styles.datePicker}
-                  />
-                </View>
-              </View>
-
+      <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
+        <View style={styles.innerContainer}>
+          {/* 기업 리스트 */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.companyScroll}
+          >
+            {companies.map(({ id, Logo }) => (
               <TouchableOpacity
-                onPress={() => setShowPicker(false)}
-                style={styles.closeBtn}
+                key={id}
+                onPress={() =>
+                  setSelectedCompany((prev) => (prev === id ? null : id))
+                }
+                style={[
+                  styles.companyCircle,
+                  selectedCompany === id && styles.activeCompany,
+                ]}
               >
-                <Text style={styles.closeText}>확인</Text>
+                <Logo width={58} height={58} />
               </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* 날짜 버튼 */}
+          <TouchableOpacity
+            style={styles.dateButtonSingle}
+            onPress={() => setShowPicker(true)}
+          >
+            <Ionicons name="calendar-outline" size={20} color="#4CC53A" />
+            <Text style={styles.dateButtonText}>
+              {formatDate(startDate)} ~ {formatDate(endDate)}
+            </Text>
+          </TouchableOpacity>
+
+          {/* 알림 리스트 */}
+          <FlatList
+            data={filteredAlerts}
+            keyExtractor={(item) => item.date}
+            contentContainerStyle={{ paddingBottom: 80 }}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <View style={styles.dateSection}>
+                {/* 날짜 + 가로선 */}
+                <View style={styles.dateHeaderRow}>
+                  <Text style={styles.dateTextHeader}>{item.date}</Text>
+                  <View style={styles.dateDivider} />
+                </View>
+
+                {/* 타임라인 알림 */}
+                {item.items.map((alert, index) => {
+                  const companyName =
+                    companies.find((c) => c.id === alert.company)?.name ??
+                    alert.company;
+                  return (
+                    <View key={index} style={styles.timelineRow}>
+                      <View style={styles.timeline}>
+                        {index === 0 ? (
+                          <View style={styles.outerCircle}>
+                            <View style={styles.innerDot} />
+                          </View>
+                        ) : (
+                          <View style={styles.singleCircle} />
+                        )}
+                        {index !== item.items.length - 1 && (
+                          <View style={styles.line} />
+                        )}
+                      </View>
+
+                      <View style={styles.alertContent}>
+                        <View style={styles.alertHeader}>
+                          <Text style={styles.alertTitle}>
+                            {companyName} | {alert.title}
+                          </Text>
+                          <Text style={styles.alertTime}>{alert.time}</Text>
+                        </View>
+                        <Text style={styles.alertDesc}>{alert.desc}</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+            ListEmptyComponent={
+              <Text style={styles.noAlert}>기록이 없습니다.</Text>
+            }
+          />
+
+          {/* 날짜 설정 모달 */}
+          <Modal
+            visible={showPicker}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowPicker(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>조회 기간 설정</Text>
+
+                <View style={styles.datePickerRow}>
+                  <View style={styles.pickerColumn}>
+                    <Text style={styles.pickerLabel}>시작일</Text>
+                    <DateTimePicker
+                      value={startDate || new Date()}
+                      mode="date"
+                      display="spinner"
+                      locale="ko-KR"
+                      onChange={(e, d) => d && setStartDate(d)}
+                      style={styles.datePicker}
+                    />
+                  </View>
+                  <View style={styles.pickerColumn}>
+                    <Text style={styles.pickerLabel}>종료일</Text>
+                    <DateTimePicker
+                      value={endDate || new Date()}
+                      mode="date"
+                      display="spinner"
+                      locale="ko-KR"
+                      onChange={(e, d) => d && setEndDate(d)}
+                      style={styles.datePicker}
+                    />
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => setShowPicker(false)}
+                  style={styles.closeBtn}
+                >
+                  <Text style={styles.closeText}>확인</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </Modal>
-      </View>
-    </SafeAreaView>
+          </Modal>
+        </View>
+      </SafeAreaView>
+      <CustomBottomTab activeTab="기록" />
+    </View>
   );
 }
 
 export const options = { title: "알림 히스토리" };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#fff" },
-  container: {
+  safeArea: {
+    flex: 1,
     backgroundColor: "#fff",
-    paddingHorizontal: 20,
-    paddingTop: 15,
   },
-
-  companyScroll: { marginBottom: 20 },
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  innerContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 5,
+  },
+  companyScroll: {
+    marginBottom: 20,
+  },
   companyCircle: {
     width: 80,
     height: 80,
