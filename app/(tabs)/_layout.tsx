@@ -19,6 +19,7 @@ export default function TabLayout() {
       }}
     >
       <Stack.Screen name="index" />
+      <Stack.Screen name="(home)/index" />
       <Stack.Screen name="(alert-condition)" />
       <Stack.Screen name="(alert-condition-detail)/[id]" />
       <Stack.Screen name="(alert-condition-modify)/[id]" />
