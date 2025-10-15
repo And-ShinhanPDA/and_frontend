@@ -13,6 +13,7 @@ import {
 } from "react-native";
 
 import ShinhanLogo from "@/assets/images/companies/logo_12_신한금융그룹.svg";
+import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
 
 type Company = {
@@ -221,7 +222,11 @@ export default function AlertConditionDetail() {
 
         <View style={styles.conditionRight}>
           <TouchableOpacity
-            onPress={() => router.push("/(tabs)/(alert-condition-detail)/[id]")}
+            onPress={() =>
+              router.push(
+                "/(tabs)/(alert-condition)/(alert-condition-detail)/[id]"
+              )
+            }
           >
             <Image
               source={require("@/assets/images/alert/company_search.png")}
@@ -318,6 +323,7 @@ export default function AlertConditionDetail() {
           />
         </ScrollView>
       </View>
+      <CustomBottomTab activeTab="조건 검색" />
     </View>
   );
 }

@@ -1,4 +1,6 @@
+import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
+import { COMPANIES } from "@/constants/companies";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -10,7 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { COMPANIES } from "@/constants/companies";
 export default function AlertAdditional() {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -67,6 +68,7 @@ export default function AlertAdditional() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
+      <CustomBottomTab activeTab="차트" />
     </View>
   );
 }

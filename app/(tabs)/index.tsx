@@ -1,3 +1,4 @@
+import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
 import ActivatedCompanyCard from "@/components/home/active-company";
 import ActivatedConditionCard from "@/components/home/active-condition";
@@ -23,6 +24,7 @@ export default function HomeScreen() {
         <ActivatedCompanyCard />
         <TreemapChart />
       </ScrollView>
+      <CustomBottomTab activeTab="홈" />
     </View>
   );
 }

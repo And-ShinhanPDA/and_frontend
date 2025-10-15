@@ -1,3 +1,4 @@
+import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -127,7 +128,7 @@ export default function AlertAdditional() {
       style={styles.item}
       onPress={() =>
         router.push({
-          pathname: "/(tabs)/(alert-company-additional)/[id]",
+          pathname: "/(tabs)/(alert-company)/(alert-company-additional)/[id]",
           params: { id: item.id, name: item.name },
         })
       }
@@ -170,6 +171,7 @@ export default function AlertAdditional() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
+      <CustomBottomTab activeTab="기업 알림" />
     </View>
   );
 }

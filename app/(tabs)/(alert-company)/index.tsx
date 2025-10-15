@@ -1,9 +1,13 @@
+import CustomHeader from "@/components/header/header";
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Animated,
   Image,
-  Pressable,
   ImageSourcePropType,
+  Pressable,
   StyleSheet,
   Switch,
   Text,
@@ -12,11 +16,8 @@ import {
   View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
-import CustomHeader from "@/components/header/header";
-import { router } from "expo-router";
-import { alertService } from "@/services/alert-service";
-import { useAuth } from "@/contexts/AuthContext";
 
+import { CustomBottomTab } from "@/components/bottom/bottom";
 import { COMPANIES } from "@/constants/companies";
 type CompanyAlert = {
   alertId: string;
@@ -167,7 +168,8 @@ export default function AlertCompany() {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: "/(tabs)/(alert-company-detail)/[id]",
+                  pathname:
+                    "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
                   params: { id: item.alertId, name: item.name },
                 })
               }
@@ -238,6 +240,8 @@ export default function AlertCompany() {
           style={styles.plusIcon}
         />
       </TouchableOpacity>
+
+      <CustomBottomTab activeTab="기업 알림" />
     </View>
   );
 }
@@ -293,7 +297,7 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 30,
-    bottom: 40,
+    bottom: 110,
     width: 56,
     height: 56,
     borderRadius: 28,

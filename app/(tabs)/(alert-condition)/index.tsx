@@ -1,3 +1,4 @@
+import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -155,7 +156,8 @@ export default function AlertCondition() {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: "/(tabs)/(alert-condition-companyList)/[id]",
+                  pathname:
+                    "/(tabs)/(alert-condition)/(alert-condition-companyList)/[id]",
                   params: { id: item.id },
                 })
               }
@@ -229,6 +231,8 @@ export default function AlertCondition() {
           style={styles.plusIcon}
         />
       </TouchableOpacity>
+
+      <CustomBottomTab activeTab="조건 검색" />
     </View>
   );
 }
@@ -278,7 +282,7 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: 30,
-    bottom: 40,
+    bottom: 110,
     width: 56,
     height: 56,
     borderRadius: 28,
