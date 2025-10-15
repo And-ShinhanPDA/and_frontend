@@ -27,7 +27,6 @@ export const alertService = {
   ) {
     const url = new URL(`${BASE_URL}/api/alerts`);
 
-    // 쿼리 파라미터 설정
     if (params?.stockCode)
       url.searchParams.append("stockCode", params.stockCode);
     if (typeof params?.enabled === "boolean")
@@ -99,6 +98,37 @@ export const alertService = {
     }
   },
 
+  // 특정 알림 활성 / 비활성화
+  async toggleAlertActive(
+    accessToken: string,
+    alertId: string,
+    isActive: boolean
+  ) {
+    const url = `${BASE_URL}/api/alerts/${alertId}/toggle`;
+
+    try {
+      const res = await axios.patch(
+        url,
+        { isActive },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("[특정 알림 활성/비활성 응답]:", res.data);
+      return res.data;
+    } catch (err: any) {
+      console.error(
+        "[특정 알림 활성/비활성 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
+    }
+  },
+
   // 기업 알림 전체 활성 / 비활성 함수
   async toggleCompanyAlerts(
     accessToken: string,
@@ -145,6 +175,92 @@ export const alertService = {
     } catch (err: any) {
       console.error(
         "[기업 알림 전체 삭제 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
+    }
+  },
+
+  // 특정 알림 상세 조회
+  async getAlertDetail(accessToken: string, alertId: string) {
+    const url = `${BASE_URL}/api/alerts/${alertId}`;
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("[특정 알림 상세 응답]:", res.data);
+      return res.data;
+    } catch (err: any) {
+      console.error(
+        "[특정 알림 조회 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
+    }
+  },
+
+  // 특정 알림 수정 (이름, 조건 등)
+  async updateAlert(
+    accessToken: string,
+    alertId: string,
+    payload: {
+      stockCode: string | null;
+      title: string;
+      isActive: boolean;
+      conditions: {
+        indicator: string;
+        threshold: number | null;
+        threshold2?: number | null;
+      }[];
+      isPreset: boolean;
+    }
+  ) {
+    const url = `${BASE_URL}/api/alerts/${alertId}`;
+    console.log("[PATCH] 특정 알림 수정 요청:", url);
+    console.log("[요청 데이터]:", payload);
+
+    try {
+      const res = await axios.patch(url, payload, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("[특정 알림 수정 응답]:", res.data);
+      return res.data;
+    } catch (err: any) {
+      console.error(
+        "[특정 알림 수정 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
+    }
+  },
+
+  // 특정 알림 삭제
+  async deleteAlert(accessToken: string, alertId: string) {
+    const url = `${BASE_URL}/api/alerts/${alertId}`;
+    console.log("[DELETE] 특정 알림 삭제 요청:", url);
+
+    try {
+      const res = await axios.delete(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("[특정 알림 삭제 응답]:", res.data);
+      return res.data;
+    } catch (err: any) {
+      console.error(
+        "[특정 알림 삭제 실패]:",
         err.response?.data ?? err.message
       );
       throw err;

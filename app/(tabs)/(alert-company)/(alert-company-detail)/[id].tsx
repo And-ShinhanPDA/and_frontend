@@ -1,6 +1,6 @@
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Animated,
@@ -13,6 +13,8 @@ import {
   View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
 
 // TODO: types로 빼기
 type AlertCondition = {
@@ -23,6 +25,11 @@ type AlertCondition = {
 };
 
 export default function CompanyAlertDetail() {
+  const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
+  const { accessToken } = useAuth();
+
+  // console.log("id : stockId:", id);
+  // console.log("name:", name);
   const [search, setSearch] = useState("");
   const [fadeAnimations, setFadeAnimations] = useState<
     Record<string, Animated.Value>
@@ -34,42 +41,40 @@ export default function CompanyAlertDetail() {
     useState<boolean>(true);
 
   // TODO: API 연결
-  const [alerts, setAlerts] = useState<AlertCondition[]>([
-    {
-      id: "1",
-      name: "SMA량 거래량 조건",
-      enabled: false,
-      tags: [
-        "SMA",
-        "거래량",
-        "52주",
-        "볼린저밴드",
-        "볼린저밴드",
-        "볼린저밴드",
-        "볼린저밴드",
-        "볼린저밴드",
-        "볼린저밴드",
-      ],
-    },
-    {
-      id: "2",
-      name: "가격 설정 조건",
-      enabled: true,
-      tags: ["가격", "RSI", "52주", "SMA"],
-    },
-    {
-      id: "3",
-      name: "SMA 조건",
-      enabled: true,
-      tags: ["SMA", "거래량", "52주", "볼린저밴드"],
-    },
-    {
-      id: "4",
-      name: "볼린저 밴드 조건",
-      enabled: true,
-      tags: ["후행", "RSI", "52주", "SMA"],
-    },
-  ]);
+  const [alerts, setAlerts] = useState<AlertCondition[]>([]);
+
+  useEffect(() => {
+    const fetchCompanyAlerts = async () => {
+      if (!accessToken || !id) return;
+      try {
+        console.log("[API 호출 시작] /api/alerts?stockCode=", id);
+
+        const res = await alertService.getUserAlerts(accessToken, {
+          stockCode: id,
+        });
+
+        console.log("[알림 응답]:", res);
+
+        if (res?.data && Array.isArray(res.data)) {
+          // TODO: 실제 구조에 맞게 변환 필요 (일단 mock 형태로 변환)
+          const formatted = res.data.map((a: any) => ({
+            id: a.alertId?.toString() ?? "0",
+            name: a.title ?? "알림 이름 없음",
+            enabled: a.isActive ?? true,
+            tags: a.conditions?.map((c: any) => c.indicator ?? "조건") ?? [
+              "조건",
+            ],
+          }));
+          setAlerts(formatted);
+          console.log(`변환된 알림 수: ${formatted.length}`);
+        }
+      } catch (err) {
+        console.error("[기업별 알림 조회 실패]:", err);
+      }
+    };
+
+    fetchCompanyAlerts();
+  }, [accessToken, id]);
 
   // 초기 애니메이션 설정
   useEffect(() => {
@@ -81,15 +86,37 @@ export default function CompanyAlertDetail() {
   }, [alerts]);
 
   // 토글 스위치
-  const toggleSwitch = (id: string) => {
-    setAlerts((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, enabled: !c.enabled } : c))
-    );
+  const toggleSwitch = async (id: string, isActive: boolean) => {
+    if (!accessToken) return;
+    try {
+      const newState = !isActive;
+
+      setAlerts((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, enabled: newState } : c))
+      );
+      const res = await alertService.toggleAlertActive(
+        accessToken,
+        id,
+        newState
+      );
+
+      console.log(`${name} 알림 ${newState ? "활성화" : "비활성화"} 성공`, res);
+    } catch (err) {
+      console.error("[알림 토글 실패]:", err);
+    }
   };
 
   // 삭제 기능
-  const deleteCompany = (id: string) => {
-    setAlerts((prev) => prev.filter((c) => c.id !== id));
+  const deleteAlert = async (alertId: string) => {
+    if (!accessToken) return;
+    try {
+      const res = await alertService.deleteAlert(accessToken, alertId);
+      console.log("[알림 삭제 성공]:", res);
+
+      setAlerts((prev) => prev.filter((c) => c.id !== alertId));
+    } catch (err) {
+      console.error("[알림 삭제 실패]:", err);
+    }
   };
 
   // 왼쪽 스와이프 시 fade out
@@ -145,7 +172,7 @@ export default function CompanyAlertDetail() {
     <View style={styles.container}>
       {/* 헤더 */}
       <CustomHeader
-        title="기업 이름으로 바꿔야 함"
+        title={name ?? "기업 이름"}
         showBackButton={true}
         rightButtons="preset-and-mypage"
         onPresetPress={() => console.log("프리셋 열기")}
@@ -210,7 +237,7 @@ export default function CompanyAlertDetail() {
                     trackColor={{ false: "#ccc", true: "#4CC439" }}
                     thumbColor="#fff"
                     ios_backgroundColor="#E9E9EA"
-                    onValueChange={() => toggleSwitch(item.id)}
+                    onValueChange={() => toggleSwitch(item.id, item.enabled)}
                     value={item.enabled}
                   />
                 </Animated.View>
@@ -223,7 +250,7 @@ export default function CompanyAlertDetail() {
             <TouchableOpacity
               style={styles.deleteButton}
               onLayout={(e) => setDeleteWidth(e.nativeEvent.layout.width)}
-              onPress={() => deleteCompany(item.id)}
+              onPress={() => deleteAlert(item.id)}
             >
               <Text style={styles.deleteText}>삭제</Text>
             </TouchableOpacity>
