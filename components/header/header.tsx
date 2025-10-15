@@ -255,6 +255,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginTop: 70,
+    marginBottom: 8,
     paddingHorizontal: 16,
   },
   leftSection: {

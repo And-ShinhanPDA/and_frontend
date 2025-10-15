@@ -4,10 +4,10 @@ import ActivatedCompanyCard from "@/components/home/active-company";
 import ActivatedConditionCard from "@/components/home/active-condition";
 import PriceAlertToast from "@/components/home/price-toast-alert";
 import TreemapChart from "@/components/home/treemap-chart";
-import { ScrollView, StyleSheet, View } from "react-native";
-import { useState } from "react";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
+import { useState } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
 
 export default function HomeScreen() {
   const [isPresetOpen, setIsPresetOpen] = useState(false);

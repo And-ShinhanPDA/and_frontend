@@ -1,3 +1,5 @@
+import { CustomBottomTab } from "@/components/bottom/bottom";
+import CustomHeader from "@/components/header/header";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useMemo, useState } from "react";
@@ -11,13 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-const DoosanLogo = require("@/assets/images/companies/logo_10_두산.png");
-const KiaLogo = require("@/assets/images/companies/logo_11_기아.png");
-const ShinhanLogo = require("@/assets/images/companies/logo_12_신한금융그룹.png");
-const KakaoLogo = require("@/assets/images/companies/logo_13_카카오.png");
-import { CustomBottomTab } from "@/components/bottom/bottom";
-import CustomHeader from "@/components/header/header";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AlertHistory() {
@@ -28,10 +23,26 @@ export default function AlertHistory() {
 
   // TODO: companies랑 alertsByDate 나중에 바꿔야함
   const companies = [
-    { id: "shinhan", name: "신한지주", logo: ShinhanLogo },
-    { id: "kia", name: "기아", logo: KiaLogo },
-    { id: "doosan", name: "두산", logo: DoosanLogo },
-    { id: "kakao", name: "카카오", logo: KakaoLogo },
+    {
+      id: "shinhan",
+      name: "신한지주",
+      logo: require("@/assets/images/companies/logo_12_신한금융그룹.png"),
+    },
+    {
+      id: "kia",
+      name: "기아",
+      logo: require("@/assets/images/companies/logo_11_기아.png"),
+    },
+    {
+      id: "doosan",
+      name: "두산",
+      logo: require("@/assets/images/companies/logo_10_두산.png"),
+    },
+    {
+      id: "kakao",
+      name: "카카오",
+      logo: require("@/assets/images/companies/logo_13_카카오.png"),
+    },
   ];
 
   const alertsByDate = [
@@ -126,7 +137,11 @@ export default function AlertHistory() {
                   selectedCompany === id && styles.activeCompany,
                 ]}
               >
-                <Image source={logo} style={styles.companyLogo} />
+                <Image
+                  source={logo}
+                  style={{ width: 70, height: 70, borderRadius: 50 }}
+                  resizeMode="contain"
+                />
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -146,8 +161,9 @@ export default function AlertHistory() {
           <FlatList
             data={filteredAlerts}
             keyExtractor={(item) => item.date}
-            contentContainerStyle={{ paddingBottom: 80 }}
+            contentContainerStyle={{ paddingBottom: 80, flexGrow: 1 }}
             showsVerticalScrollIndicator={false}
+            removeClippedSubviews={false}
             renderItem={({ item }) => (
               <View style={styles.dateSection}>
                 {/* 날짜 + 가로선 */}
@@ -259,13 +275,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   innerContainer: {
-    flex: 1,
+    flex: 0,
     paddingHorizontal: 20,
-    paddingTop: 5,
+    paddingTop: 15, // 헤더와 아이콘 리스트 간격 줄임 (15 → 5)
   },
   companyScroll: {
-    marginTop: 15,
-    marginBottom: 20,
+    marginBottom: 20, // 아이콘 리스트와 날짜 버튼 간격 늘림 (0 → 20)
   },
   companyCircle: {
     width: 80,
