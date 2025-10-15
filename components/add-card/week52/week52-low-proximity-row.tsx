@@ -29,7 +29,7 @@ export default function Week52LowProximityRow({
     }
   };
 
-  const filled = value.trim() !== "";
+  const filled = String(value).trim() !== "";
 
   return (
     <View style={styles.rowContainer}>

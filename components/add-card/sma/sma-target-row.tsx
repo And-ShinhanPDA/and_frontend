@@ -40,7 +40,7 @@ export default function SMATargetRow({
     }
   };
 
-  const hasValue = value.trim() !== "";
+  const hasValue = String(value).trim() !== "";
 
   return (
     <View style={[styles.rowContainer, dropdownVisible && styles.rowRaised]}>

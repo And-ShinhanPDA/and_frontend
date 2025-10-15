@@ -30,7 +30,7 @@ export default function Week52HighProximityRow({
     }
   };
 
-  const filled = value.trim() !== "";
+  const filled = String(value).trim() !== "";
 
   return (
     <View style={styles.rowContainer}>

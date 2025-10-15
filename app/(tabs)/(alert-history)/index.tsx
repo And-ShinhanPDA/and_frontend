@@ -1,3 +1,5 @@
+import { CustomBottomTab } from "@/components/bottom/bottom";
+import CustomHeader from "@/components/header/header";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useMemo, useState } from "react";
@@ -11,9 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-import { CustomBottomTab } from "@/components/bottom/bottom";
-import CustomHeader from "@/components/header/header";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AlertHistory() {
@@ -140,7 +139,7 @@ export default function AlertHistory() {
               >
                 <Image
                   source={logo}
-                  style={{ width: 60, height: 60, borderRadius: 50 }}
+                  style={{ width: 70, height: 70, borderRadius: 50 }}
                   resizeMode="contain"
                 />
               </TouchableOpacity>
@@ -293,6 +292,11 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   activeCompany: { borderWidth: 2, borderColor: "#4CC53A" },
+  companyLogo: {
+    width: 62,
+    height: 62,
+    borderRadius: 29,
+  },
 
   dateButtonSingle: {
     flexDirection: "row",

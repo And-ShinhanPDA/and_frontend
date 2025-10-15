@@ -4,9 +4,14 @@ import ActivatedCompanyCard from "@/components/home/active-company";
 import ActivatedConditionCard from "@/components/home/active-condition";
 import PriceAlertToast from "@/components/home/price-toast-alert";
 import TreemapChart from "@/components/home/treemap-chart";
+import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
+import PresetSelect from "@/components/preset/preset-select";
+import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
 export default function HomeScreen() {
+  const [isPresetOpen, setIsPresetOpen] = useState(false);
+
   return (
     <View style={styles.wrapper}>
       <CustomHeader
@@ -14,7 +19,7 @@ export default function HomeScreen() {
         showBackButton={false}
         customLeft={<PriceAlertToast />}
         rightButtons="preset-and-mypage"
-        onPresetPress={() => console.log("프리셋 열기")}
+        onPresetPress={() => setIsPresetOpen(true)}
       />
       <ScrollView
         style={styles.scrollView}
@@ -24,6 +29,15 @@ export default function HomeScreen() {
         <ActivatedCompanyCard />
         <TreemapChart />
       </ScrollView>
+
+      <ConditionBottomSheet
+        visible={isPresetOpen}
+        onClose={() => setIsPresetOpen(false)}
+        ratio={0.8}
+      >
+        <PresetSelect onClose={() => setIsPresetOpen(false)} />
+      </ConditionBottomSheet>
+
       <CustomBottomTab activeTab="홈" />
     </View>
   );

@@ -60,11 +60,12 @@ export default function Week52ConditionContent({
       highAlert: sectionToggles.highAlert,
       lowAlert: sectionToggles.lowAlert,
       highProximity:
-        sectionToggles.highProximity && highProximity.value.trim() !== ""
+        sectionToggles.highProximity &&
+        String(highProximity.value).trim() !== ""
           ? { value: highProximity.value }
           : null,
       lowProximity:
-        sectionToggles.lowProximity && lowProximity.value.trim() !== ""
+        sectionToggles.lowProximity && String(lowProximity.value).trim() !== ""
           ? { value: lowProximity.value }
           : null,
     });
@@ -105,7 +106,7 @@ export default function Week52ConditionContent({
           value={sectionToggles.highProximity}
           onToggle={() => toggleSection("highProximity")}
           rows={[{}]}
-          hasFilled={highProximity.value.trim() !== ""}
+          hasFilled={String(highProximity.value).trim() !== ""}
           onAdd={() => {}}
           renderRow={() =>
             sectionToggles.highProximity && (
@@ -142,7 +143,7 @@ export default function Week52ConditionContent({
           value={sectionToggles.lowProximity}
           onToggle={() => toggleSection("lowProximity")}
           rows={[{}]}
-          hasFilled={lowProximity.value.trim() !== ""}
+          hasFilled={String(lowProximity.value).trim() !== ""}
           onAdd={() => {}}
           renderRow={() =>
             sectionToggles.lowProximity && (

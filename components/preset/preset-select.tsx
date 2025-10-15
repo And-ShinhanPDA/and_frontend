@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dimensions,
   ScrollView,
@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { presetService } from "@/services/preset-service";
+import { useAuth } from "@/contexts/AuthContext";
+import { extractIndicatorCategories } from "@/utils/parseConditions";
 import Benjamin from "../../assets/images/preset/benjamin.svg";
 import Charlie from "../../assets/images/preset/charlie.svg";
 import GoldenCross from "../../assets/images/preset/goldencross.svg";
@@ -14,75 +17,107 @@ import Jesse from "../../assets/images/preset/jesse.svg";
 import Mark from "../../assets/images/preset/mark.svg";
 import Peter from "../../assets/images/preset/peter.svg";
 import Warren from "../../assets/images/preset/warren.svg";
-const presets = {
-  내: [
-    {
-      id: 9,
-      name: "워렌 버핏",
-      desc: "사용 지표: 50일 이동평균선 (SMA), 거래량",
-      image: Warren,
-    },
-  ],
-  유명인: [
-    {
-      id: 1,
-      name: "워렌 버핏",
-      desc: "사용 지표: 50일 이동평균선 (SMA), 200일 이동평균선 (SMA), 거래량",
-      image: Warren,
-    },
-    {
-      id: 2,
-      name: "벤저민 그레이엄",
-      desc: "사용 지표: 50일 이동평균선 (SMA), 200일 이동평균선 (SMA), 거래량",
-      image: Benjamin,
-    },
-    {
-      id: 3,
-      name: "찰리 멍거",
-      desc: "사용 지표: 50일 이동평균선 (SMA), 200일 이동평균선 (SMA)",
-      image: Charlie,
-    },
-    {
-      id: 4,
-      name: "피터 린치",
-      desc: "사용 지표: 50일 이동평균선 (SMA), 거래량",
-      image: Peter,
-    },
-  ],
-  추천: [
-    {
-      id: 5,
-      name: "추세추종 (골든 크로스)",
-      desc: "사용 지표: 50일 이동평균선 (SMA), 200일 이동평균선 (SMA), 거래량",
-      image: GoldenCross,
-    },
-    {
-      id: 6,
-      name: "제시 리버모어",
-      desc: "사용 지표: 50일 이동평균선 (SMA), 200일 이동평균선 (SMA), 거래량",
-      image: Jesse,
-    },
-    {
-      id: 7,
-      name: "마크 미너비니",
-      desc: "사용 지표: 50일 이동평균선 (SMA), 거래량",
-      image: Mark,
-    },
-    {
-      id: 8,
-      name: "피터 린치",
-      desc: "사용 지표: 50일 이동평균선 (SMA), 거래량",
-      image: Peter,
-    },
-  ],
+
+const imageMap: { [key: string]: any } = {
+  "워렌 버핏": Warren,
+  "벤저민 그레이엄": Benjamin,
+  "찰리 멍거": Charlie,
+  "피터 린치": Peter,
+  "추세 추종": GoldenCross,
+  "제시 리버모어": Jesse,
+  "마크 미너비니": Mark,
 };
+
+// 추천 프리셋과 유명인 프리셋에 대한 지표 설명
+const descMap: { [key: string]: string } = {
+  "추세 추종": "사용 지표: 50일 이동평균선(SMA), 200일 이동평균선(SMA)",
+  "모멘텀 돌파": "사용 지표: 52주 최고가, 거래량, RSI",
+  "과매도 반등": "사용 지표: RSI, 볼린저 밴드",
+  "추세 전환 경계": "사용 지표: 볼린저 밴드, 데드크로스",
+  "리스크 관리": "사용 지표: 추적 손절매",
+  "이상 거래량 포착": "사용 지표: 일간 등락률, 거래량",
+  "워렌 버핏": "사용 지표: 목표가, 52주 최저가, RSI",
+  "벤저민 그레이엄": "사용 지표: 목표가, 52주 최저가, 거래량",
+  "찰리 멍거": "사용 지표: 목표가, RSI",
+  "피터 린치": "사용 지표: 52주 최고가, 거래량, RSI",
+  "폴 튜더 존스": "사용 지표: 일간 등락률, 52주 최저가",
+  "마이클 버리": "사용 지표: 52주 최저가, 거래량, 볼린저 밴드",
+};
+
+interface Preset {
+  presetId: number;
+  title: string;
+  category: string;
+  conditions: any[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 40 * 2 - 14) / 2;
 
 export default function PresetSelect({ onClose }: { onClose: () => void }) {
-  const [category, setCategory] = useState<"내" | "유명인" | "추천">("내");
-  const currentList = presets[category];
+  const [category, setCategory] = useState<"내" | "유명인" | "추천">("유명인");
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const { accessToken } = useAuth();
+
+  useEffect(() => {
+    const fetchPresets = async () => {
+      if (!accessToken) {
+        console.log("[프리셋] accessToken이 없습니다.");
+        return;
+      }
+
+      try {
+        console.log("[프리셋] API 요청 시작");
+        const response = await presetService.getPresetList(accessToken);
+        console.log("[프리셋] API 응답 결과:", response);
+
+        if (response.data) {
+          const categoryCount = response.data.reduce(
+            (acc: any, preset: Preset) => {
+              acc[preset.category] = (acc[preset.category] || 0) + 1;
+              return acc;
+            },
+            {}
+          );
+
+          setPresets(response.data);
+        }
+      } catch (error) {
+        console.error("[프리셋] API 요청 실패:", error);
+      }
+    };
+
+    fetchPresets();
+  }, [accessToken]);
+
+  const categoryMap: { [key: string]: string } = {
+    내: "custom",
+    유명인: "influencer",
+    추천: "recommended",
+  };
+
+  const currentList = presets
+    .filter((preset) => {
+      const matches = preset.category === categoryMap[category];
+      return matches;
+    })
+    .map((preset) => {
+      // custom 카테고리는 동적으로 지표 추출, 나머지는 하드코딩된 설명 사용
+      const desc =
+        preset.category === "custom"
+          ? extractIndicatorCategories(preset.conditions)
+          : descMap[preset.title] || `조건 ${preset.conditions.length}개`;
+
+      return {
+        id: preset.presetId,
+        name: preset.title,
+        desc: desc,
+        image: imageMap[preset.title] || GoldenCross,
+      };
+    });
 
   return (
     <View style={styles.container}>

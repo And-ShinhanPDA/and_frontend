@@ -54,9 +54,13 @@ export default function VolumeConditionContent({
   const handleConfirmPress = () => {
     onConfirm({
       avgRise:
-        toggles.avgRise && avgRiseValue.trim() !== "" ? avgRiseValue : null,
+        toggles.avgRise && String(avgRiseValue).trim() !== ""
+          ? avgRiseValue
+          : null,
       avgDrop:
-        toggles.avgDrop && avgDropValue.trim() !== "" ? avgDropValue : null,
+        toggles.avgDrop && String(avgDropValue).trim() !== ""
+          ? avgDropValue
+          : null,
       spike: toggles.spike,
       drop: toggles.drop,
     });
@@ -74,7 +78,7 @@ export default function VolumeConditionContent({
           value={toggles.avgRise}
           onToggle={() => toggle("avgRise")}
           rows={[{}]}
-          hasFilled={avgRiseValue.trim() !== ""}
+          hasFilled={String(avgRiseValue).trim() !== ""}
           onAdd={() => {}}
           renderRow={() =>
             toggles.avgRise && (
@@ -99,7 +103,7 @@ export default function VolumeConditionContent({
           value={toggles.avgDrop}
           onToggle={() => toggle("avgDrop")}
           rows={[{}]}
-          hasFilled={avgDropValue.trim() !== ""}
+          hasFilled={String(avgDropValue).trim() !== ""}
           onAdd={() => {}}
           renderRow={() =>
             toggles.avgDrop && (

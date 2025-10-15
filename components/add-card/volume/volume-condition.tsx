@@ -23,13 +23,24 @@ if (
 
 export default function VolumeConditionCard({
   onTempSave,
+  initialValue,
 }: {
   onTempSave: (id: string, getter: () => any[]) => void;
+  initialValue?: any;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
-  const [conditionData, setConditionData] = useState<any>(null);
+  const [conditionData, setConditionData] = useState<any>(initialValue || null);
   const [expanded, setExpanded] = useState(false);
+
+  // initialValue가 있으면 초기 설정
+  useEffect(() => {
+    if (initialValue) {
+      setConditionData(initialValue);
+      setHasCondition(true);
+      setExpanded(true);
+    }
+  }, [initialValue]);
 
   const handleConfirm = (data: any) => {
     console.log("거래량 조건 입력:", data);
@@ -83,7 +94,7 @@ export default function VolumeConditionCard({
     };
 
     onTempSave("volume", getCondition);
-  }, [conditionData]);
+  }, [conditionData, onTempSave]);
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);

@@ -14,6 +14,8 @@ import {
   View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
+import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
+import PresetSelect from "@/components/preset/preset-select";
 
 // TODO: types로 빼기
 type AlertCondition = {
@@ -29,8 +31,8 @@ export default function AlertCondition() {
     Record<string, Animated.Value>
   >({});
   const [deleteWidth, setDeleteWidth] = useState(80);
+  const [isPresetOpen, setIsPresetOpen] = useState(false);
 
-  // TODO: API 연결
   const [alerts, setAlerts] = useState<AlertCondition[]>([
     {
       id: "1",
@@ -117,7 +119,7 @@ export default function AlertCondition() {
         title="조건 검색"
         showBackButton={false}
         rightButtons="preset-and-mypage"
-        onPresetPress={() => console.log("프리셋 열기")}
+        onPresetPress={() => setIsPresetOpen(true)}
         // onMyPagePress={() => router.push("/mypage")}
       />
 
@@ -231,6 +233,15 @@ export default function AlertCondition() {
           style={styles.plusIcon}
         />
       </TouchableOpacity>
+
+      {/* 프리셋 모달 */}
+      <ConditionBottomSheet
+        visible={isPresetOpen}
+        onClose={() => setIsPresetOpen(false)}
+        ratio={0.8}
+      >
+        <PresetSelect onClose={() => setIsPresetOpen(false)} />
+      </ConditionBottomSheet>
 
       <CustomBottomTab activeTab="조건 검색" />
     </View>

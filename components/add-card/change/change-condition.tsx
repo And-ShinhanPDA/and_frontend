@@ -25,14 +25,25 @@ if (
 
 export default function ChangeConditionCard({
   onTempSave,
+  initialValue,
 }: {
   onTempSave: (id: string, getter: () => any[]) => void;
+  initialValue?: ChangeConditionData;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasCondition, setHasCondition] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [conditionData, setConditionData] =
-    useState<ChangeConditionData | null>(null);
+    useState<ChangeConditionData | null>(initialValue || null);
+
+  // initialValue가 있으면 초기 설정
+  useEffect(() => {
+    if (initialValue) {
+      setConditionData(initialValue);
+      setHasCondition(true);
+      setExpanded(true);
+    }
+  }, [initialValue]);
 
   const handleConfirm = (data: ChangeConditionData) => {
     setConditionData(data);
@@ -81,7 +92,7 @@ export default function ChangeConditionCard({
     };
 
     onTempSave("changeRate", getCondition);
-  }, [conditionData]);
+  }, [conditionData, onTempSave]);
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);

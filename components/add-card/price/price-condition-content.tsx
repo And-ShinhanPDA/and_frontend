@@ -58,58 +58,65 @@ export default function PriceConditionContent({
   useEffect(() => {
     if (inited.current) return;
     if (initialValue) {
-      if (initialValue.limits?.length === 2) {
-        setLimits([
-          {
-            id: 1,
-            comparison: "이상",
-            amount: initialValue.limits[0].amount ?? "",
-          },
-          {
-            id: 2,
-            comparison: "이하",
-            amount: initialValue.limits[1].amount ?? "",
-          },
-        ]);
+      // limits 처리
+      if (initialValue.limits && initialValue.limits.length > 0) {
+        const newLimits = [
+          { id: 1, comparison: "이상" as "이상" | "이하", amount: "" },
+          { id: 2, comparison: "이하" as "이상" | "이하", amount: "" },
+        ];
+
+        initialValue.limits.forEach((limit) => {
+          if (limit.comparison === "이상") {
+            newLimits[0].amount = String(limit.amount ?? "");
+          } else {
+            newLimits[1].amount = String(limit.amount ?? "");
+          }
+        });
+
+        setLimits(newLimits);
+        setToggles((prev) => ({ ...prev, limit: true }));
       }
-      if (initialValue.openChanges?.length === 2) {
-        setOpenChanges([
-          {
-            id: 1,
-            direction: "+",
-            amount: initialValue.openChanges[0].amount ?? "",
-          },
-          {
-            id: 2,
-            direction: "-",
-            amount: initialValue.openChanges[1].amount ?? "",
-          },
-        ]);
+
+      // openChanges 처리
+      if (initialValue.openChanges && initialValue.openChanges.length > 0) {
+        const newOpenChanges = [
+          { id: 1, direction: "+" as "+" | "-", amount: "" },
+          { id: 2, direction: "-" as "+" | "-", amount: "" },
+        ];
+
+        initialValue.openChanges.forEach((change) => {
+          if (change.direction === "+") {
+            newOpenChanges[0].amount = String(change.amount ?? "");
+          } else {
+            newOpenChanges[1].amount = String(change.amount ?? "");
+          }
+        });
+
+        setOpenChanges(newOpenChanges);
+        setToggles((prev) => ({ ...prev, open: true }));
       }
-      if (initialValue.currentChanges?.length === 2) {
-        setCurrentChanges([
-          {
-            id: 1,
-            direction: "+",
-            amount: initialValue.currentChanges[0].amount ?? "",
-          },
-          {
-            id: 2,
-            direction: "-",
-            amount: initialValue.currentChanges[1].amount ?? "",
-          },
-        ]);
+
+      // currentChanges 처리
+      if (
+        initialValue.currentChanges &&
+        initialValue.currentChanges.length > 0
+      ) {
+        const newCurrentChanges = [
+          { id: 1, direction: "+" as "+" | "-", amount: "" },
+          { id: 2, direction: "-" as "+" | "-", amount: "" },
+        ];
+
+        initialValue.currentChanges.forEach((change) => {
+          if (change.direction === "+") {
+            newCurrentChanges[0].amount = String(change.amount ?? "");
+          } else {
+            newCurrentChanges[1].amount = String(change.amount ?? "");
+          }
+        });
+
+        setCurrentChanges(newCurrentChanges);
+        setToggles((prev) => ({ ...prev, current: true }));
       }
-      setToggles({
-        limit:
-          initialValue.limits?.some((v) => v.amount.trim() !== "") ?? false,
-        open:
-          initialValue.openChanges?.some((v) => v.amount.trim() !== "") ??
-          false,
-        current:
-          initialValue.currentChanges?.some((v) => v.amount.trim() !== "") ??
-          false,
-      });
     }
     inited.current = true;
   }, [initialValue]);
@@ -161,7 +168,7 @@ export default function PriceConditionContent({
           value={toggles.limit}
           onToggle={() => toggle("limit")}
           rows={limits}
-          hasFilled={limits.some((v) => v.amount.trim() !== "")}
+          hasFilled={limits.some((v) => String(v.amount).trim() !== "")}
           onAdd={() => {}}
           renderRow={(r) =>
             toggles.limit && (
@@ -186,7 +193,7 @@ export default function PriceConditionContent({
                 >
                   {r.comparison}
                 </Text>
-                {r.amount.trim() !== "" && (
+                {String(r.amount).trim() !== "" && (
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() =>
@@ -212,7 +219,7 @@ export default function PriceConditionContent({
           value={toggles.open}
           onToggle={() => toggle("open")}
           rows={openChanges}
-          hasFilled={openChanges.some((v) => v.amount.trim() !== "")}
+          hasFilled={openChanges.some((v) => String(v.amount).trim() !== "")}
           onAdd={() => {}}
           renderRow={(r) =>
             toggles.open && (
@@ -237,7 +244,7 @@ export default function PriceConditionContent({
                     )
                   }
                 />
-                {r.amount.trim() !== "" && (
+                {String(r.amount).trim() !== "" && (
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() =>
@@ -263,7 +270,7 @@ export default function PriceConditionContent({
           value={toggles.current}
           onToggle={() => toggle("current")}
           rows={currentChanges}
-          hasFilled={currentChanges.some((v) => v.amount.trim() !== "")}
+          hasFilled={currentChanges.some((v) => String(v.amount).trim() !== "")}
           onAdd={() => {}}
           renderRow={(r) =>
             toggles.current && (
@@ -289,7 +296,7 @@ export default function PriceConditionContent({
                   }
                 />
 
-                {r.amount.trim() !== "" && (
+                {String(r.amount).trim() !== "" && (
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() =>
