@@ -218,7 +218,11 @@ export default function AlertCondition() {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => router.push("/(tabs)/(alert-condition-additional)/[id]")}
+        onPress={() =>
+          router.push(
+            "/(tabs)/(alert-condition)/(alert-condition-additional)/[id]"
+          )
+        }
       >
         <Image
           source={require("@/assets/images/alert/condition_alert.png")}
