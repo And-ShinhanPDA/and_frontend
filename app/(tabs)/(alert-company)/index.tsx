@@ -3,6 +3,7 @@ import {
   Animated,
   Image,
   Pressable,
+  ImageSourcePropType,
   StyleSheet,
   Switch,
   Text,
@@ -11,38 +12,75 @@ import {
   View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
-
-import ShinhanLogo from "@/assets/images/companies/logo_12_신한금융그룹.svg";
 import CustomHeader from "@/components/header/header";
 import { router } from "expo-router";
+import { alertService } from "@/services/alert-service";
+import { useAuth } from "@/contexts/AuthContext";
 
-type Company = {
-  id: string;
+import { COMPANIES } from "@/constants/companies";
+type CompanyAlert = {
+  alertId: string;
   name: string;
-  Logo: React.FC<{ width?: number; height?: number }>;
+  logo: ImageSourcePropType;
   alerts: number;
   enabled: boolean;
 };
 
 export default function AlertCompany() {
+  const { accessToken } = useAuth();
   const [search, setSearch] = useState("");
   const [fadeAnimations, setFadeAnimations] = useState<
     Record<string, Animated.Value>
   >({});
   const [deleteWidth, setDeleteWidth] = useState(80);
 
-  const [companies, setCompanies] = useState<Company[]>([
-    { id: "1", name: "신한지주", Logo: ShinhanLogo, alerts: 3, enabled: false },
-    { id: "2", name: "구글", Logo: ShinhanLogo, alerts: 3, enabled: true },
-    { id: "3", name: "삼성전자", Logo: ShinhanLogo, alerts: 3, enabled: true },
-    { id: "4", name: "네이버", Logo: ShinhanLogo, alerts: 3, enabled: true },
-  ]);
+  const [companies, setCompanies] = useState<CompanyAlert[]>([]);
+
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      if (!accessToken) {
+        console.log("accessToken 없음");
+        return;
+      }
+      try {
+        const res = await alertService.getUserAlerts(accessToken);
+        console.log("[알림 응답]:", res);
+        const rawList = Array.isArray(res.data) ? res.data : res.data?.data;
+
+        if (Array.isArray(rawList)) {
+          const formatted = rawList.map((a: any) => {
+            const matchedCompany = COMPANIES.find(
+              (c) => c.code === a.stockCode
+            );
+
+            return {
+              alertId: String(a.alertId ?? a.id),
+              name: matchedCompany?.name ?? a.title ?? "제목 없음",
+              logo: matchedCompany!.logo,
+
+              alerts: a.conditions?.length ?? 0,
+              enabled: a.isActive ?? false,
+            };
+          });
+
+          setCompanies(formatted);
+          console.log(`변환된 알림 개수: ${formatted.length}`);
+        } else {
+          console.warn("알림 리스트 데이터 구조:", res.data);
+        }
+      } catch (err) {
+        console.error("[알림 조회 실패]:");
+      }
+    };
+
+    fetchAlerts();
+  }, [accessToken]);
 
   // 초기 애니메이션 설정
   useEffect(() => {
     const anims: Record<string, Animated.Value> = {};
     companies.forEach((company) => {
-      anims[company.id] = new Animated.Value(1);
+      anims[company.alertId] = new Animated.Value(1);
     });
     setFadeAnimations(anims);
   }, []);
@@ -50,13 +88,13 @@ export default function AlertCompany() {
   // 토글 스위치
   const toggleSwitch = (id: string) => {
     setCompanies((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, enabled: !c.enabled } : c))
+      prev.map((c) => (c.alertId === id ? { ...c, enabled: !c.enabled } : c))
     );
   };
 
   // 삭제 기능
   const deleteCompany = (id: string) => {
-    setCompanies((prev) => prev.filter((c) => c.id !== id));
+    setCompanies((prev) => prev.filter((c) => c.alertId !== id));
   };
 
   // 왼쪽 스와이프 시 fade out
@@ -109,7 +147,7 @@ export default function AlertCompany() {
           c.name.toLowerCase().includes(search.toLowerCase())
         )}
         showsVerticalScrollIndicator={false}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.alertId}
         onRowOpen={handleRowOpen}
         onRowClose={handleRowClose}
         rightOpenValue={-deleteWidth}
@@ -118,7 +156,8 @@ export default function AlertCompany() {
         disableRightSwipe={true}
         closeOnRowPress
         renderItem={({ item, index }) => {
-          const fadeAnim = fadeAnimations[item.id] || new Animated.Value(1);
+          const fadeAnim =
+            fadeAnimations[item.alertId] || new Animated.Value(1);
           const filtered = companies.filter((c) =>
             c.name.toLowerCase().includes(search.toLowerCase())
           );
@@ -129,7 +168,7 @@ export default function AlertCompany() {
               onPress={() =>
                 router.push({
                   pathname: "/(tabs)/(alert-company-detail)/[id]",
-                  params: { id: item.id, name: item.name },
+                  params: { id: item.alertId, name: item.name },
                 })
               }
             >
@@ -139,7 +178,12 @@ export default function AlertCompany() {
                   isLast && { borderBottomWidth: 1, borderColor: "#F5F6F8" },
                 ]}
               >
-                <item.Logo width={44} height={44} />
+                <Image
+                  source={item.logo as ImageSourcePropType}
+                  style={{ width: 44, height: 44 }}
+                  resizeMode="contain"
+                />
+
                 <View style={styles.itemText}>
                   <Text style={styles.name}>{item.name}</Text>
                   <Text style={styles.subText}>
@@ -164,7 +208,7 @@ export default function AlertCompany() {
                     trackColor={{ false: "#ccc", true: "#4CC439" }}
                     thumbColor="#fff"
                     ios_backgroundColor="#E9E9EA"
-                    onValueChange={() => toggleSwitch(item.id)}
+                    onValueChange={() => toggleSwitch(item.alertId)}
                     value={item.enabled}
                   />
                 </Animated.View>
@@ -177,7 +221,7 @@ export default function AlertCompany() {
             <TouchableOpacity
               style={styles.deleteButton}
               onLayout={(e) => setDeleteWidth(e.nativeEvent.layout.width)}
-              onPress={() => deleteCompany(item.id)}
+              onPress={() => deleteCompany(item.alertId)}
             >
               <Text style={styles.deleteText}>삭제</Text>
             </TouchableOpacity>

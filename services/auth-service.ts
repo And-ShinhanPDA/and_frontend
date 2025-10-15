@@ -1,12 +1,12 @@
 import { AuthResponse, SignInPayload, SignUpPayload, User } from "@/types/auth";
 import axios from "axios";
-const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
+const BASE_URL = process.env.EXPO_PUBLIC_USER_URL;
 
 export const authService = {
   // 회원가입
   async signUp(payload: SignUpPayload): Promise<User> {
     const res = await axios.post<AuthResponse<User>>(
-      `${BASE_URL}/user/api/auth/signup`,
+      `${BASE_URL}/api/auth/signup`,
       payload
     );
     return res.data.data;
@@ -25,14 +25,14 @@ export const authService = {
         accessToken: string;
         refreshTokenId: string;
       }>
-    >(`${BASE_URL}/user/api/auth/login`, payload);
+    >(`${BASE_URL}/api/auth/login`, payload);
 
     const user: User = {
       id: res.data.data.userId,
       email: res.data.data.email,
       name: res.data.data.name,
     };
-
+    console.log("gee");
     return {
       user,
       accessToken: res.data.data.accessToken,
@@ -43,7 +43,7 @@ export const authService = {
   // 토큰 만료 시 재발급
   async refresh(accessToken: string, refreshTokenId: string): Promise<string> {
     const res = await axios.post<AuthResponse<{ accessToken: string }>>(
-      `${BASE_URL}/user/api/auth/refresh`,
+      `${BASE_URL}/api/auth/refresh`,
       { refreshTokenId },
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
@@ -53,7 +53,7 @@ export const authService = {
 
   // 로그아웃
   async logout(accessToken: string, refreshTokenId: string): Promise<void> {
-    await axios.delete(`${BASE_URL}/user/api/auth/logout/${refreshTokenId}`, {
+    await axios.delete(`${BASE_URL}/api/auth/logout/${refreshTokenId}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
   },
