@@ -49,7 +49,9 @@ export default function CompanyAlertDetail() {
         rightButtons="preset-and-modify"
         onPresetPress={() => console.log("프리셋으로 추가")}
         onModifyPress={() =>
-          router.push("/(tabs)/(alert-condition-modify)/[id]")
+          router.push(
+            "/(tabs)/(alert-company)/(alert-company-alertModify)/[id]"
+          )
         }
       />
 

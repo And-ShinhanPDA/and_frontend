@@ -13,18 +13,20 @@ import {
 
 type RightButtonType =
   | "mypage"
-  | "preset-small" // 작은 프리셋 버튼 (width: 62)
-  | "preset-large" // 큰 프리셋 버튼 (프리셋으로 추가)
+  | "preset-small"
+  | "preset-large"
   | "modify"
-  | "preset-and-mypage" // 프리셋 + 마이페이지
-  | "preset-and-modify"; // 프리셋으로 추가 + 수정
+  | "preset-and-mypage"
+  | "preset-and-modify";
 
 type CustomHeaderProps = {
   // 왼쪽 영역
   leftContent?: "title" | "custom";
-  title?: string;
+  title?: string | ReactNode;
   customLeft?: ReactNode;
   showBackButton?: boolean;
+  onBackPress?: () => void;
+  centerTitle?: boolean;
 
   // 오른쪽 영역
   rightButtons?: RightButtonType;
@@ -39,6 +41,8 @@ export default function CustomHeader({
   title = "",
   customLeft,
   showBackButton = true,
+  onBackPress,
+  centerTitle = false,
   rightButtons,
   onMyPagePress,
   onPresetPress,
@@ -46,6 +50,14 @@ export default function CustomHeader({
   customRight,
 }: CustomHeaderProps) {
   const router = useRouter();
+
+  const handleBackPress = () => {
+    if (onBackPress) {
+      onBackPress();
+    } else {
+      router.back();
+    }
+  };
 
   const renderRightButtons = () => {
     if (customRight) {
@@ -174,23 +186,58 @@ export default function CustomHeader({
     }
   };
 
+  if (centerTitle) {
+    // 중앙 정렬 레이아웃
+    return (
+      <View style={styles.header}>
+        {/* 왼쪽 영역 */}
+        <View style={styles.leftSide}>
+          {showBackButton && (
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleBackPress}
+            >
+              <Arrow width={22} height={22} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* 중앙 타이틀 */}
+        <View style={styles.centerTitle}>
+          {typeof title === "string" ? (
+            <Text style={styles.centerTitleText} numberOfLines={1}>
+              {title}
+            </Text>
+          ) : (
+            title
+          )}
+        </View>
+
+        {/* 오른쪽 영역 */}
+        <View style={styles.rightSide}>{renderRightButtons()}</View>
+      </View>
+    );
+  }
+
+  // 기존 왼쪽 정렬 레이아웃
   return (
     <View style={styles.header}>
       {/* 왼쪽 영역 */}
       <View style={styles.leftSection}>
         {showBackButton && (
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
             <Arrow width={22} height={22} />
           </TouchableOpacity>
         )}
 
         {leftContent === "title" ? (
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {title}
-          </Text>
+          typeof title === "string" ? (
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              {title}
+            </Text>
+          ) : (
+            title
+          )
         ) : (
           customLeft
         )}
@@ -214,6 +261,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    flex: 1,
   },
   backButton: {
     width: 24,
@@ -232,6 +280,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     marginRight: 4,
+  },
+  // 중앙 정렬용 스타일
+  leftSide: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+  },
+  centerTitle: {
+    flex: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  centerTitleText: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#111",
+    textAlign: "center",
+  },
+  rightSide: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 12,
   },
   presetSmallButton: {
     backgroundColor: "rgba(76, 197, 58, 0.15)",

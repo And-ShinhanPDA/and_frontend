@@ -11,7 +11,13 @@ export default function TabLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "none",
+        animationDuration: 0,
+      }}
+    >
       <Stack.Screen name="index" />
       <Stack.Screen name="(alert-condition)" />
       <Stack.Screen name="(alert-condition-detail)/[id]" />

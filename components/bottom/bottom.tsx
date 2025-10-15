@@ -27,7 +27,7 @@ export function CustomBottomTab({ activeTab }: CustomBottomTabProps) {
     },
     {
       name: "홈" as TabName,
-      path: "/",
+      path: "/app/(tabs)/index",
       icon: require("@/assets/images/bottomNavigation/home.png"),
     },
     {
