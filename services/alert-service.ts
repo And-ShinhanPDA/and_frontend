@@ -278,6 +278,49 @@ export const alertService = {
       throw err;
     }
   },
+  // 현재 활성화 된 기업 알림(홈)
+  async getTriggeredAlerts(accessToken: string, stockCodes?: string[]) {
+    const url = `${BASE_URL}/api/alerts/triggered`;
+    console.log("[GET] 현재 울리고 있는 기업 알림 요청:", url);
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const rawData = res.data?.data || [];
+
+      let filtered = rawData.filter((alert: any) => alert.isActive === true);
+
+      if (stockCodes && stockCodes.length > 0) {
+        filtered = filtered.filter((a: any) =>
+          stockCodes.includes(a.stockCode)
+        );
+      }
+
+      const parsed = filtered.map((a: any) => ({
+        alertId: a.alertId,
+        stockCode: a.stockCode,
+        message: a.message,
+        isActive: a.isActive,
+        conditions: a.conditions,
+        createdAt: a.createdAt,
+        updatedAt: a.updatedAt,
+      }));
+
+      console.log(`[현재 울리고 있는 알림] ${parsed.length}개`);
+      return parsed;
+    } catch (err: any) {
+      console.error(
+        "[현재 울리고 있는 알림 조회 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
+    }
+  },
 
   // 오늘 발생한 알림 조회
   // async getTodayAlerts(accessToken: string) {

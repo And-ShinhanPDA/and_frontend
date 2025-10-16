@@ -142,12 +142,22 @@ export const chartHtml = `
 
       const applyAll=({period,data,smaOn})=>{
         if(!window.LightweightCharts)return;
+        
+        // 시간 형식 설정 (분봉용)
+        const timeScaleOptions = period === '1m' ? {
+          timeVisible: true,
+          secondsVisible: false,
+        } : {
+          timeVisible: false,
+          secondsVisible: false,
+        };
+
         if(!chart){
           chart=LightweightCharts.createChart(document.getElementById('main'),{
             layout:{background:{color:'#ffffff'},textColor:'#333'},
             grid:{vertLines:{color:'#f3f3f3'},horzLines:{color:'#f3f3f3'}},
             crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
-
+            timeScale: timeScaleOptions,
           });
           candle=chart.addCandlestickSeries({
             upColor:COLORS.up, downColor:COLORS.down,
@@ -190,21 +200,44 @@ export const chartHtml = `
 
           syncCharts(chart, [volChart, rsiChart]);
           new ResizeObserver(resizeAll).observe(document.getElementById('wrap'));
+        } else {
+          // 차트가 이미 있을 때 timeScale 옵션 업데이트
+          chart.applyOptions({
+            timeScale: timeScaleOptions,
+          });
         }
 
         candle.setData(data);
-        s5Arr=calcSMA(data,5); s20Arr=calcSMA(data,20); s60Arr=calcSMA(data,60); s120Arr=calcSMA(data,120);
-        s5.setData(s5Arr); s20.setData(s20Arr); s60.setData(s60Arr); s120.setData(s120Arr);
-        const {up,low}=calcBoll(data); upper.setData(up); lower.setData(low);
+        
+        // 일봉일 때만 SMA, Bollinger Band 계산
+        if (period === '1D') {
+          s5Arr=calcSMA(data,5); s20Arr=calcSMA(data,20); s60Arr=calcSMA(data,60); s120Arr=calcSMA(data,120);
+          s5.setData(s5Arr); s20.setData(s20Arr); s60.setData(s60Arr); s120.setData(s120Arr);
+          const {up,low}=calcBoll(data); upper.setData(up); lower.setData(low);
+        } else {
+          // 분봉일 때는 SMA 라인 숨기기
+          s5.setData([]); s20.setData([]); s60.setData([]); s120.setData([]);
+          upper.setData([]); lower.setData([]);
+          s5Arr=[]; s20Arr=[]; s60Arr=[]; s120Arr=[];
+        }
+        
         vol.setData(data.map(d=>({time:d.time,value:d.volume,color:d.close>=d.open?COLORS.up:COLORS.down})));
-        rsi.setData(calcRSI(data));
+        
+        // RSI는 데이터가 충분할 때만 계산 (분봉에도 표시)
+        if (data.length > 14) {
+          rsi.setData(calcRSI(data));
+        } else {
+          rsi.setData([]);
+        }
 
-        // 골/데드크로스 마커
+        // 골/데드크로스 마커 (일봉일 때만)
         markers=[];
-        for(let i=1;i<data.length;i++){
-          const a1=s5Arr[i-1].value,b1=s20Arr[i-1].value,a2=s5Arr[i].value,b2=s20Arr[i].value;
-          if(a1<b1&&a2>b2)markers.push({time:data[i].time,position:'aboveBar',color:'#FFD700',shape:'circle'});
-          if(a1>b1&&a2<b2)markers.push({time:data[i].time,position:'belowBar',color:'#007BFF',shape:'circle'});
+        if (period === '1D' && s5Arr.length > 0 && s20Arr.length > 0) {
+          for(let i=1;i<data.length;i++){
+            const a1=s5Arr[i-1].value,b1=s20Arr[i-1].value,a2=s5Arr[i].value,b2=s20Arr[i].value;
+            if(a1<b1&&a2>b2)markers.push({time:data[i].time,position:'aboveBar',color:'#FFD700',shape:'circle'});
+            if(a1>b1&&a2<b2)markers.push({time:data[i].time,position:'belowBar',color:'#007BFF',shape:'circle'});
+          }
         }
         candle.setMarkers(markers);
 
@@ -221,9 +254,29 @@ export const chartHtml = `
               if (m.color === '#007BFF') return 'SMA5가 SMA20 하향 돌파 (데드크로스)';
               return null;
             };
+            const candleData = data.find(d => d.time === t);
+            
+            // SMA 값은 일봉일 때만 전송
+            const smaData = period === '1D' ? {
+              sma5:smaAt(s5Arr,t),
+              sma10:candleData?.sma10,
+              sma20:smaAt(s20Arr,t),
+              sma30:candleData?.sma30,
+              sma50:candleData?.sma50,
+              sma60:smaAt(s60Arr,t),
+              sma100:candleData?.sma100,
+              sma120:smaAt(s120Arr,t),
+              sma200:candleData?.sma200
+            } : {};
+            
             send({type:'crosshair',payload:{
-              candle:c,
-              sma:{sma5:smaAt(s5Arr,t),sma20:smaAt(s20Arr,t),sma60:smaAt(s60Arr,t),sma120:smaAt(s120Arr,t)},
+              candle:{
+                ...c,
+                volume: candleData?.volume,
+                rsi14: candleData?.rsi14,
+                diffFromPrev: candleData?.diffFromPrev
+              },
+              sma: smaData,
               alert:alertAt(t)
             }});
           });
@@ -235,6 +288,9 @@ export const chartHtml = `
       };
 
       load().then(()=>{
+        // WebView 준비 완료 신호 전송
+        send({type:'webviewReady'});
+        
         const onMsg=(e)=>{try{
           const m=JSON.parse(e.data);
           if(m.type==='setAll')applyAll(m.payload);
