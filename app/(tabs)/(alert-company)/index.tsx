@@ -1,4 +1,6 @@
+import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
+import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 import { router } from "expo-router";
@@ -16,8 +18,6 @@ import {
   View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
-import { CustomBottomTab } from "@/components/bottom/bottom";
-import { COMPANIES } from "@/constants/companies";
 type CompanyAlert = {
   alertId: string;
   name: string;
