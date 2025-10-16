@@ -24,6 +24,7 @@ export default function HomeScreen() {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
       >
         <ActivatedConditionCard />
         <ActivatedCompanyCard />

@@ -1,7 +1,8 @@
 import Arrow from "@/assets/images/arrow.svg";
+import LogoutModal from "@/components/modals/logout";
 import { Typography } from "@/components/ui/Typography";
 import { useRouter } from "expo-router";
-import React, { ReactNode } from "react";
+import React, { ReactNode, useState } from "react";
 import {
   Image,
   Pressable,
@@ -30,9 +31,15 @@ type CustomHeaderProps = {
 
   // 오른쪽 영역
   rightButtons?: RightButtonType;
-  onMyPagePress?: () => void;
+
+  // 콜백들
+  onMyPagePress?: () => void; // ⬅️ 기존: 원하는 동작이 있으면 여기로
   onPresetPress?: () => void;
   onModifyPress?: () => void;
+
+  // 로그아웃 모달용
+  userName?: string;
+  onLogoutConfirm?: () => void; // ⬅️ 확인 버튼 콜백(우선순위 가장 높음)
   customRight?: ReactNode;
 };
 
@@ -48,28 +55,35 @@ export default function CustomHeader({
   onPresetPress,
   onModifyPress,
   customRight,
+  userName = "사용자",
+  onLogoutConfirm,
 }: CustomHeaderProps) {
   const router = useRouter();
+  const [logoutVisible, setLogoutVisible] = useState(false);
 
   const handleBackPress = () => {
-    if (onBackPress) {
-      onBackPress();
-    } else {
-      router.back();
-    }
+    if (onBackPress) onBackPress();
+    else router.back();
+  };
+
+  // 로그아웃 모달 확인 시 실제 동작
+  const handleLogoutConfirm = () => {
+    setLogoutVisible(false);
+    // 우선순위: onLogoutConfirm → onMyPagePress → fallback
+    if (onLogoutConfirm) return onLogoutConfirm();
+    if (onMyPagePress) return onMyPagePress();
+    // 기본 동작(예시): 로그인 화면으로
+    // 필요 시 프로젝트의 logout() 호출 등으로 교체
+    console.log("로그아웃 확인");
   };
 
   const renderRightButtons = () => {
-    if (customRight) {
-      return customRight;
-    }
+    if (customRight) return customRight;
 
     switch (rightButtons) {
       case "mypage":
         return (
-          <Pressable
-            onPress={onMyPagePress || (() => console.log("마이페이지 이동"))}
-          >
+          <Pressable onPress={() => setLogoutVisible(true)}>
             <Image
               source={require("@/assets/images/logOut.png")}
               style={{ width: 24, height: 24, marginRight: 5 }}
@@ -141,9 +155,9 @@ export default function CustomHeader({
                 프리셋
               </Typography>
             </Pressable>
-            <Pressable
-              onPress={onMyPagePress || (() => console.log("마이페이지 이동"))}
-            >
+
+            {/* 마이페이지(로그아웃) 아이콘 → 모달 오픈 */}
+            <Pressable onPress={() => setLogoutVisible(true)}>
               <Image
                 source={require("@/assets/images/logOut.png")}
                 style={{ width: 24, height: 24, marginRight: 5 }}
@@ -186,23 +200,32 @@ export default function CustomHeader({
     }
   };
 
-  if (centerTitle) {
-    // 중앙 정렬 레이아웃
-    return (
-      <View style={styles.header}>
-        {/* 왼쪽 영역 */}
-        <View style={styles.leftSide}>
-          {showBackButton && (
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={handleBackPress}
-            >
-              <Arrow width={22} height={22} />
-            </TouchableOpacity>
-          )}
-        </View>
+  const headerView = (
+    <View style={styles.header}>
+      {/* 왼쪽 영역 */}
+      <View style={centerTitle ? styles.leftSide : styles.leftSection}>
+        {showBackButton && (
+          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+            <Arrow width={22} height={22} />
+          </TouchableOpacity>
+        )}
 
-        {/* 중앙 타이틀 */}
+        {!centerTitle &&
+          (leftContent === "title" ? (
+            typeof title === "string" ? (
+              <Text style={styles.headerTitle} numberOfLines={1}>
+                {title}
+              </Text>
+            ) : (
+              title
+            )
+          ) : (
+            customLeft
+          ))}
+      </View>
+
+      {/* 중앙 타이틀 */}
+      {centerTitle && (
         <View style={styles.centerTitle}>
           {typeof title === "string" ? (
             <Text style={styles.centerTitleText} numberOfLines={1}>
@@ -212,40 +235,27 @@ export default function CustomHeader({
             title
           )}
         </View>
-
-        {/* 오른쪽 영역 */}
-        <View style={styles.rightSide}>{renderRightButtons()}</View>
-      </View>
-    );
-  }
-
-  // 기존 왼쪽 정렬 레이아웃
-  return (
-    <View style={styles.header}>
-      {/* 왼쪽 영역 */}
-      <View style={styles.leftSection}>
-        {showBackButton && (
-          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-            <Arrow width={22} height={22} />
-          </TouchableOpacity>
-        )}
-
-        {leftContent === "title" ? (
-          typeof title === "string" ? (
-            <Text style={styles.headerTitle} numberOfLines={1}>
-              {title}
-            </Text>
-          ) : (
-            title
-          )
-        ) : (
-          customLeft
-        )}
-      </View>
+      )}
 
       {/* 오른쪽 영역 */}
-      <View style={styles.rightSection}>{renderRightButtons()}</View>
+      <View style={centerTitle ? styles.rightSide : styles.rightSection}>
+        {renderRightButtons()}
+      </View>
     </View>
+  );
+
+  return (
+    <>
+      {headerView}
+
+      {/* 로그아웃 모달 */}
+      <LogoutModal
+        visible={logoutVisible}
+        userName={userName}
+        onCancel={() => setLogoutVisible(false)}
+        onConfirm={handleLogoutConfirm}
+      />
+    </>
   );
 }
 
