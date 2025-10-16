@@ -18,9 +18,6 @@ import {
   View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
-import { CustomBottomTab } from "@/components/bottom/bottom";
-import { COMPANIES } from "@/constants/companies";
-
 
 type CompanyAlert = {
   stockCode: string;

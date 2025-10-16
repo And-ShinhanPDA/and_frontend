@@ -3,7 +3,9 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { WebView, WebViewMessageEvent } from "react-native-webview";
 import ChartHeader, { Candle } from "./chart-header";
 import { chartHtml } from "./chart-html";
-type Period = "5m" | "1D" | "1W";
+import { chartService } from "@/services/chart-service";
+
+type Period = "1m" | "1D";
 const fmt = (n?: number) =>
   typeof n === "number" ? Math.round(n).toLocaleString() : "-";
 const ymd = (sec?: number) =>
@@ -15,17 +17,12 @@ const weekday = (sec?: number) =>
 
 const genCandles = (period: Period, count: number, base = 79200): Candle[] => {
   const out: Candle[] = [];
-  const step =
-    period === "5m"
-      ? 60 * 5
-      : period === "1D"
-      ? 60 * 60 * 24
-      : 60 * 60 * 24 * 7;
+  const step = period === "1m" ? 60 : 60 * 60 * 24;
   const now = Math.floor(Date.now() / 1000);
   let price = base;
   for (let i = count - 1; i >= 0; i--) {
     const t = now - i * step;
-    const change = (Math.random() - 0.5) * (period === "5m" ? 200 : 1000);
+    const change = (Math.random() - 0.5) * (period === "1m" ? 200 : 1000);
     const open = price;
     const close = Math.max(100, open + change);
     const high = Math.max(open, close) + Math.random() * 200;
@@ -37,7 +34,15 @@ const genCandles = (period: Period, count: number, base = 79200): Candle[] => {
   return out;
 };
 
-export default function ChartScreen({ companyName }: { companyName: string }) {
+export default function ChartScreen({
+  companyName,
+  stockCode,
+  onPriceUpdate,
+}: {
+  companyName: string;
+  stockCode: string;
+  onPriceUpdate?: (price: any) => void;
+}) {
   const [period, setPeriod] = useState<Period>("1D");
   const [smaOn, setSmaOn] = useState({
     sma5: true,
@@ -48,6 +53,7 @@ export default function ChartScreen({ companyName }: { companyName: string }) {
   const [ohlc, setOhlc] = useState<Candle | null>(null);
   const [smaVals, setSmaVals] = useState<any>({});
   const [headerAlert, setHeaderAlert] = useState<string | null>(null);
+  const [webViewLoaded, setWebViewLoaded] = useState(false);
 
   const data = useMemo(() => genCandles(period, 250, 79200), [period]);
 
@@ -62,7 +68,11 @@ export default function ChartScreen({ companyName }: { companyName: string }) {
     ? (((currPrice ?? 0) - prevClose) / prevClose) * 100
     : 0;
   const isUp = diff >= 0;
-
+  const [candles, setCandles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [lastCandle, setLastCandle] = useState<Candle | null>(null);
+  const [currentPrice, setCurrentPrice] = useState<any>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const SMA_META = {
     sma5: { label: "5", line: "#FF8A80", chipBg: "#FFEBEE", chipOn: "#C62828" }, // 파스텔 레드
     sma20: {
@@ -85,11 +95,149 @@ export default function ChartScreen({ companyName }: { companyName: string }) {
     },
   } as const;
 
+  // 일봉 데이터 fetch
+  const fetchDailyData = async () => {
+    try {
+      const result = await chartService.getDailyCandles(stockCode);
+      setCandles(result);
+
+      // 마지막 캔들 데이터 저장
+      if (result.length > 0) {
+        const lastData = result[result.length - 1];
+        setLastCandle({
+          time: new Date(lastData.time).getTime() / 1000,
+          open: lastData.open,
+          high: lastData.high,
+          low: lastData.low,
+          close: lastData.close,
+          volume: lastData.volume,
+          rsi14: lastData.rsi14,
+          diffFromPrev: lastData.diffFromPrev,
+        });
+      }
+    } catch (err) {
+      console.error("일봉 데이터 불러오기 실패:", err);
+    }
+  };
+
+  // 분봉 데이터 fetch
+  const fetchMinuteData = async () => {
+    try {
+      const result = await chartService.getMinuteCandles(stockCode);
+      setCandles(result);
+
+      // 마지막 캔들 데이터 저장
+      if (result.length > 0) {
+        const lastData = result[result.length - 1];
+        setLastCandle({
+          time: lastData.time,
+          open: lastData.open,
+          high: lastData.high,
+          low: lastData.low,
+          close: lastData.close,
+          volume: lastData.volume,
+          rsi14: lastData.rsi14,
+          diffFromPrev: lastData.diffFromPrev,
+        });
+      }
+    } catch (err) {
+      console.error("분봉 데이터 불러오기 실패:", err);
+    }
+  };
+
+  // 현재가 fetch
+  const fetchCurrentPrice = async () => {
+    try {
+      const result = await chartService.getCurrentPrice(stockCode);
+      setCurrentPrice(result);
+
+      // 부모 컴포넌트로 현재가 전달
+      if (onPriceUpdate) {
+        onPriceUpdate(result);
+      }
+
+      console.log("현재가 업데이트:", {
+        price: result.currentPrice,
+        diff: result.diff,
+        diffRate: result.diffRate,
+      });
+    } catch (err) {
+      console.error("현재가 조회 실패:", err);
+    }
+  };
+
+  // 초기 데이터 로드 및 period 변경 시
   useEffect(() => {
-    webRef.current?.postMessage(
-      JSON.stringify({ type: "setAll", payload: { period, data, smaOn } })
-    );
-  }, [period, data, smaOn]);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        if (period === "1D") {
+          await fetchDailyData();
+        } else if (period === "1m") {
+          await fetchMinuteData();
+        }
+        await fetchCurrentPrice();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [stockCode, period]);
+
+  // 1분마다 자동 갱신 (주석처리 - 업데이트 안되는 문제로)
+  // useEffect(() => {
+  //   console.log("자동 갱신 설정:", period, stockCode);
+
+  //   // 기존 interval 정리
+  //   if (intervalRef.current) {
+  //     console.log("기존 interval 정리");
+  //     clearInterval(intervalRef.current);
+  //     intervalRef.current = null;
+  //   }
+
+  //   if (period === "1m") {
+  //     console.log("분봉 자동 갱신 시작 (1분마다)");
+  //     // 분봉일 때 1분마다 갱신
+  //     intervalRef.current = setInterval(() => {
+  //       const now = new Date().toLocaleTimeString();
+  //       console.log(`[${now}] 분봉 자동 갱신 실행...`);
+  //       fetchMinuteData();
+  //       fetchCurrentPrice();
+  //     }, 60000); // 60초 = 1분
+  //   } else if (period === "1D") {
+  //     console.log("일봉 현재가 갱신 시작 (1분마다)");
+  //     // 일봉일 때 1분마다 현재가만 갱신
+  //     intervalRef.current = setInterval(() => {
+  //       const now = new Date().toLocaleTimeString();
+  //       console.log(`[${now}] 현재가 자동 갱신 실행...`);
+  //       fetchCurrentPrice();
+  //     }, 60000); // 60초 = 1분
+  //   }
+
+  //   // cleanup
+  //   return () => {
+  //     if (intervalRef.current) {
+  //       console.log("🧹 cleanup: interval 정리");
+  //       clearInterval(intervalRef.current);
+  //       intervalRef.current = null;
+  //     }
+  //   };
+  // }, [period, stockCode]);
+
+  useEffect(() => {
+    if (webViewLoaded && webRef.current && candles.length > 0) {
+      console.log("📊 WebView에 일봉 데이터 전송:", candles.length, "개");
+      setTimeout(() => {
+        webRef.current?.postMessage(
+          JSON.stringify({
+            type: "setAll",
+            payload: { period, data: candles, smaOn },
+          })
+        );
+      }, 200);
+    }
+  }, [webViewLoaded, candles, period, smaOn]);
 
   const onMessage = (e: WebViewMessageEvent) => {
     try {
@@ -98,6 +246,9 @@ export default function ChartScreen({ companyName }: { companyName: string }) {
         setOhlc(msg.payload.candle ?? null);
         setSmaVals(msg.payload.sma ?? {});
         setHeaderAlert(msg.payload.alert ?? null);
+      } else if (msg.type === "webviewReady") {
+        // WebView가 준비되었다는 신호를 받으면 데이터 전송
+        setWebViewLoaded(true);
       }
     } catch {}
   };
@@ -106,91 +257,112 @@ export default function ChartScreen({ companyName }: { companyName: string }) {
     setSmaOn((prev) => ({ ...prev, [k]: !prev[k] }));
   const changePeriod = (p: Period) => setPeriod(p);
 
-  const header = ohlc ?? data[data.length - 1];
+  const header = ohlc ?? lastCandle;
+
+  // 현재가 정보 반영
+  const displayPrice = currentPrice?.currentPrice ?? currPrice;
+  const displayDiff = currentPrice?.diff ?? diff;
+  const displayDiffPct = currentPrice?.diffRate ?? diffPct;
+  const displayIsUp = (currentPrice?.diff ?? diff) >= 0;
 
   return (
     <View style={styles.container}>
-      <ChartHeader
-        companyName={companyName}
-        ohlc={ohlc ?? data[data.length - 1]}
-        smaVals={smaVals}
-        headerAlert={headerAlert}
-        fmt={fmt}
-        ymd={ymd}
-        weekday={weekday}
-        diff={diff}
-        diffPct={diffPct}
-        isUp={isUp}
-        currPrice={currPrice}
-      />
-
-      {/* SMA 토글 버튼 */}
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.toggleBar}
-      >
-        {(
-          [
-            { key: "sma5", meta: SMA_META.sma5 },
-            { key: "sma20", meta: SMA_META.sma20 },
-            { key: "sma60", meta: SMA_META.sma60 },
-            { key: "sma120", meta: SMA_META.sma120 },
-          ] as const
-        ).map(({ key, meta }) => {
-          const on = smaOn[key as keyof typeof smaOn];
-          return (
-            <Pressable
-              key={key}
-              onPress={() => toggle(key as keyof typeof smaOn)}
-              style={[
-                styles.chip,
-                { borderColor: on ? meta.line : "#D9D9D9" },
-                on ? { backgroundColor: meta.chipBg } : styles.chipOff,
-              ]}
-            >
-              <Text
-                style={{ color: on ? meta.chipOn : "#666", fontWeight: "700" }}
-              >
-                {meta.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-
-      {/* WebView */}
-      <View style={{ flex: 1, minHeight: 350 }}>
-        <WebView
-          ref={webRef}
-          originWhitelist={["*"]}
-          source={{ html: chartHtml }}
-          javaScriptEnabled
-          domStorageEnabled
-          onMessage={onMessage}
-          style={{ flex: 1, backgroundColor: "#ffffff" }}
+      {/* 고정 헤더 */}
+      <View style={styles.fixedHeader}>
+        <ChartHeader
+          companyName={companyName}
+          ohlc={ohlc ?? lastCandle}
+          smaVals={smaVals}
+          headerAlert={headerAlert}
+          fmt={fmt}
+          ymd={ymd}
+          weekday={weekday}
+          diff={displayDiff}
+          diffPct={displayDiffPct}
+          isUp={displayIsUp}
+          currPrice={displayPrice}
         />
+
+        {/* SMA 토글 버튼 (일봉일 때만 표시) */}
+        {period === "1D" && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.toggleBar}
+          >
+            {(
+              [
+                { key: "sma5", meta: SMA_META.sma5 },
+                { key: "sma20", meta: SMA_META.sma20 },
+                { key: "sma60", meta: SMA_META.sma60 },
+                { key: "sma120", meta: SMA_META.sma120 },
+              ] as const
+            ).map(({ key, meta }) => {
+              const on = smaOn[key as keyof typeof smaOn];
+              return (
+                <Pressable
+                  key={key}
+                  onPress={() => toggle(key as keyof typeof smaOn)}
+                  style={[
+                    styles.chip,
+                    { borderColor: on ? meta.line : "#D9D9D9" },
+                    on ? { backgroundColor: meta.chipBg } : styles.chipOff,
+                  ]}
+                >
+                  <Text
+                    style={{
+                      color: on ? meta.chipOn : "#666",
+                      fontWeight: "700",
+                    }}
+                  >
+                    {meta.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        )}
       </View>
 
-      {/* 기간 버튼 */}
-      <View style={styles.periodBar}>
-        {(["5m", "1D", "1W"] as Period[]).map((p) => (
-          <Pressable
-            key={p}
-            onPress={() => changePeriod(p)}
-            style={[styles.periodBtn, period === p && styles.periodBtnActive]}
-          >
-            <Text
-              style={[
-                styles.periodText,
-                period === p && styles.periodTextActive,
-              ]}
+      {/* 스크롤 가능한 차트 영역 */}
+      <View style={styles.scrollableContent}>
+        <View style={styles.chartContainer}>
+          <WebView
+            ref={webRef}
+            originWhitelist={["*"]}
+            source={{ html: chartHtml }}
+            javaScriptEnabled
+            domStorageEnabled
+            onMessage={onMessage}
+            onLoadEnd={() => {
+              // WebView 로드 완료 시 초기 데이터 전송
+              setTimeout(() => {
+                setWebViewLoaded(true);
+              }, 200);
+            }}
+            style={{ flex: 1, backgroundColor: "#ffffff" }}
+          />
+        </View>
+
+        {/* 기간 버튼 */}
+        <View style={styles.periodBar}>
+          {(["1m", "1D"] as Period[]).map((p) => (
+            <Pressable
+              key={p}
+              onPress={() => changePeriod(p)}
+              style={[styles.periodBtn, period === p && styles.periodBtnActive]}
             >
-              {p === "5m" ? "5분" : p === "1D" ? "일" : "주"}
-            </Text>
-          </Pressable>
-        ))}
+              <Text
+                style={[
+                  styles.periodText,
+                  period === p && styles.periodTextActive,
+                ]}
+              >
+                {p === "1m" ? "1분" : "일"}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
     </View>
   );
@@ -198,6 +370,17 @@ export default function ChartScreen({ companyName }: { companyName: string }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#ffffff" },
+
+  fixedHeader: {
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+    zIndex: 10,
+  },
+
+  scrollableContent: {
+    flex: 1,
+  },
 
   priceHeader: {
     backgroundColor: "#ffffff",
@@ -235,18 +418,20 @@ const styles = StyleSheet.create({
   alertText: { color: "#2C2C2C", fontSize: 12 },
 
   toggleBar: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 12,
     backgroundColor: "#fff",
   },
   chip: {
     borderWidth: 1,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    minWidth: 44,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    minWidth: 50,
+    maxWidth: 60,
     alignItems: "center",
+    justifyContent: "center",
   },
   chipOn: { backgroundColor: "#E8F9E5" },
   chipOff: { backgroundColor: "#FFFFFF" },
@@ -254,13 +439,26 @@ const styles = StyleSheet.create({
   periodBar: {
     flexDirection: "row",
     justifyContent: "space-evenly",
-    paddingVertical: 8,
+    paddingVertical: 12,
+    paddingBottom: 20,
     borderTopWidth: 1,
     borderTopColor: "#F0F0F0",
     backgroundColor: "#fff",
   },
-  periodBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10 },
+  periodBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
+    minWidth: 60,
+    alignItems: "center",
+  },
   periodBtnActive: { backgroundColor: "#E8F9E5" },
   periodText: { color: "#666", fontWeight: "700" },
   periodTextActive: { color: "#2C8A2C" },
+
+  chartContainer: {
+    flex: 1,
+    maxHeight: 400,
+    minHeight: 300,
+  },
 });
