@@ -1,49 +1,109 @@
-// components/modals/LogoutAlert.tsx  (기존 LogoutModal 대체)
-import { useEffect, useRef } from "react";
-import { Alert } from "react-native";
+import React from "react";
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-interface LogoutAlertProps {
+interface LogoutModalProps {
   visible: boolean;
   userName?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-export default function LogoutAlert({
+export default function LogoutModal({
   visible,
   userName = "사용자",
   onConfirm,
   onCancel,
-}: LogoutAlertProps) {
-  const wasVisible = useRef(false);
+}: LogoutModalProps) {
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onCancel}
+    >
+      <View style={styles.overlay}>
+        <View style={styles.modalContainer}>
+          <Text style={styles.message}>
+            <Text style={styles.userName}>{userName}</Text> 님{"\n"}
+            로그아웃 하시겠습니까?
+          </Text>
 
-  useEffect(() => {
-    // visible 이 false -> true 로 바뀌는 순간에만 Alert 표시
-    if (!wasVisible.current && visible) {
-      wasVisible.current = true;
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={onCancel}
+            >
+              <Text style={styles.cancelText}>아니오</Text>
+            </TouchableOpacity>
 
-      Alert.alert(
-        `${userName} 님`,
-        `\n로그아웃 하시겠습니까?`,
-        [
-          { text: "아니오", style: "cancel", onPress: onCancel },
-          { text: "예", onPress: onConfirm },
-        ],
-        {
-          // 안드로이드에서 바깥 터치/Back 키로 닫힘 허용
-          cancelable: true,
-          // onDismiss: 버튼을 누르지 않고 닫혔을 때 콜백
-          onDismiss: onCancel,
-        }
-      );
-    }
-
-    // Alert가 뜬 후 부모가 visible=false로 내려주면 다음 표시를 위해 리셋
-    if (wasVisible.current && !visible) {
-      wasVisible.current = false;
-    }
-  }, [visible, userName, onCancel, onConfirm]);
-
-  // UI 렌더링 필요 없음 (Alert는 네이티브)
-  return null;
+            <TouchableOpacity
+              style={[styles.button, styles.confirmButton]}
+              onPress={onConfirm}
+            >
+              <Text style={styles.confirmText}>예</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
 }
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: "80%",
+    maxWidth: 320,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+  },
+  message: {
+    fontSize: 16,
+    color: "#333",
+    textAlign: "center",
+    lineHeight: 24,
+    marginBottom: 24,
+    fontFamily: "Pretendard",
+  },
+  userName: {
+    fontWeight: "600",
+    color: "#111",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    gap: 12,
+    width: "100%",
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#F5F5F5",
+  },
+  confirmButton: {
+    backgroundColor: "#4CC53A",
+  },
+  cancelText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#666",
+    fontFamily: "Pretendard",
+  },
+  confirmText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#fff",
+    fontFamily: "Pretendard",
+  },
+});
