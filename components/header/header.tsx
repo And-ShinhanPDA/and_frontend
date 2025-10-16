@@ -71,8 +71,8 @@ export default function CustomHeader({
             onPress={onMyPagePress || (() => console.log("마이페이지 이동"))}
           >
             <Image
-              source={require("@/assets/images/mypage.png")}
-              style={{ width: 28, height: 28 }}
+              source={require("@/assets/images/logOut.png")}
+              style={{ width: 24, height: 24, marginRight: 5 }}
               resizeMode="contain"
             />
           </Pressable>
@@ -145,8 +145,8 @@ export default function CustomHeader({
               onPress={onMyPagePress || (() => console.log("마이페이지 이동"))}
             >
               <Image
-                source={require("@/assets/images/mypage.png")}
-                style={{ width: 28, height: 28 }}
+                source={require("@/assets/images/logOut.png")}
+                style={{ width: 24, height: 24, marginRight: 5 }}
                 resizeMode="contain"
               />
             </Pressable>

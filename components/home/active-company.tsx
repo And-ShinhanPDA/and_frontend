@@ -1,18 +1,20 @@
 import { saveActivatedCompanies } from "@/services/widgetShare";
-import React, { useEffect } from "react";
-import { StyleSheet, Text, View } from "react-native";
-
-import Shinhan from "../../assets/images/companies/logo_12_신한금융그룹.svg";
-import Samsung from "../../assets/images/companies/logo_1_삼성전자.svg";
-import Hynix from "../../assets/images/companies/logo_2_하이닉스.svg";
-import Naver from "../../assets/images/companies/logo_7_네이버.svg";
+import React, { useEffect, useRef } from "react";
+import {
+  Animated,
+  Image,
+  ImageSourcePropType,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 type CompanyAlert = {
   id: number;
   name: string;
   price: string;
   count: number;
-  logo: any;
+  logo: ImageSourcePropType;
 };
 
 const sampleCompanies: CompanyAlert[] = [
@@ -21,111 +23,163 @@ const sampleCompanies: CompanyAlert[] = [
     name: "신한 지주",
     price: "70,800",
     count: 1,
-    logo: Shinhan,
+    logo: require("../../assets/images/companies/logo_12_신한금융그룹.png"),
   },
   {
     id: 2,
     name: "삼성전자",
     price: "86,000",
     count: 1,
-    logo: Samsung,
+    logo: require("../../assets/images/companies/logo_1_삼성전자.png"),
   },
   {
     id: 3,
     name: "NAVER",
     price: "254,000",
     count: 1,
-    logo: Naver,
+    logo: require("../../assets/images/companies/logo_7_네이버.png"),
   },
   {
     id: 4,
     name: "SK하이닉스",
     price: "395,500",
     count: 1,
-    logo: Hynix,
+    logo: require("../../assets/images/companies/logo_2_하이닉스.png"),
   },
 ];
+
+// 깜빡이는 점 컴포넌트
+const BlinkingDot = () => {
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.2,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [opacity]);
+
+  return <Animated.View style={[styles.blinkingDot, { opacity }]} />;
+};
 
 export default function ActivatedCompanyCard({
   data = sampleCompanies,
 }: {
   data?: CompanyAlert[];
 }) {
-  // ✅ 위젯으로 기업 데이터 전달
   useEffect(() => {
     saveActivatedCompanies(data);
   }, [data]);
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>활성화 된 기업 알림</Text>
+    <View>
+      <View style={styles.titleContainer}>
+        <Text style={styles.cardTitle}>활성화 된 기업 알림</Text>
+        <BlinkingDot />
+      </View>
 
-      {data.map((item) => {
-        const Logo = item.logo;
-        return (
-          <View key={item.id} style={styles.row}>
-            <View style={styles.left}>
-              <View style={styles.dot} />
-              <Logo width={24} height={24} />
-              <View style={{ marginLeft: 8 }}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.price}>{item.price}</Text>
+      <View style={styles.card}>
+        {data.map((item, index) => {
+          const isLast = index === data.length - 1;
+
+          return (
+            <View key={item.id} style={[styles.row, isLast && styles.rowLast]}>
+              <View style={styles.left}>
+                <Image
+                  source={item.logo}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
+                <View style={{ marginLeft: 8 }}>
+                  <Text style={styles.name}>{item.name}</Text>
+                  <Text style={styles.price}>{item.price}</Text>
+                </View>
               </View>
+
+              <Text style={styles.count}>{item.count}개</Text>
             </View>
-            <Text style={styles.count}>{item.count}개</Text>
-          </View>
-        );
-      })}
+          );
+        })}
+      </View>
     </View>
   );
 }
 
+const LOGO_SIZE = 35;
+
 const styles = StyleSheet.create({
+  titleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    marginLeft: 5,
+  },
   card: {
     backgroundColor: "#fff",
     borderRadius: 16,
-    padding: 16,
-    // shadowColor: "#000",
-    // shadowOpacity: 0.08,
-    // shadowRadius: 6,
+    padding: 20,
+    paddingBottom: 12,
     elevation: 3,
     marginBottom: 24,
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: "600",
-    marginBottom: 12,
     color: "#111",
+    fontFamily: "Pretendard",
+    marginRight: 8,
+  },
+  blinkingDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#EF4444",
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 14,
+    marginBottom: 18,
+  },
+  rowLast: {
+    marginBottom: 12,
   },
   left: {
     flexDirection: "row",
     alignItems: "center",
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#4CC439",
+  logo: {
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
     marginRight: 8,
+    borderRadius: 9,
   },
   name: {
     fontSize: 14,
     color: "#111",
-    fontWeight: "500",
+    fontFamily: "Pretendard",
+    marginBottom: 4,
   },
   price: {
     fontSize: 13,
     color: "#666",
+    fontFamily: "Pretendard",
   },
   count: {
     fontSize: 14,
     color: "#333",
-    fontWeight: "500",
+    fontFamily: "Pretendard",
   },
 });
