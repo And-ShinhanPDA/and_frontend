@@ -18,12 +18,13 @@ export default function HomeScreen() {
         leftContent="custom"
         showBackButton={false}
         customLeft={<PriceAlertToast />}
-        rightButtons="preset-and-mypage"
+        rightButtons="mypage"
         onPresetPress={() => setIsPresetOpen(true)}
       />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
       >
         <ActivatedConditionCard />
         <ActivatedCompanyCard />
@@ -56,7 +57,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
     paddingTop: 24,
     paddingBottom: 10,
   },

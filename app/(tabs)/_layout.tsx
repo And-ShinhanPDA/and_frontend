@@ -16,6 +16,7 @@ export default function TabLayout() {
         headerShown: false,
         animation: "none",
         animationDuration: 0,
+        gestureEnabled: false,
       }}
     >
       <Stack.Screen name="index" />
