@@ -3,8 +3,8 @@ import CustomHeader from "@/components/header/header";
 import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
-import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Animated,
   Image,
@@ -18,13 +18,13 @@ import {
   View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
+
 type CompanyAlert = {
-  alertId: string;
+  stockCode: string;
   name: string;
-  logo: ImageSourcePropType;
-  // 나중에 알림 갯수랑 알림 활성화 여부 반영된 후 반영하기
-  alerts?: number;
-  enabled?: boolean;
+  logo?: ImageSourcePropType;
+  alertCount: number;
+  isToggle: boolean;
 };
 
 export default function AlertCompany() {
@@ -36,92 +36,113 @@ export default function AlertCompany() {
   const [deleteWidth, setDeleteWidth] = useState(80);
   const [companies, setCompanies] = useState<CompanyAlert[]>([]);
 
-  // 기업 리스트 조회
-  useEffect(() => {
-    const fetchAlertedCompanies = async () => {
-      if (!accessToken) {
-        console.log("accessToken 없음");
-        return;
+  /* 기업 리스트 조회 */
+  const fetchAlertedCompanies = async () => {
+    if (!accessToken) {
+      console.log("accessToken 없음");
+      return;
+    }
+    try {
+      const res = await alertService.getAlertedCompanies(accessToken);
+      console.log("[알림 기업 응답]:", res);
+
+      const rawList = Array.isArray(res) ? res : [];
+
+      if (Array.isArray(rawList)) {
+        const formatted: CompanyAlert[] = rawList.map((c: any) => {
+          const matchedCompany = COMPANIES.find((comp) => comp.code === c.id);
+
+          return {
+            stockCode: c.id,
+            name: c.name,
+            logo: matchedCompany?.logo,
+            alertCount: c.alertCount ?? 0,
+            isToggle: c.isToggle ?? false,
+          };
+        });
+
+        setCompanies(formatted);
+        console.log(`변환된 기업 수: ${formatted.length}`);
       }
-      try {
-        const res = await alertService.getAlertedCompanies(accessToken);
-        console.log("[알림 기업 응답]:", res);
-        const rawList = Array.isArray(res.data) ? res.data : res.data?.data;
+    } catch (err) {
+      console.error("[알림 조회 실패]:", err);
+    }
+  };
 
-        if (Array.isArray(rawList)) {
-          const formatted = rawList.map((c: any) => {
-            const matchedCompany = COMPANIES.find(
-              (comp) => comp.code === c.stockCode
-            );
+  useFocusEffect(
+    useCallback(() => {
+      fetchAlertedCompanies();
+    }, [accessToken])
+  );
 
-            return {
-              alertId: c.stockCode,
-              name: c.name,
-              logo: matchedCompany!.logo,
-              // 추후에 알림 갯수랑 알림 활성화 여부 반영된 후 반영하기
-              alerts: c.alertCount ?? 0,
-              enabled: c.isActive ?? true, // 일단 기본 true (나중에 실제값반영필요함)
-            };
-          });
-
-          setCompanies(formatted);
-          console.log(`변환된 알림 개수: ${formatted.length}`);
-        }
-      } catch (err) {
-        console.error("[알림 조회 실패]:");
-      }
-    };
-
-    fetchAlertedCompanies();
-  }, [accessToken]);
-
-  // 초기 애니메이션 설정
+  /* 초기 애니메이션 설정 */
   useEffect(() => {
     const anims: Record<string, Animated.Value> = {};
     companies.forEach((company) => {
-      anims[company.alertId] = new Animated.Value(1);
+      anims[company.stockCode] = new Animated.Value(1);
     });
     setFadeAnimations(anims);
   }, [companies]);
 
-  // 토글 스위치
-  const toggleSwitch = async (id: string) => {
+  /* 토글 스위치 */
+  const toggleSwitch = async (stockCode: string) => {
     if (!accessToken) return;
-    const target = companies.find((c) => c.alertId === id);
+    const target = companies.find((c) => c.stockCode === stockCode);
     if (!target) return;
-    const newActive = !target.enabled;
+
+    const newActive = !target.isToggle;
     try {
-      await alertService.toggleCompanyAlerts(accessToken, id, newActive);
       setCompanies((prev) =>
-        prev.map((c) => (c.alertId === id ? { ...c, enabled: newActive } : c))
+        prev.map((c) =>
+          c.stockCode === stockCode
+            ? {
+                ...c,
+                isToggle: newActive,
+              }
+            : c
+        )
       );
+
+      await alertService.toggleCompanyAlerts(accessToken, stockCode, newActive);
+
+      // API 호출 후 최신 데이터 다시 조회
+      await fetchAlertedCompanies();
+
       console.log(
         `${target.name} 기업 알림 ${newActive ? "활성화" : "비활성화"} 완료`
       );
     } catch (err) {
       console.error("[기업 알림 토글 실패]:", err);
+
+      setCompanies((prev) =>
+        prev.map((c) =>
+          c.stockCode === stockCode
+            ? {
+                ...c,
+                isToggle: !newActive,
+              }
+            : c
+        )
+      );
     }
-    // API 수정되면 토글 기능 반영하기
-    // setCompanies((prev) =>
-    //   prev.map((c) => (c.alertId === id ? { ...c, enabled: !c.enabled } : c))
-    // );
   };
 
-  // 삭제 기능
-  const deleteCompany = async (id: string) => {
+  /* 삭제 기능 */
+  const deleteCompany = async (stockCode: string) => {
     if (!accessToken) return;
-    const target = companies.find((c) => c.alertId === id);
+    const target = companies.find((c) => c.stockCode === stockCode);
     if (!target) return;
+
     try {
-      await alertService.deleteCompanyAlerts(accessToken, id);
-      setCompanies((prev) => prev.filter((c) => c.alertId !== id));
+      await alertService.deleteCompanyAlerts(accessToken, stockCode);
+      setCompanies((prev) => prev.filter((c) => c.stockCode !== stockCode));
       console.log(`${target.name} 기업 알림 삭제 완료`);
     } catch (err) {
       console.error("[기업 알림 삭제 실패]:", err);
     }
   };
 
-  // 왼쪽 스와이프 시 fade out
+  /* 왼쪽 스와이프 시 fade out */
   const handleRowOpen = (rowKey: string) => {
     const fadeAnim = fadeAnimations[rowKey];
     if (!fadeAnim) return;
@@ -132,7 +153,7 @@ export default function AlertCompany() {
     }).start();
   };
 
-  // 다시 닫을 시 fade in
+  /* 닫을 시 fade in */
   const handleRowClose = (rowKey: string) => {
     const fadeAnim = fadeAnimations[rowKey];
     if (!fadeAnim) return;
@@ -165,23 +186,20 @@ export default function AlertCompany() {
         />
       </View>
 
-      {/* 리스트 */}
       <SwipeListView
         data={companies.filter((c) =>
           c.name.toLowerCase().includes(search.toLowerCase())
         )}
         showsVerticalScrollIndicator={false}
-        keyExtractor={(item) => item.alertId}
+        keyExtractor={(item) => item.stockCode}
         onRowOpen={handleRowOpen}
         onRowClose={handleRowClose}
         rightOpenValue={-deleteWidth}
-        leftOpenValue={0}
-        disableLeftSwipe={false}
-        disableRightSwipe={true}
+        disableRightSwipe
         closeOnRowPress
         renderItem={({ item, index }) => {
           const fadeAnim =
-            fadeAnimations[item.alertId] || new Animated.Value(1);
+            fadeAnimations[item.stockCode] || new Animated.Value(1);
           const filtered = companies.filter((c) =>
             c.name.toLowerCase().includes(search.toLowerCase())
           );
@@ -193,7 +211,7 @@ export default function AlertCompany() {
                 router.push({
                   pathname:
                     "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
-                  params: { id: item.alertId, name: item.name },
+                  params: { id: item.stockCode, name: item.name },
                 })
               }
             >
@@ -204,16 +222,15 @@ export default function AlertCompany() {
                 ]}
               >
                 <Image
-                  source={item.logo as ImageSourcePropType}
+                  source={item.logo}
                   style={{ width: 44, height: 44 }}
                   resizeMode="contain"
                 />
 
                 <View style={styles.itemText}>
                   <Text style={styles.name}>{item.name}</Text>
-                  {/* 나중에 현재 설정 알림 갯수 API 수정 후 반영하기 */}
                   <Text style={styles.subText}>
-                    현재 설정 알림: {item.alerts ?? 0}개
+                    현재 설정 알림: {item.isToggle ? item.alertCount ?? 0 : 0}개
                   </Text>
                 </View>
 
@@ -234,8 +251,8 @@ export default function AlertCompany() {
                     trackColor={{ false: "#ccc", true: "#4CC439" }}
                     thumbColor="#fff"
                     ios_backgroundColor="#E9E9EA"
-                    onValueChange={() => toggleSwitch(item.alertId)}
-                    value={item.enabled}
+                    onValueChange={() => toggleSwitch(item.stockCode)}
+                    value={item.isToggle}
                   />
                 </Animated.View>
               </View>
@@ -247,7 +264,7 @@ export default function AlertCompany() {
             <TouchableOpacity
               style={styles.deleteButton}
               onLayout={(e) => setDeleteWidth(e.nativeEvent.layout.width)}
-              onPress={() => deleteCompany(item.alertId)}
+              onPress={() => deleteCompany(item.stockCode)}
             >
               <Text style={styles.deleteText}>삭제</Text>
             </TouchableOpacity>

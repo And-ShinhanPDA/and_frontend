@@ -65,7 +65,7 @@ export const alertService = {
   // 사용자가 알림 등록한 기업 리스트 조회
   async getAlertedCompanies(accessToken: string) {
     const url = `${BASE_URL}/api/alerts/companies?alerted=true`;
-    console.log("[GET] 알림 설정된 기업 리스트:", url);
+    console.log("[GET] 알림 설정된 기업 리스트 요청:", url);
 
     try {
       const res = await axios.get(url, {
@@ -75,25 +75,37 @@ export const alertService = {
         },
       });
 
-      console.log("[응답 데이터]:", res.data);
+      const { code, message, data } = res.data ?? {};
 
-      if (Array.isArray(res.data?.data)) {
-        console.log(`조회된 기업 수: ${res.data.data.length}`);
-        res.data.data.forEach((company: any, i: number) => {
-          console.log(
-            `#${i + 1} ${company.name} (${company.stockCode}) - 알림 ${
-              company.alertCount
-            }개`
-          );
-        });
+      console.log(`[응답 코드]: ${code}`);
+      console.log(`[응답 메시지]: ${message}`);
+
+      if (!Array.isArray(data)) {
+        console.warn("[경고] data 필드가 배열이 아닙니다:", data);
+        return [];
       }
 
-      return res.data;
+      console.log(`조회된 기업 수: ${data.length}`);
+
+      const formatted = data.map((company: any, i: number) => ({
+        id: company.stockCode,
+        name: company.name,
+        alertCount: company.alertCount ?? 0,
+        isToggle: !!company.isToggle,
+      }));
+
+      formatted.forEach((c, i) => {
+        console.log(
+          `#${i + 1} ${c.name} (${c.id}) — 알림 ${c.alertCount}개, ${
+            c.isToggle ? "활성화" : "비활성화"
+          }`
+        );
+      });
+
+      return formatted;
     } catch (err: any) {
-      console.error(
-        "[알림 기업 리스트 조회 실패]:",
-        err.response?.data ?? err.message
-      );
+      const errorMsg = err.response?.data ?? err.message;
+      console.error("[알림 기업 리스트 조회 실패]:", errorMsg);
       throw err;
     }
   },
@@ -261,6 +273,97 @@ export const alertService = {
     } catch (err: any) {
       console.error(
         "[특정 알림 삭제 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
+    }
+  },
+  // 현재 활성화 된 기업 알림 (홈)
+  async getTriggeredAlerts(accessToken: string, stockCodes?: string[]) {
+    const url = `${BASE_URL}/api/alerts/triggered`;
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const rawData = res.data?.data || [];
+
+      let filtered = rawData.filter((alert: any) => alert.isActive === true);
+
+      if (stockCodes && stockCodes.length > 0) {
+        filtered = filtered.filter((a: any) =>
+          stockCodes.includes(a.stockCode)
+        );
+      }
+
+      const parsed = filtered.map((a: any) => ({
+        alertId: a.alertId,
+        stockCode: a.stockCode,
+        message: a.message,
+        isActive: a.isActive,
+        conditions: a.conditions,
+        createdAt: a.createdAt,
+        updatedAt: a.updatedAt,
+      }));
+
+      console.log(`[현재 울리고 있는 알림] ${parsed.length}개`);
+      return parsed;
+    } catch (err: any) {
+      console.error(
+        "[현재 울리고 있는 알림 조회 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
+    }
+  },
+  // 울린 알림들 조회(전체 / 기간)
+  async getAlertHistory(
+    accessToken: string,
+    stockCode?: string,
+    start?: string,
+    end?: string
+  ) {
+    // stockCode가 없으면 전체 기록 조회
+    const baseUrl = stockCode
+      ? `${BASE_URL}/api/alerts/history/${stockCode}`
+      : `${BASE_URL}/api/alerts/history`;
+
+    const url = new URL(baseUrl);
+
+    // 기간이 있으면 쿼리 파라미터 추가
+    if (start && end) {
+      url.searchParams.append("start", start);
+      url.searchParams.append("end", end);
+    }
+
+    try {
+      const res = await axios.get(url.toString(), {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const rawData = res.data?.data || [];
+      console.log("rawData:", rawData);
+      const parsed = rawData.map((item: any) => ({
+        id: item.id,
+        alertId: item.alertId,
+        isSent: item.isSent,
+        indicatorSnapshot: item.indicatorSnapshot,
+        createdAt: item.createdAt,
+        stockCode: item.stockCode,
+      }));
+
+      console.log(`[울린 알림 조회 성공] ${parsed.length}건`);
+      return parsed;
+    } catch (err: any) {
+      console.error(
+        "[울린 알림 조회 실패]:",
         err.response?.data ?? err.message
       );
       throw err;

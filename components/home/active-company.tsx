@@ -1,5 +1,5 @@
 import { saveActivatedCompanies } from "@/services/widgetShare";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Image,
@@ -8,7 +8,9 @@ import {
   Text,
   View,
 } from "react-native";
-
+import { COMPANIES } from "@/constants/companies";
+import { alertService } from "@/services/alert-service";
+import { useAuth } from "@/contexts/AuthContext";
 type CompanyAlert = {
   id: number;
   name: string;
@@ -16,37 +18,6 @@ type CompanyAlert = {
   count: number;
   logo: ImageSourcePropType;
 };
-
-const sampleCompanies: CompanyAlert[] = [
-  {
-    id: 1,
-    name: "신한 지주",
-    price: "70,800",
-    count: 1,
-    logo: require("../../assets/images/companies/logo_12_신한금융그룹.png"),
-  },
-  {
-    id: 2,
-    name: "삼성전자",
-    price: "86,000",
-    count: 1,
-    logo: require("../../assets/images/companies/logo_1_삼성전자.png"),
-  },
-  {
-    id: 3,
-    name: "NAVER",
-    price: "254,000",
-    count: 1,
-    logo: require("../../assets/images/companies/logo_7_네이버.png"),
-  },
-  {
-    id: 4,
-    name: "SK하이닉스",
-    price: "395,500",
-    count: 1,
-    logo: require("../../assets/images/companies/logo_2_하이닉스.png"),
-  },
-];
 
 // 깜빡이는 점 컴포넌트
 const BlinkingDot = () => {
@@ -74,15 +45,51 @@ const BlinkingDot = () => {
   return <Animated.View style={[styles.blinkingDot, { opacity }]} />;
 };
 
-export default function ActivatedCompanyCard({
-  data = sampleCompanies,
-}: {
-  data?: CompanyAlert[];
-}) {
-  useEffect(() => {
-    saveActivatedCompanies(data);
-  }, [data]);
+export default function ActivatedCompanyCard() {
+  const [companies, setCompanies] = useState<CompanyAlert[]>([]);
+  const { accessToken } = useAuth();
 
+  // 실제 API로부터 데이터 불러오기
+  const fetchTriggeredAlerts = async () => {
+    if (!accessToken) {
+      return;
+    }
+
+    try {
+      const res = await alertService.getTriggeredAlerts(accessToken);
+
+      // 기업별 알림 개수 카운트
+      const grouped: Record<string, number> = {};
+      res.forEach((a: any) => {
+        grouped[a.stockCode] = (grouped[a.stockCode] || 0) + 1;
+      });
+
+      const formatted: CompanyAlert[] = Object.entries(grouped).map(
+        ([stockCode, count]) => {
+          const matched = COMPANIES.find((c) => c.code === stockCode);
+          return {
+            id: Number(stockCode),
+            name: matched?.name || stockCode,
+            price: "-", // 나중에 실제 현재값으로 교체필요
+            count: count as number,
+            logo:
+              matched?.logo ||
+              require("../../assets/images/companies/logo_1_삼성전자.png"),
+          };
+        }
+      );
+
+      setCompanies(formatted);
+      saveActivatedCompanies(formatted); // 위젯 공유용 저장
+      console.log("[홈] 활성화된 기업:", formatted.length);
+    } catch (err) {
+      console.error("활성화된 기업 조회 실패:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTriggeredAlerts();
+  }, []);
   return (
     <View>
       <View style={styles.titleContainer}>
@@ -91,27 +98,34 @@ export default function ActivatedCompanyCard({
       </View>
 
       <View style={styles.card}>
-        {data.map((item, index) => {
-          const isLast = index === data.length - 1;
-
-          return (
-            <View key={item.id} style={[styles.row, isLast && styles.rowLast]}>
-              <View style={styles.left}>
-                <Image
-                  source={item.logo}
-                  style={styles.logo}
-                  resizeMode="contain"
-                />
-                <View style={{ marginLeft: 8 }}>
-                  <Text style={styles.name}>{item.name}</Text>
-                  <Text style={styles.price}>{item.price}</Text>
+        {companies.length === 0 ? (
+          <Text style={{ color: "#666" }}>
+            현재 활성화된 기업 알림이 없습니다.
+          </Text>
+        ) : (
+          companies.map((item, index) => {
+            const isLast = index === companies.length - 1;
+            return (
+              <View
+                key={item.id}
+                style={[styles.row, isLast && styles.rowLast]}
+              >
+                <View style={styles.left}>
+                  <Image
+                    source={item.logo}
+                    style={styles.logo}
+                    resizeMode="contain"
+                  />
+                  <View style={{ marginLeft: 8 }}>
+                    <Text style={styles.name}>{item.name}</Text>
+                    <Text style={styles.price}>{item.price}</Text>
+                  </View>
                 </View>
+                <Text style={styles.count}>{item.count}개</Text>
               </View>
-
-              <Text style={styles.count}>{item.count}개</Text>
-            </View>
-          );
-        })}
+            );
+          })
+        )}
       </View>
     </View>
   );

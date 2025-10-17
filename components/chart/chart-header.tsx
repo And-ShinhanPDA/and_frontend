@@ -8,13 +8,20 @@ export type Candle = {
   low: number;
   close: number;
   volume: number;
+  rsi14?: number;
+  diffFromPrev?: number;
 };
 
 export type SmaVals = {
   sma5?: number;
+  sma10?: number;
   sma20?: number;
+  sma30?: number;
+  sma50?: number;
   sma60?: number;
+  sma100?: number;
   sma120?: number;
+  sma200?: number;
 };
 
 type ChartHeaderProps = {
@@ -82,19 +89,103 @@ export default function ChartHeader({
           </Text>
         </View>
         <View style={[styles.row, { marginTop: 6 }]}>
-          <Text style={{ color: "#9EE493", fontWeight: "600" }}>
-            5 {fmt(smaVals.sma5)}
+          <Text style={styles.kv}>
+            거래량 <Text style={styles.bold}>{fmt(ohlc?.volume)}</Text>
           </Text>
-          <Text style={{ color: "#6ACE5A", fontWeight: "600" }}>
-            20 {fmt(smaVals.sma20)}
-          </Text>
-          <Text style={{ color: "#4CC439", fontWeight: "600" }}>
-            60 {fmt(smaVals.sma60)}
-          </Text>
-          <Text style={{ color: "#A9A9A9", fontWeight: "600" }}>
-            120 {fmt(smaVals.sma120)}
+          <Text style={styles.kv}>
+            RSI{" "}
+            <Text style={styles.bold}>
+              {ohlc?.rsi14 ? ohlc.rsi14.toFixed(2) : "-"}
+            </Text>
           </Text>
         </View>
+        <View style={[styles.row, { marginTop: 2 }]}>
+          <Text style={styles.kv}>
+            전일대비{" "}
+            <Text
+              style={[
+                styles.bold,
+                {
+                  color: (ohlc?.diffFromPrev ?? 0) >= 0 ? "#4CC439" : "#EF5350",
+                },
+              ]}
+            >
+              {ohlc?.diffFromPrev
+                ? `${ohlc.diffFromPrev >= 0 ? "+" : ""}${fmt(
+                    ohlc.diffFromPrev
+                  )}`
+                : "-"}
+            </Text>
+          </Text>
+        </View>
+        {/* SMA 값 표시 (값이 있을 때만) */}
+        {(smaVals.sma5 || smaVals.sma10 || smaVals.sma20 || smaVals.sma30) && (
+          <View style={[styles.row, { marginTop: 8 }]}>
+            {smaVals.sma5 && (
+              <Text
+                style={{ color: "#FF8A80", fontWeight: "600", fontSize: 12 }}
+              >
+                5 {fmt(smaVals.sma5)}
+              </Text>
+            )}
+            {smaVals.sma10 && (
+              <Text
+                style={{ color: "#FFA726", fontWeight: "600", fontSize: 12 }}
+              >
+                10 {fmt(smaVals.sma10)}
+              </Text>
+            )}
+            {smaVals.sma20 && (
+              <Text
+                style={{ color: "#90CAF9", fontWeight: "600", fontSize: 12 }}
+              >
+                20 {fmt(smaVals.sma20)}
+              </Text>
+            )}
+            {smaVals.sma30 && (
+              <Text
+                style={{ color: "#66BB6A", fontWeight: "600", fontSize: 12 }}
+              >
+                30 {fmt(smaVals.sma30)}
+              </Text>
+            )}
+          </View>
+        )}
+        {(smaVals.sma50 ||
+          smaVals.sma60 ||
+          smaVals.sma100 ||
+          smaVals.sma200) && (
+          <View style={[styles.row, { marginTop: 2 }]}>
+            {smaVals.sma50 && (
+              <Text
+                style={{ color: "#AB47BC", fontWeight: "600", fontSize: 12 }}
+              >
+                50 {fmt(smaVals.sma50)}
+              </Text>
+            )}
+            {smaVals.sma60 && (
+              <Text
+                style={{ color: "#B39DDB", fontWeight: "600", fontSize: 12 }}
+              >
+                60 {fmt(smaVals.sma60)}
+              </Text>
+            )}
+            {smaVals.sma100 && (
+              <Text
+                style={{ color: "#FFCC80", fontWeight: "600", fontSize: 12 }}
+              >
+                100 {fmt(smaVals.sma100)}
+              </Text>
+            )}
+            {smaVals.sma200 && (
+              <Text
+                style={{ color: "#A1887F", fontWeight: "600", fontSize: 12 }}
+              >
+                200 {fmt(smaVals.sma200)}
+              </Text>
+            )}
+          </View>
+        )}
         {headerAlert && (
           <View style={styles.alertBox}>
             <Text style={styles.alertTitle}>🔔 알림</Text>
