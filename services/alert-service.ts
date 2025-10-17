@@ -278,10 +278,9 @@ export const alertService = {
       throw err;
     }
   },
-  // 현재 활성화 된 기업 알림(홈)
+  // 현재 활성화 된 기업 알림 (홈)
   async getTriggeredAlerts(accessToken: string, stockCodes?: string[]) {
     const url = `${BASE_URL}/api/alerts/triggered`;
-    console.log("[GET] 현재 울리고 있는 기업 알림 요청:", url);
 
     try {
       const res = await axios.get(url, {
@@ -316,6 +315,55 @@ export const alertService = {
     } catch (err: any) {
       console.error(
         "[현재 울리고 있는 알림 조회 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
+    }
+  },
+  // 울린 알림들 조회(전체 / 기간)
+  async getAlertHistory(
+    accessToken: string,
+    stockCode?: string,
+    start?: string,
+    end?: string
+  ) {
+    // stockCode가 없으면 전체 기록 조회
+    const baseUrl = stockCode
+      ? `${BASE_URL}/api/alerts/history/${stockCode}`
+      : `${BASE_URL}/api/alerts/history`;
+
+    const url = new URL(baseUrl);
+
+    // 기간이 있으면 쿼리 파라미터 추가
+    if (start && end) {
+      url.searchParams.append("start", start);
+      url.searchParams.append("end", end);
+    }
+
+    try {
+      const res = await axios.get(url.toString(), {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const rawData = res.data?.data || [];
+      console.log("rawData:", rawData);
+      const parsed = rawData.map((item: any) => ({
+        id: item.id,
+        alertId: item.alertId,
+        isSent: item.isSent,
+        indicatorSnapshot: item.indicatorSnapshot,
+        createdAt: item.createdAt,
+        stockCode: item.stockCode,
+      }));
+
+      console.log(`[울린 알림 조회 성공] ${parsed.length}건`);
+      return parsed;
+    } catch (err: any) {
+      console.error(
+        "[울린 알림 조회 실패]:",
         err.response?.data ?? err.message
       );
       throw err;
