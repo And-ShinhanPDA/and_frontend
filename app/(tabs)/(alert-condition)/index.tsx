@@ -16,6 +16,7 @@ import {
 import { SwipeListView } from "react-native-swipe-list-view";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
+import { useAuth } from "@/contexts/AuthContext";
 
 // TODO: types로 빼기
 type AlertCondition = {
@@ -32,6 +33,18 @@ export default function AlertCondition() {
   >({});
   const [deleteWidth, setDeleteWidth] = useState(80);
   const [isPresetOpen, setIsPresetOpen] = useState(false);
+  const { signOut, user } = useAuth();
+
+  // 로그아웃 핸들러
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      console.log("로그아웃 성공");
+      router.replace("/(auth)/login");
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+    }
+  };
 
   const [alerts, setAlerts] = useState<AlertCondition[]>([
     {
@@ -120,7 +133,8 @@ export default function AlertCondition() {
         showBackButton={false}
         rightButtons="preset-and-mypage"
         onPresetPress={() => setIsPresetOpen(true)}
-        // onMyPagePress={() => router.push("/mypage")}
+        userName={user?.name || "사용자"}
+        onLogoutConfirm={handleLogout}
       />
 
       <View style={styles.searchWrapper}>

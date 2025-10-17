@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { COMPANIES } from "@/constants/companies";
 
 type AlertHistoryItem = {
@@ -40,8 +40,20 @@ export default function AlertHistory() {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
-  const { accessToken } = useAuth();
+  const { accessToken, signOut, user } = useAuth();
   const [alertsByDate, setAlertsByDate] = useState<any[]>([]);
+  const router = useRouter();
+
+  // 로그아웃 핸들러
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      console.log("로그아웃 성공");
+      router.replace("/(auth)/login");
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -172,6 +184,8 @@ export default function AlertHistory() {
         title="알림 히스토리"
         showBackButton={false}
         rightButtons="mypage"
+        userName={user?.name || "사용자"}
+        onLogoutConfirm={handleLogout}
       />
 
       <SafeAreaView style={styles.safeArea} edges={["left", "right", "bottom"]}>

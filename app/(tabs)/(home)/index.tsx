@@ -6,11 +6,27 @@ import PriceAlertToast from "@/components/home/price-toast-alert";
 import TreemapChart from "@/components/home/treemap-chart";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
 export default function HomeScreen() {
   const [isPresetOpen, setIsPresetOpen] = useState(false);
+  const { signOut, user } = useAuth();
+  const router = useRouter();
+
+  // 로그아웃 핸들러
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      console.log("로그아웃 성공");
+      // 로그인 화면으로 이동
+      router.replace("/(auth)/login");
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+    }
+  };
 
   return (
     <View style={styles.wrapper}>
@@ -20,6 +36,8 @@ export default function HomeScreen() {
         customLeft={<PriceAlertToast />}
         rightButtons="mypage"
         onPresetPress={() => setIsPresetOpen(true)}
+        userName={user?.name || "사용자"}
+        onLogoutConfirm={handleLogout}
       />
       <ScrollView
         style={styles.scrollView}

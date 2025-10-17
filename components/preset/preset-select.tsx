@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
+  Animated,
   Dimensions,
   ScrollView,
   StyleSheet,
@@ -60,6 +61,10 @@ const CARD_WIDTH = (width - 40 * 2 - 14) / 2;
 export default function PresetSelect({ onClose }: { onClose: () => void }) {
   const [category, setCategory] = useState<"내" | "유명인" | "추천">("유명인");
   const [presets, setPresets] = useState<Preset[]>([]);
+  const [editMode, setEditMode] = useState<{ [key: number]: boolean }>({});
+  const shakeAnimations = useRef<{ [key: number]: Animated.Value }>({});
+  const fadeAnimations = useRef<{ [key: number]: Animated.Value }>({});
+  const scaleAnimations = useRef<{ [key: number]: Animated.Value }>({});
   const { accessToken } = useAuth();
 
   useEffect(() => {
@@ -119,6 +124,110 @@ export default function PresetSelect({ onClose }: { onClose: () => void }) {
       };
     });
 
+  const startShake = (id: number) => {
+    if (!shakeAnimations.current[id]) {
+      shakeAnimations.current[id] = new Animated.Value(0);
+    }
+    if (!fadeAnimations.current[id]) {
+      fadeAnimations.current[id] = new Animated.Value(0);
+    }
+    if (!scaleAnimations.current[id]) {
+      scaleAnimations.current[id] = new Animated.Value(1);
+    }
+
+    const singleShake = Animated.sequence([
+      Animated.timing(shakeAnimations.current[id], {
+        toValue: 0.5,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimations.current[id], {
+        toValue: -0.5,
+        duration: 160,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimations.current[id], {
+        toValue: 0.5,
+        duration: 160,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimations.current[id], {
+        toValue: 0,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+    ]);
+
+    Animated.loop(singleShake, { iterations: 4 }).start();
+
+    Animated.parallel([
+      Animated.timing(fadeAnimations.current[id], {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnimations.current[id], {
+        toValue: 1.02,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  // 흔들림 애니메이션 정지
+  const stopShake = (id: number) => {
+    if (shakeAnimations.current[id]) {
+      shakeAnimations.current[id].stopAnimation();
+      shakeAnimations.current[id].setValue(0);
+    }
+    if (fadeAnimations.current[id]) {
+      Animated.timing(fadeAnimations.current[id], {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }).start();
+    }
+    if (scaleAnimations.current[id]) {
+      Animated.spring(scaleAnimations.current[id], {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
+    }
+  };
+
+  // 긴 눌림 핸들러 (내 프리셋만)
+  const handleLongPress = (id: number) => {
+    if (category === "내") {
+      setEditMode((prev) => ({ ...prev, [id]: true }));
+      startShake(id);
+    }
+  };
+
+  // 편집 모드 해제
+  const handleCancelEdit = (id: number) => {
+    setEditMode((prev) => ({ ...prev, [id]: false }));
+    stopShake(id);
+  };
+
+  // 프리셋 삭제
+  const handleDelete = (id: number) => {
+    console.log("프리셋 삭제:", id);
+    // TODO: 삭제 로직
+    handleCancelEdit(id);
+  };
+
+  // 일반 클릭 핸들러 (나중에 조건 등록 기능 추가)
+  const handlePress = (id: number) => {
+    // 편집 모드가 아닐 때만 동작
+    if (!editMode[id]) {
+      console.log("프리셋 선택:", id);
+      // TODO: 조건 등록 로직
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.tabContainer}>
@@ -142,19 +251,74 @@ export default function PresetSelect({ onClose }: { onClose: () => void }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.grid}>
-          {currentList.map((p) => (
-            <TouchableOpacity key={p.id} style={styles.card}>
-              <View style={styles.imageContainer}>
-                <p.image width={70} height={70} />
-              </View>
+          {currentList.map((p) => {
+            // 애니메이션 값 초기화
+            if (!shakeAnimations.current[p.id]) {
+              shakeAnimations.current[p.id] = new Animated.Value(0);
+            }
+            if (!fadeAnimations.current[p.id]) {
+              fadeAnimations.current[p.id] = new Animated.Value(0);
+            }
+            if (!scaleAnimations.current[p.id]) {
+              scaleAnimations.current[p.id] = new Animated.Value(1);
+            }
 
-              <View style={styles.textCenter}>
-                <Text style={styles.name}>{p.name}</Text>
-              </View>
+            const rotation = shakeAnimations.current[p.id].interpolate({
+              inputRange: [-1, 1],
+              outputRange: ["-1.5deg", "1.5deg"],
+            });
 
-              <Text style={styles.desc}>{p.desc}</Text>
-            </TouchableOpacity>
-          ))}
+            return (
+              <Animated.View
+                key={p.id}
+                style={[
+                  styles.card,
+                  {
+                    transform: [
+                      { rotate: rotation },
+                      { scale: scaleAnimations.current[p.id] },
+                    ],
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  style={styles.cardTouchable}
+                  onPress={() => handlePress(p.id)}
+                  onLongPress={() => handleLongPress(p.id)}
+                  delayLongPress={400}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.imageContainer}>
+                    <p.image width={70} height={70} />
+                  </View>
+
+                  <View style={styles.textCenter}>
+                    <Text style={styles.name}>{p.name}</Text>
+                  </View>
+
+                  <Text style={styles.desc}>{p.desc}</Text>
+                </TouchableOpacity>
+
+                {/* 삭제 버튼 - 편집 모드일 때만 표시 */}
+                {editMode[p.id] && (
+                  <Animated.View
+                    style={[
+                      styles.deleteButton,
+                      { opacity: fadeAnimations.current[p.id] },
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={styles.deleteButtonInner}
+                      onPress={() => handleDelete(p.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.deleteButtonText}>✕</Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                )}
+              </Animated.View>
+            );
+          })}
         </View>
       </ScrollView>
 
@@ -204,16 +368,19 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     backgroundColor: "#fff",
     borderRadius: 20,
-    paddingVertical: 18,
-    paddingHorizontal: 10,
     marginBottom: 16,
     shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 3 },
     shadowRadius: 6,
     elevation: 3,
-    alignItems: "center",
     position: "relative",
+  },
+  cardTouchable: {
+    paddingVertical: 18,
+    paddingHorizontal: 10,
+    alignItems: "center",
+    width: "100%",
   },
   imageContainer: {
     position: "absolute",
@@ -249,4 +416,29 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   closeText: { color: "#fff", fontWeight: "600", fontSize: 15 },
+  deleteButton: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    zIndex: 10,
+  },
+  deleteButtonInner: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#4CC439",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  deleteButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "700",
+    lineHeight: 18,
+  },
 });

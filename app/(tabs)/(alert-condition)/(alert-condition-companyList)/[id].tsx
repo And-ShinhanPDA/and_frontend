@@ -15,6 +15,7 @@ import {
 import ShinhanLogo from "@/assets/images/companies/logo_12_신한금융그룹.svg";
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Company = {
   id: string;
@@ -28,6 +29,7 @@ type Company = {
 
 export default function AlertConditionDetail() {
   const { name } = useLocalSearchParams<{ name: string }>();
+  const { signOut, user } = useAuth();
   const headerScrollRef = useRef<ScrollView | null>(null);
   const dataScrollRef = useRef<ScrollView | null>(null);
   const leftFlatListRef = useRef<FlatList | null>(null);
@@ -35,6 +37,17 @@ export default function AlertConditionDetail() {
   const scrollingRef = useRef(false);
   const verticalScrollingRef = useRef(false);
   const [isHorizontalScrolling, setIsHorizontalScrolling] = useState(false);
+
+  // 로그아웃 핸들러
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      console.log("로그아웃 성공");
+      router.replace("/(auth)/login");
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+    }
+  };
 
   const syncScroll = (offsetX: number) => {
     if (scrollingRef.current) return;
@@ -204,6 +217,8 @@ export default function AlertConditionDetail() {
         showBackButton={true}
         rightButtons="preset-and-mypage"
         onPresetPress={() => console.log("프리셋으로 추가")}
+        userName={user?.name || "사용자"}
+        onLogoutConfirm={handleLogout}
       />
 
       <View style={styles.conditionBox}>

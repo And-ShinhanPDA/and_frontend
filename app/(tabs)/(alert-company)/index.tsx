@@ -28,13 +28,24 @@ type CompanyAlert = {
 };
 
 export default function AlertCompany() {
-  const { accessToken } = useAuth();
+  const { accessToken, signOut, user } = useAuth();
   const [search, setSearch] = useState("");
   const [fadeAnimations, setFadeAnimations] = useState<
     Record<string, Animated.Value>
   >({});
   const [deleteWidth, setDeleteWidth] = useState(80);
   const [companies, setCompanies] = useState<CompanyAlert[]>([]);
+
+  // 로그아웃 핸들러
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      console.log("로그아웃 성공");
+      router.replace("/(auth)/login");
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+    }
+  };
 
   /* 기업 리스트 조회 */
   const fetchAlertedCompanies = async () => {
@@ -171,6 +182,8 @@ export default function AlertCompany() {
         showBackButton={false}
         rightButtons="preset-and-mypage"
         onPresetPress={() => console.log("프리셋 열기")}
+        userName={user?.name || "사용자"}
+        onLogoutConfirm={handleLogout}
       />
 
       <View style={styles.searchWrapper}>
