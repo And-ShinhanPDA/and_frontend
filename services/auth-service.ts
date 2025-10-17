@@ -1,6 +1,8 @@
 import { AuthResponse, SignInPayload, SignUpPayload, User } from "@/types/auth";
 import axios from "axios";
-const BASE_URL = process.env.EXPO_PUBLIC_USER_URL;
+
+// 🚨 iOS ATS 우회: HTTP 사용 (ATS 예외로 허용)
+const BASE_URL = 'http://43-203-153-18.nip.io/alert';
 
 export const authService = {
   // 회원가입
@@ -17,27 +19,60 @@ export const authService = {
     accessToken: string;
     refreshTokenId: string;
   }> {
-    const res = await axios.post<
-      AuthResponse<{
-        userId: number;
-        email: string;
-        name: string;
-        accessToken: string;
-        refreshTokenId: string;
-      }>
-    >(`${BASE_URL}/api/auth/login`, payload);
+    const url = `${BASE_URL}/api/auth/login`;
+    console.log("🔗 [auth-service] 요청 URL:", url);
+    console.log("📧 [auth-service] Email:", payload.email);
 
-    const user: User = {
-      id: res.data.data.userId,
-      email: res.data.data.email,
-      name: res.data.data.name,
-    };
-    console.log("gee");
-    return {
-      user,
-      accessToken: res.data.data.accessToken,
-      refreshTokenId: res.data.data.refreshTokenId,
-    };
+    try {
+      const res = await axios.post<
+        AuthResponse<{
+          userId: number;
+          email: string;
+          name: string;
+          accessToken: string;
+          refreshTokenId: string;
+        }>
+      >(url, payload, {
+        timeout: 15000,
+        validateStatus: (status) => status >= 200 && status < 500, // 400-499도 받기
+      });
+
+      console.log("📨 [auth-service] 응답 Status:", res.status);
+      console.log("📨 [auth-service] 응답 Data:", JSON.stringify(res.data, null, 2));
+
+      // 2xx가 아니면 에러로 처리
+      if (res.status < 200 || res.status >= 300) {
+        console.error("❌ [auth-service] HTTP 에러:", {
+          status: res.status,
+          statusText: res.statusText,
+          data: res.data,
+        });
+        throw new Error(res.data?.message || `HTTP ${res.status}: ${res.statusText}`);
+      }
+
+      const user: User = {
+        id: res.data.data.userId,
+        email: res.data.data.email,
+        name: res.data.data.name,
+      };
+      
+      console.log("✅ [auth-service] 로그인 성공!");
+      return {
+        user,
+        accessToken: res.data.data.accessToken,
+        refreshTokenId: res.data.data.refreshTokenId,
+      };
+    } catch (err: any) {
+      console.error("💥 [auth-service] 네트워크 에러:", {
+        message: err.message,
+        code: err.code,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        url: err.config?.url,
+      });
+      throw err;
+    }
   },
 
   // 토큰 만료 시 재발급
