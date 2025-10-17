@@ -2,7 +2,7 @@ import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   FlatList,
   Image,
@@ -14,92 +14,148 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
+import { useFocusEffect } from "expo-router";
+import { COMPANIES } from "@/constants/companies";
+
+type AlertHistoryItem = {
+  id: number;
+  alertId: string;
+  isSent: boolean;
+  indicatorSnapshot: string;
+  createdAt: string;
+  stockCode?: string;
+};
+
+type AlertItem = {
+  company: string;
+  time: string;
+  title: string;
+  desc: string;
+};
 
 export default function AlertHistory() {
   const [showPicker, setShowPicker] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const { accessToken } = useAuth();
+  const [alertsByDate, setAlertsByDate] = useState<any[]>([]);
 
-  // TODO: companies랑 alertsByDate 나중에 바꿔야함
-  const companies = [
-    {
-      id: "shinhan",
-      name: "신한지주",
-      logo: require("@/assets/images/companies/logo_12_신한금융그룹.png"),
-    },
-    {
-      id: "kia",
-      name: "기아",
-      logo: require("@/assets/images/companies/logo_11_기아.png"),
-    },
-    {
-      id: "doosan",
-      name: "두산",
-      logo: require("@/assets/images/companies/logo_10_두산.png"),
-    },
-    {
-      id: "kakao",
-      name: "카카오",
-      logo: require("@/assets/images/companies/logo_13_카카오.png"),
-    },
-  ];
+  useFocusEffect(
+    useCallback(() => {
+      const fetchAlertHistory = async () => {
+        if (!accessToken) return;
 
-  const alertsByDate = [
-    {
-      date: "2025.09.16(화)",
-      items: [
-        {
-          company: "shinhan",
-          time: "11:43",
-          title: "알림1",
-          desc: "사용 지표: 50일 이동평균선(SMA), 200일 이동평균선(SMA), 거래량",
-        },
-        {
-          company: "kia",
-          time: "11:45",
-          title: "알림2",
-          desc: "사용 지표: 50일 이동평균선(SMA)",
-        },
-        {
-          company: "kakao",
-          time: "12:45",
-          title: "알림3",
-          desc: "사용 지표: 50일 이동평균선(SMA)",
-        },
-      ],
-    },
-    {
-      date: "2025.09.15(월)",
-      items: [
-        {
-          company: "doosan",
-          time: "10:15",
-          title: "알림1",
-          desc: "사용 지표: 50일 이동평균선(SMA)",
-        },
-        {
-          company: "kia",
-          time: "12:45",
-          title: "알림2",
-          desc: "사용 지표: 50일 이동평균선(SMA)",
-        },
-      ],
-    },
-  ];
+        try {
+          const formattedStart = startDate
+            ? startDate.toISOString().split("T")[0]
+            : undefined;
+          const formattedEnd = endDate
+            ? endDate.toISOString().split("T")[0]
+            : undefined;
 
+          // 선택된 기업이 있으면 해당 기업 코드 사용, 없으면 undefined로 전체 조회
+          const companyData = selectedCompany
+            ? COMPANIES.find((c) => c.id === selectedCompany)
+            : null;
+
+          const result: AlertHistoryItem[] = await alertService.getAlertHistory(
+            accessToken,
+            companyData?.code,
+            formattedStart,
+            formattedEnd
+          );
+
+          // ✅ 날짜별 그룹화
+          const grouped: Record<string, any[]> = {};
+          result.forEach((item) => {
+            const date = item.createdAt.split("T")[0];
+            if (!grouped[date]) grouped[date] = [];
+
+            // stockCode를 기업 ID로 매핑
+            let companyId = "unknown";
+            if (selectedCompany) {
+              // 특정 기업이 선택된 경우
+              companyId = selectedCompany;
+            } else if (item.stockCode) {
+              // 전체 조회에서 stockCode로 기업 찾기
+              const foundCompany = COMPANIES.find(
+                (c) => c.code === item.stockCode
+              );
+              companyId = foundCompany?.id || item.stockCode;
+            }
+
+            grouped[date].push({
+              company: companyId,
+              time: item.createdAt.split("T")[1].slice(0, 5),
+              title: `알림 ${item.id}`,
+              desc: item.indicatorSnapshot || "조건 충족",
+            });
+          });
+
+          const groupedArray = Object.entries(grouped).map(([date, items]) => ({
+            date: date.replace(/-/g, ".") + "(알림)",
+            items,
+          }));
+
+          setAlertsByDate(groupedArray);
+
+          const logMessage = selectedCompany
+            ? `[${companyData?.name}] 알림 ${result.length}건 로드 완료`
+            : `전체 알림 ${result.length}건 로드 완료`;
+          console.log(logMessage);
+        } catch (err) {
+          console.error("알림 이력 조회 실패:", err);
+        }
+      };
+
+      fetchAlertHistory();
+    }, [selectedCompany, startDate, endDate, accessToken])
+  );
+
+  // 날짜 & 기업 필터링
   const filteredAlerts = useMemo(() => {
     return alertsByDate
       .filter((group) => {
         const dateWithoutDay = group.date.split("(")[0].replace(/\./g, "-");
         const groupDate = new Date(dateWithoutDay);
-        if (startDate && groupDate < startDate) return false;
-        if (endDate && groupDate > endDate) return false;
+
+        // 날짜 범위 필터링
+        if (startDate) {
+          const startDateOnly = new Date(
+            startDate.getFullYear(),
+            startDate.getMonth(),
+            startDate.getDate()
+          );
+          const groupDateOnly = new Date(
+            groupDate.getFullYear(),
+            groupDate.getMonth(),
+            groupDate.getDate()
+          );
+          if (groupDateOnly < startDateOnly) return false;
+        }
+
+        if (endDate) {
+          const endDateOnly = new Date(
+            endDate.getFullYear(),
+            endDate.getMonth(),
+            endDate.getDate()
+          );
+          const groupDateOnly = new Date(
+            groupDate.getFullYear(),
+            groupDate.getMonth(),
+            groupDate.getDate()
+          );
+          if (groupDateOnly > endDateOnly) return false;
+        }
+
         return true;
       })
       .map((group) => ({
         ...group,
-        items: group.items.filter((item) => {
+        items: group.items.filter((item: AlertItem) => {
           if (selectedCompany && item.company !== selectedCompany) return false;
           return true;
         }),
@@ -118,15 +174,16 @@ export default function AlertHistory() {
         rightButtons="mypage"
       />
 
-      <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
-        <View style={styles.innerContainer}>
+      <SafeAreaView style={styles.safeArea} edges={["left", "right", "bottom"]}>
+        {/* 고정된 상단 영역 */}
+        <View style={styles.fixedTopSection}>
           {/* 기업 리스트 */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.companyScroll}
           >
-            {companies.map(({ id, logo }) => (
+            {COMPANIES.map(({ id, logo }) => (
               <TouchableOpacity
                 key={id}
                 onPress={() =>
@@ -139,7 +196,11 @@ export default function AlertHistory() {
               >
                 <Image
                   source={logo}
-                  style={{ width: 70, height: 70, borderRadius: 50 }}
+                  style={{
+                    width: selectedCompany === id ? 70 : 72,
+                    height: selectedCompany === id ? 70 : 72,
+                    borderRadius: selectedCompany === id ? 35 : 36,
+                  }}
                   resizeMode="contain"
                 />
               </TouchableOpacity>
@@ -156,12 +217,14 @@ export default function AlertHistory() {
               {formatDate(startDate)} ~ {formatDate(endDate)}
             </Text>
           </TouchableOpacity>
+        </View>
 
-          {/* 알림 리스트 */}
+        {/* 스크롤 가능한 히스토리 영역 */}
+        <View style={styles.historyContainer}>
           <FlatList
             data={filteredAlerts}
             keyExtractor={(item) => item.date}
-            contentContainerStyle={{ paddingBottom: 80, flexGrow: 1 }}
+            contentContainerStyle={{ paddingBottom: 120, flexGrow: 1 }}
             showsVerticalScrollIndicator={false}
             removeClippedSubviews={false}
             renderItem={({ item }) => (
@@ -173,9 +236,9 @@ export default function AlertHistory() {
                 </View>
 
                 {/* 타임라인 알림 */}
-                {item.items.map((alert, index) => {
+                {item.items.map((alert: AlertItem, index: number) => {
                   const companyName =
-                    companies.find((c) => c.id === alert.company)?.name ??
+                    COMPANIES.find((c) => c.id === alert.company)?.name ??
                     alert.company;
                   return (
                     <View key={index} style={styles.timelineRow}>
@@ -210,54 +273,54 @@ export default function AlertHistory() {
               <Text style={styles.noAlert}>기록이 없습니다.</Text>
             }
           />
-
-          {/* 날짜 설정 모달 */}
-          <Modal
-            visible={showPicker}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowPicker(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>조회 기간 설정</Text>
-
-                <View style={styles.datePickerRow}>
-                  <View style={styles.pickerColumn}>
-                    <Text style={styles.pickerLabel}>시작일</Text>
-                    <DateTimePicker
-                      value={startDate || new Date()}
-                      mode="date"
-                      display="spinner"
-                      locale="ko-KR"
-                      onChange={(e, d) => d && setStartDate(d)}
-                      style={styles.datePicker}
-                    />
-                  </View>
-                  <View style={styles.pickerColumn}>
-                    <Text style={styles.pickerLabel}>종료일</Text>
-                    <DateTimePicker
-                      value={endDate || new Date()}
-                      mode="date"
-                      display="spinner"
-                      locale="ko-KR"
-                      onChange={(e, d) => d && setEndDate(d)}
-                      style={styles.datePicker}
-                    />
-                  </View>
-                </View>
-
-                <TouchableOpacity
-                  onPress={() => setShowPicker(false)}
-                  style={styles.closeBtn}
-                >
-                  <Text style={styles.closeText}>확인</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
         </View>
       </SafeAreaView>
+
+      {/* 날짜 설정 모달 */}
+      <Modal
+        visible={showPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>조회 기간 설정</Text>
+
+            <View style={styles.datePickerRow}>
+              <View style={styles.pickerColumn}>
+                <Text style={styles.pickerLabel}>시작일</Text>
+                <DateTimePicker
+                  value={startDate || new Date()}
+                  mode="date"
+                  display="spinner"
+                  locale="ko-KR"
+                  onChange={(e, d) => d && setStartDate(d)}
+                  style={styles.datePicker}
+                />
+              </View>
+              <View style={styles.pickerColumn}>
+                <Text style={styles.pickerLabel}>종료일</Text>
+                <DateTimePicker
+                  value={endDate || new Date()}
+                  mode="date"
+                  display="spinner"
+                  locale="ko-KR"
+                  onChange={(e, d) => d && setEndDate(d)}
+                  style={styles.datePicker}
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => setShowPicker(false)}
+              style={styles.closeBtn}
+            >
+              <Text style={styles.closeText}>확인</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       <CustomBottomTab activeTab="기록" />
     </View>
   );
@@ -274,13 +337,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-  innerContainer: {
-    flex: 0,
+  fixedTopSection: {
     paddingHorizontal: 20,
-    paddingTop: 15, // 헤더와 아이콘 리스트 간격 줄임 (15 → 5)
+    paddingTop: 15,
+    backgroundColor: "#fff",
+    zIndex: 10,
   },
   companyScroll: {
-    marginBottom: 20, // 아이콘 리스트와 날짜 버튼 간격 늘림 (0 → 20)
+    marginBottom: 20,
+  },
+  historyContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
   },
   companyCircle: {
     width: 80,
@@ -290,6 +358,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
+    borderWidth: 2,
+    borderColor: "transparent",
+    padding: 2,
   },
   activeCompany: { borderWidth: 2, borderColor: "#4CC53A" },
   companyLogo: {

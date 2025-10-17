@@ -69,7 +69,6 @@ export default function AlertCompany() {
     }
   };
 
-  /* 화면 포커스 시마다 갱신 */
   useFocusEffect(
     useCallback(() => {
       fetchAlertedCompanies();

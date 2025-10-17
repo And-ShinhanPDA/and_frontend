@@ -278,6 +278,97 @@ export const alertService = {
       throw err;
     }
   },
+  // 현재 활성화 된 기업 알림 (홈)
+  async getTriggeredAlerts(accessToken: string, stockCodes?: string[]) {
+    const url = `${BASE_URL}/api/alerts/triggered`;
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const rawData = res.data?.data || [];
+
+      let filtered = rawData.filter((alert: any) => alert.isActive === true);
+
+      if (stockCodes && stockCodes.length > 0) {
+        filtered = filtered.filter((a: any) =>
+          stockCodes.includes(a.stockCode)
+        );
+      }
+
+      const parsed = filtered.map((a: any) => ({
+        alertId: a.alertId,
+        stockCode: a.stockCode,
+        message: a.message,
+        isActive: a.isActive,
+        conditions: a.conditions,
+        createdAt: a.createdAt,
+        updatedAt: a.updatedAt,
+      }));
+
+      console.log(`[현재 울리고 있는 알림] ${parsed.length}개`);
+      return parsed;
+    } catch (err: any) {
+      console.error(
+        "[현재 울리고 있는 알림 조회 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
+    }
+  },
+  // 울린 알림들 조회(전체 / 기간)
+  async getAlertHistory(
+    accessToken: string,
+    stockCode?: string,
+    start?: string,
+    end?: string
+  ) {
+    // stockCode가 없으면 전체 기록 조회
+    const baseUrl = stockCode
+      ? `${BASE_URL}/api/alerts/history/${stockCode}`
+      : `${BASE_URL}/api/alerts/history`;
+
+    const url = new URL(baseUrl);
+
+    // 기간이 있으면 쿼리 파라미터 추가
+    if (start && end) {
+      url.searchParams.append("start", start);
+      url.searchParams.append("end", end);
+    }
+
+    try {
+      const res = await axios.get(url.toString(), {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const rawData = res.data?.data || [];
+      console.log("rawData:", rawData);
+      const parsed = rawData.map((item: any) => ({
+        id: item.id,
+        alertId: item.alertId,
+        isSent: item.isSent,
+        indicatorSnapshot: item.indicatorSnapshot,
+        createdAt: item.createdAt,
+        stockCode: item.stockCode,
+      }));
+
+      console.log(`[울린 알림 조회 성공] ${parsed.length}건`);
+      return parsed;
+    } catch (err: any) {
+      console.error(
+        "[울린 알림 조회 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
+    }
+  },
 
   // 오늘 발생한 알림 조회
   // async getTodayAlerts(accessToken: string) {
