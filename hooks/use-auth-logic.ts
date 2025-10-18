@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_ID_KEY = "refresh_token_id";
+const USER_KEY = "user_info";
 
 export function useAuthLogic() {
   const [isReady, setIsReady] = useState(false);
@@ -17,10 +18,22 @@ export function useAuthLogic() {
       try {
         const savedAccess = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
         const savedRefresh = await SecureStore.getItemAsync(REFRESH_ID_KEY);
+        const savedUser = await SecureStore.getItemAsync(USER_KEY);
+
+        console.log("=== 앱 시작 시 복원 ===");
+        console.log("savedAccess:", savedAccess);
+        console.log("savedRefresh:", savedRefresh);
+        console.log("savedUser:", savedUser);
 
         if (savedAccess && savedRefresh) {
           setAccessToken(savedAccess);
           setRefreshTokenId(savedRefresh);
+
+          if (savedUser) {
+            const parsedUser = JSON.parse(savedUser);
+            console.log("복원된 user:", parsedUser);
+            setUser(parsedUser);
+          }
         }
       } catch (e) {
         console.warn("Auth restore error", e);
@@ -37,8 +50,12 @@ export function useAuthLogic() {
       password,
     });
 
+    console.log("=== 로그인 성공 ===");
+    console.log("로그인한 user:", user);
+
     await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, String(accessToken));
     await SecureStore.setItemAsync(REFRESH_ID_KEY, String(refreshTokenId));
+    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
 
     setAccessToken(accessToken);
     setRefreshTokenId(refreshTokenId);
@@ -56,12 +73,21 @@ export function useAuthLogic() {
 
   // 로그아웃
   const signOut = useCallback(async () => {
-    await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
-    await SecureStore.deleteItemAsync(REFRESH_ID_KEY);
-    setUser(null);
-    setAccessToken(null);
-    setRefreshTokenId(null);
-  }, []);
+    try {
+      if (accessToken && refreshTokenId) {
+        // await authService.logout(accessToken, refreshTokenId);
+      }
+    } catch (error) {
+      console.error("로그아웃 API 호출 실패:", error);
+    } finally {
+      await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+      await SecureStore.deleteItemAsync(REFRESH_ID_KEY);
+      await SecureStore.deleteItemAsync(USER_KEY);
+      setUser(null);
+      setAccessToken(null);
+      setRefreshTokenId(null);
+    }
+  }, [accessToken, refreshTokenId]);
 
   return useMemo(
     () => ({

@@ -18,6 +18,10 @@ export default function HomeScreen() {
 
   // 로그아웃 핸들러
   const handleLogout = async () => {
+    console.log("=== 로그아웃 시작 ===");
+    console.log("user 전체:", user);
+    console.log("user.name:", user?.name);
+    console.log("userName prop:", user?.name || "사용자");
     try {
       await signOut();
       console.log("로그아웃 성공");
