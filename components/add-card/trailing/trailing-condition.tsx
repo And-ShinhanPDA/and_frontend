@@ -60,28 +60,48 @@ export default function TrailingConditionCard({
       const list: any[] = [];
 
       // 손절매 (하락)
-      if (String(conditionData.stopPrice).trim() !== "")
-        list.push({
-          indicator: "TRAILING_STOP_PRICE",
-          threshold: Number(conditionData.stopPrice),
-        });
-      if (String(conditionData.stopPercent).trim() !== "")
-        list.push({
-          indicator: "TRAILING_STOP_PERCENT",
-          threshold: Number(conditionData.stopPercent),
-        });
+      if (String(conditionData.stopPrice).trim() !== "") {
+        const amount = Number(conditionData.stopPrice);
+        if (!isNaN(amount) && amount > 0 && amount <= 1000000) {
+          // 100만원 이하만 허용
+          list.push({
+            indicator: "TRAILING_STOP_PRICE",
+            threshold: amount,
+          });
+        }
+      }
+      if (String(conditionData.stopPercent).trim() !== "") {
+        const amount = Number(conditionData.stopPercent);
+        if (!isNaN(amount) && amount > 0 && amount <= 100) {
+          // 100% 이하만 허용
+          list.push({
+            indicator: "TRAILING_STOP_PERCENT",
+            threshold: amount,
+          });
+        }
+      }
 
       // 매수 (상승)
-      if (String(conditionData.buyPrice).trim() !== "")
-        list.push({
-          indicator: "TRAILING_BUY_PRICE",
-          threshold: Number(conditionData.buyPrice),
-        });
-      if (String(conditionData.buyPercent).trim() !== "")
-        list.push({
-          indicator: "TRAILING_BUY_PERCENT",
-          threshold: Number(conditionData.buyPercent),
-        });
+      if (String(conditionData.buyPrice).trim() !== "") {
+        const amount = Number(conditionData.buyPrice);
+        if (!isNaN(amount) && amount > 0 && amount <= 1000000) {
+          // 100만원 이하만 허용
+          list.push({
+            indicator: "TRAILING_BUY_PRICE",
+            threshold: amount,
+          });
+        }
+      }
+      if (String(conditionData.buyPercent).trim() !== "") {
+        const amount = Number(conditionData.buyPercent);
+        if (!isNaN(amount) && amount > 0 && amount <= 100) {
+          // 100% 이하만 허용
+          list.push({
+            indicator: "TRAILING_BUY_PERCENT",
+            threshold: amount,
+          });
+        }
+      }
 
       console.log("최종 TRAILING payload:", list);
       return list;

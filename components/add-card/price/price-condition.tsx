@@ -64,7 +64,8 @@ export default function PriceConditionCard({
       // --- 가격 제한 ---
       conditionData.limits.forEach((limit) => {
         const amount = Number(limit.amount);
-        if (!isNaN(amount) && amount > 0) {
+        if (!isNaN(amount) && amount > 0 && amount <= 1000000) {
+          // 100만원 이하만 허용
           list.push({
             indicator:
               limit.comparison === "이상" ? "PRICE_ABOVE" : "PRICE_BELOW",
@@ -76,7 +77,8 @@ export default function PriceConditionCard({
       // --- 시가 기준 (+ / -) ---
       conditionData.openChanges.forEach((change) => {
         const amount = Number(change.amount);
-        if (!isNaN(amount) && amount > 0) {
+        if (!isNaN(amount) && amount > 0 && amount <= 1000000) {
+          // 100만원 이하만 허용
           list.push({
             indicator:
               change.direction === "+"
@@ -90,7 +92,8 @@ export default function PriceConditionCard({
       // --- 현재가 기준 (+ / -) ---
       conditionData.currentChanges.forEach((change) => {
         const amount = Number(change.amount);
-        if (!isNaN(amount) && amount > 0) {
+        if (!isNaN(amount) && amount > 0 && amount <= 1000000) {
+          // 100만원 이하만 허용
           list.push({
             indicator:
               change.direction === "+"

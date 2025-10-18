@@ -304,7 +304,7 @@ export default function AlertCompany() {
         onClose={() => setIsPresetOpen(false)}
         ratio={0.8}
       >
-        <PresetSelect mode="view" onClose={() => setIsPresetOpen(false)} />
+        <PresetSelect onClose={() => setIsPresetOpen(false)} />
       </ConditionBottomSheet>
 
       <CustomBottomTab activeTab="기업 알림" />

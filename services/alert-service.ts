@@ -10,14 +10,22 @@ export const alertService = {
     console.log("요청 데이터:", payload);
     console.log("accessToken:", accessToken?.slice(0, 20) + "...");
 
-    const res = await axios.post(url, payload, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-    });
+    try {
+      const res = await axios.post(url, payload, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-    return res.data;
+      return res.data;
+    } catch (error: any) {
+      console.error("❌ 알림 등록 실패 상세 에러:", error.response?.data);
+      console.error("❌ HTTP 상태 코드:", error.response?.status);
+      console.error("❌ 요청 헤더:", error.config?.headers);
+      console.error("❌ 요청 데이터:", error.config?.data);
+      throw error;
+    }
   },
 
   // 사용자 보유 알림 조회
