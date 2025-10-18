@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { presetService } from "@/services/preset-service";
 import { useAuth } from "@/contexts/AuthContext";
 import { extractIndicatorCategories } from "@/utils/parseConditions";
@@ -77,6 +78,7 @@ export default function PresetSelect({
   const fadeAnimations = useRef<{ [key: number]: Animated.Value }>({});
   const scaleAnimations = useRef<{ [key: number]: Animated.Value }>({});
   const { accessToken } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchPresets = async () => {
@@ -229,14 +231,15 @@ export default function PresetSelect({
 
     try {
       console.log("프리셋 삭제:", id);
-      // TODO: API 연결
-      // await presetService.deletePreset(accessToken, id);
+      await presetService.deletePreset(accessToken, String(id));
 
-      // 삭제 후 목록 새로고침
+      // 삭제 후 목록에서 제거
       setPresets((prev) => prev.filter((p) => p.presetId !== id));
       handleCancelEdit(id);
+      console.log("프리셋 삭제 완료:", id);
     } catch (error) {
       console.error("프리셋 삭제 실패:", error);
+      alert("프리셋 삭제에 실패했습니다.");
     }
   };
 
@@ -271,9 +274,10 @@ export default function PresetSelect({
         ]
       );
     } else {
-      // view 모드: 세부사항 보기 (TODO: 라우터로 이동)
+      // view 모드: 세부사항 보기
       console.log("프리셋 세부사항 보기:", id);
-      // TODO: router.push로 세부사항 화면 이동
+      onClose(); // 모달 닫기
+      router.push(`/(tabs)/(preset-detail)/${id}`);
     }
   };
 
