@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
+  Alert,
   Animated,
   Dimensions,
   ScrollView,
@@ -58,7 +59,17 @@ interface Preset {
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 40 * 2 - 14) / 2;
 
-export default function PresetSelect({ onClose }: { onClose: () => void }) {
+interface PresetSelectProps {
+  onClose: () => void;
+  mode?: "view" | "select"; // view: 조회/관리 모드, select: 선택/적용 모드
+  onPresetSelect?: (presetId: number, conditions: any[]) => void; // select 모드일 때 사용
+}
+
+export default function PresetSelect({
+  onClose,
+  mode = "view",
+  onPresetSelect,
+}: PresetSelectProps) {
   const [category, setCategory] = useState<"내" | "유명인" | "추천">("유명인");
   const [presets, setPresets] = useState<Preset[]>([]);
   const [editMode, setEditMode] = useState<{ [key: number]: boolean }>({});
@@ -198,9 +209,9 @@ export default function PresetSelect({ onClose }: { onClose: () => void }) {
     }
   };
 
-  // 긴 눌림 핸들러 (내 프리셋만)
+  // 긴 눌림 핸들러 (view 모드 + 내 프리셋만)
   const handleLongPress = (id: number) => {
-    if (category === "내") {
+    if (mode === "view" && category === "내") {
       setEditMode((prev) => ({ ...prev, [id]: true }));
       startShake(id);
     }
@@ -213,18 +224,56 @@ export default function PresetSelect({ onClose }: { onClose: () => void }) {
   };
 
   // 프리셋 삭제
-  const handleDelete = (id: number) => {
-    console.log("프리셋 삭제:", id);
-    // TODO: 삭제 로직
-    handleCancelEdit(id);
+  const handleDelete = async (id: number) => {
+    if (!accessToken) return;
+
+    try {
+      console.log("프리셋 삭제:", id);
+      // TODO: API 연결
+      // await presetService.deletePreset(accessToken, id);
+
+      // 삭제 후 목록 새로고침
+      setPresets((prev) => prev.filter((p) => p.presetId !== id));
+      handleCancelEdit(id);
+    } catch (error) {
+      console.error("프리셋 삭제 실패:", error);
+    }
   };
 
-  // 일반 클릭 핸들러 (나중에 조건 등록 기능 추가)
+  // 일반 클릭 핸들러
   const handlePress = (id: number) => {
-    // 편집 모드가 아닐 때만 동작
-    if (!editMode[id]) {
-      console.log("프리셋 선택:", id);
-      // TODO: 조건 등록 로직
+    // 편집 모드일 때는 동작 안함
+    if (editMode[id]) return;
+
+    const selectedPreset = presets.find((p) => p.presetId === id);
+    if (!selectedPreset) return;
+
+    if (mode === "select") {
+      // select 모드: 프리셋 적용 확인
+      Alert.alert(
+        "프리셋 적용",
+        `"${selectedPreset.title}" 프리셋을 적용하시겠습니까?\n현재 입력된 조건은 사라집니다.`,
+        [
+          {
+            text: "아니오",
+            style: "cancel",
+          },
+          {
+            text: "예",
+            onPress: () => {
+              console.log("프리셋 적용:", id, selectedPreset.conditions);
+              if (onPresetSelect) {
+                onPresetSelect(id, selectedPreset.conditions);
+              }
+              onClose(); // 선택 후 모달 닫기
+            },
+          },
+        ]
+      );
+    } else {
+      // view 모드: 세부사항 보기 (TODO: 라우터로 이동)
+      console.log("프리셋 세부사항 보기:", id);
+      // TODO: router.push로 세부사항 화면 이동
     }
   };
 
@@ -299,8 +348,8 @@ export default function PresetSelect({ onClose }: { onClose: () => void }) {
                   <Text style={styles.desc}>{p.desc}</Text>
                 </TouchableOpacity>
 
-                {/* 삭제 버튼 - 편집 모드일 때만 표시 */}
-                {editMode[p.id] && (
+                {/* 삭제 버튼 - view 모드 + 편집 모드일 때만 표시 */}
+                {mode === "view" && editMode[p.id] && (
                   <Animated.View
                     style={[
                       styles.deleteButton,
@@ -323,7 +372,9 @@ export default function PresetSelect({ onClose }: { onClose: () => void }) {
       </ScrollView>
 
       <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-        <Text style={styles.closeText}>닫기</Text>
+        <Text style={styles.closeText}>
+          {mode === "select" ? "취소" : "닫기"}
+        </Text>
       </TouchableOpacity>
     </View>
   );
