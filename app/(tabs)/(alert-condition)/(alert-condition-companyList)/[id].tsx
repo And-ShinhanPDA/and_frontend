@@ -28,8 +28,15 @@ type Company = {
 };
 
 export default function AlertConditionDetail() {
-  const { name } = useLocalSearchParams<{ name: string }>();
+  const { id, name, tags } = useLocalSearchParams<{
+    id: string;
+    name: string;
+    tags: string;
+  }>();
   const { signOut, user } = useAuth();
+
+  
+  const parsedTags = tags ? JSON.parse(tags) : [];
   const headerScrollRef = useRef<ScrollView | null>(null);
   const dataScrollRef = useRef<ScrollView | null>(null);
   const leftFlatListRef = useRef<FlatList | null>(null);
@@ -227,7 +234,7 @@ export default function AlertConditionDetail() {
             {name || "제목 없는 조건 알림"}
           </Text>
           <View style={styles.tagContainer}>
-            {["가격", "RSI", "52주", "SMA"].map((tag, idx) => (
+            {parsedTags.map((tag: string, idx: number) => (
               <View key={idx} style={styles.tag}>
                 <Text style={styles.tagText}>{tag}</Text>
               </View>
@@ -238,9 +245,11 @@ export default function AlertConditionDetail() {
         <View style={styles.conditionRight}>
           <TouchableOpacity
             onPress={() =>
-              router.push(
-                "/(tabs)/(alert-condition)/(alert-condition-detail)/[id]"
-              )
+              router.push({
+                pathname:
+                  "/(tabs)/(alert-condition)/(alert-condition-detail)/[id]",
+                params: { id: id, name: name, tags: tags },
+              })
             }
           >
             <Image

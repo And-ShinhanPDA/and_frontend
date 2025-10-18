@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -46,12 +46,12 @@ export default function ConditionAdditional() {
     bollingerband?: any;
   }>({});
 
-  const handleTempSave = (id: string, getter: () => any[]) => {
+  const handleTempSave = useCallback((id: string, getter: () => any[]) => {
     setConditionGetters((prev) => ({ ...prev, [id]: getter }));
-  };
+  }, []);
 
   // 프리셋 조건을 각 카드 형식으로 변환
-  const parsePresetConditions = (conditions: any[]) => {
+  const parsePresetConditions = useCallback((conditions: any[]) => {
     const parsed: any = {
       change: { dailyChanges: [], baseChanges: [] },
       week52: {
@@ -150,15 +150,18 @@ export default function ConditionAdditional() {
     });
 
     return parsed;
-  };
+  }, []);
 
   // 프리셋 선택 시 호출
-  const handlePresetSelect = (presetId: number, conditions: any[]) => {
-    console.log("프리셋 적용:", presetId, conditions);
-    const parsed = parsePresetConditions(conditions);
-    console.log("파싱된 조건:", parsed);
-    setPresetConditions(parsed);
-  };
+  const handlePresetSelect = useCallback(
+    (presetId: number, conditions: any[]) => {
+      console.log("프리셋 적용:", presetId, conditions);
+      const parsed = parsePresetConditions(conditions);
+      console.log("파싱된 조건:", parsed);
+      setPresetConditions(parsed);
+    },
+    [parsePresetConditions]
+  );
 
   const handleSave = async () => {
     try {
@@ -176,7 +179,7 @@ export default function ConditionAdditional() {
         );
 
       const payload = {
-        stockCode: "005930",
+        stockCode: null,
         title: title || "조건 알림",
         isActive: true,
         isPreset: false,

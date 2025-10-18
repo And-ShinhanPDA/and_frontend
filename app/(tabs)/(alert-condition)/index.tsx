@@ -1,7 +1,7 @@
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
-import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Animated,
   Image,
@@ -17,6 +17,7 @@ import { SwipeListView } from "react-native-swipe-list-view";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
 
 // TODO: types로 빼기
 type AlertCondition = {
@@ -33,7 +34,7 @@ export default function AlertCondition() {
   >({});
   const [deleteWidth, setDeleteWidth] = useState(80);
   const [isPresetOpen, setIsPresetOpen] = useState(false);
-  const { signOut, user } = useAuth();
+  const { signOut, user, accessToken } = useAuth();
 
   // 로그아웃 핸들러
   const handleLogout = async () => {
@@ -46,42 +47,67 @@ export default function AlertCondition() {
     }
   };
 
-  const [alerts, setAlerts] = useState<AlertCondition[]>([
-    {
-      id: "1",
-      name: "SMA량 거래량 조건",
-      enabled: false,
-      tags: [
-        "SMA",
-        "거래량",
-        "52주",
-        "볼린저밴드",
-        "볼린저밴드",
-        "볼린저밴드",
-        "볼린저밴드",
-        "볼린저밴드",
-        "볼린저밴드",
-      ],
-    },
-    {
-      id: "2",
-      name: "가격 설정 조건",
-      enabled: true,
-      tags: ["가격", "RSI", "52주", "SMA"],
-    },
-    {
-      id: "3",
-      name: "SMA 조건",
-      enabled: true,
-      tags: ["SMA", "거래량", "52주", "볼린저밴드"],
-    },
-    {
-      id: "4",
-      name: "볼린저 밴드 조건",
-      enabled: true,
-      tags: ["후행", "RSI", "52주", "SMA"],
-    },
-  ]);
+  const [alerts, setAlerts] = useState<AlertCondition[]>([]);
+
+  // 조건 검색 알림 조회
+  const fetchConditionAlerts = async () => {
+    if (!accessToken) {
+      console.log("accessToken 없음");
+      return;
+    }
+    try {
+      const res = await alertService.getUserAlerts(accessToken);
+
+      const rawList = Array.isArray(res?.data) ? res.data : [];
+
+      if (Array.isArray(rawList)) {
+        console.log("전체 알림 수:", rawList.length);
+
+        const conditionAlerts = rawList.filter(
+          (alert: any) =>
+            alert.stockCode === null || alert.stockCode === undefined
+        );
+
+        const formatted: AlertCondition[] = conditionAlerts.map(
+          (alert: any) => {
+            // 조건에서 태그 추출
+            const tags: string[] = [];
+            if (alert.conditions) {
+              alert.conditions.forEach((condition: any) => {
+                if (condition.indicator) {
+                  if (condition.indicator.includes("SMA")) tags.push("SMA");
+                  if (condition.indicator.includes("RSI")) tags.push("RSI");
+                  if (condition.indicator.includes("VOLUME"))
+                    tags.push("거래량");
+                  if (condition.indicator.includes("52W")) tags.push("52주");
+                  if (condition.indicator.includes("BOLLINGER"))
+                    tags.push("볼린저밴드");
+                  if (condition.indicator.includes("PRICE")) tags.push("가격");
+                }
+              });
+            }
+
+            return {
+              id: alert.id || alert.alertId,
+              name: alert.title || "조건 알림",
+              enabled: alert.isActive || false,
+              tags: [...new Set(tags)], // 중복 제거
+            };
+          }
+        );
+
+        setAlerts(formatted);
+      }
+    } catch (err) {
+      console.error("[조건 검색 알림 조회 실패]:", err);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchConditionAlerts();
+    }, [accessToken])
+  );
 
   // 초기 애니메이션 설정
   useEffect(() => {
@@ -93,15 +119,47 @@ export default function AlertCondition() {
   }, [alerts]);
 
   // 토글 스위치
-  const toggleSwitch = (id: string) => {
-    setAlerts((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, enabled: !c.enabled } : c))
-    );
+  const toggleSwitch = async (id: string) => {
+    if (!accessToken) return;
+    const target = alerts.find((c) => c.id === id);
+    if (!target) return;
+
+    const newActive = !target.enabled;
+    try {
+      setAlerts((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, enabled: newActive } : c))
+      );
+
+      await alertService.toggleAlertActive(accessToken, id, newActive);
+
+      // API 호출 후 최신 데이터 다시 조회
+      await fetchConditionAlerts();
+
+      console.log(
+        `${target.name} 조건 알림 ${newActive ? "활성화" : "비활성화"} 완료`
+      );
+    } catch (err) {
+      console.error("[조건 알림 토글 실패]:", err);
+
+      setAlerts((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, enabled: !newActive } : c))
+      );
+    }
   };
 
   // 삭제 기능
-  const deleteCompany = (id: string) => {
-    setAlerts((prev) => prev.filter((c) => c.id !== id));
+  const deleteAlert = async (id: string) => {
+    if (!accessToken) return;
+    const target = alerts.find((c) => c.id === id);
+    if (!target) return;
+
+    try {
+      await alertService.deleteAlert(accessToken, id);
+      setAlerts((prev) => prev.filter((c) => c.id !== id));
+      console.log(`${target.name} 조건 알림 삭제 완료`);
+    } catch (err) {
+      console.error("[조건 알림 삭제 실패]:", err);
+    }
   };
 
   // 왼쪽 스와이프 시 fade out
@@ -174,7 +232,11 @@ export default function AlertCondition() {
                 router.push({
                   pathname:
                     "/(tabs)/(alert-condition)/(alert-condition-companyList)/[id]",
-                  params: { id: item.id },
+                  params: {
+                    id: item.id,
+                    name: item.name,
+                    tags: JSON.stringify(item.tags),
+                  },
                 })
               }
             >
@@ -226,7 +288,7 @@ export default function AlertCondition() {
             <TouchableOpacity
               style={styles.deleteButton}
               onLayout={(e) => setDeleteWidth(e.nativeEvent.layout.width)}
-              onPress={() => deleteCompany(item.id)}
+              onPress={() => deleteAlert(item.id)}
             >
               <Text style={styles.deleteText}>삭제</Text>
             </TouchableOpacity>
