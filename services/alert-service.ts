@@ -283,6 +283,7 @@ export const alertService = {
       throw err;
     }
   },
+
   // 현재 활성화 된 기업 알림 (홈)
   async getTriggeredAlerts(accessToken: string, stockCodes?: string[]) {
     const url = `${BASE_URL}/api/alerts/triggered`;

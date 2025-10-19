@@ -1,3 +1,6 @@
+import { COMPANIES } from "@/constants/companies";
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
 import { saveActivatedCompanies } from "@/services/widgetShare";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -8,9 +11,6 @@ import {
   Text,
   View,
 } from "react-native";
-import { COMPANIES } from "@/constants/companies";
-import { alertService } from "@/services/alert-service";
-import { useAuth } from "@/contexts/AuthContext";
 type CompanyAlert = {
   id: number;
   name: string;
