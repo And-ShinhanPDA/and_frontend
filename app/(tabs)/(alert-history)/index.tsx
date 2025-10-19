@@ -39,6 +39,7 @@ type AlertItem = {
   time: string;
   title: string;
   desc: string;
+  stockCode?: string;
 };
 
 export default function AlertHistory() {
@@ -103,7 +104,6 @@ export default function AlertHistory() {
             return alertIdFromTitle === alertId;
           });
 
-          // 정확한 스크롤 오프셋 계산
           setTimeout(() => {
             try {
               const dateHeaderHeight = 25;
@@ -215,6 +215,7 @@ export default function AlertHistory() {
               time: item.createdAt.split("T")[1].slice(0, 5),
               title: `알림 ${item.id}`,
               desc: item.indicatorSnapshot || "조건 충족",
+              stockCode: item.stockCode,
             });
           });
 
@@ -372,24 +373,53 @@ export default function AlertHistory() {
                   const alertIdFromTitle = titleMatch ? titleMatch[1] : null;
                   const isHighlighted = highlightedAlertId === alertIdFromTitle;
 
+                  // 조건검색 알림인지 확인
+                  const isConditionSearch = alert.stockCode === "조건검색";
+
                   return (
                     <View
                       key={index}
                       style={[
                         styles.timelineRow,
-                        isHighlighted && styles.highlightedRow,
+                        isHighlighted &&
+                          !isConditionSearch &&
+                          styles.highlightedRow,
                       ]}
                     >
                       <View style={styles.timeline}>
                         {index === 0 ? (
-                          <View style={styles.outerCircle}>
-                            <View style={styles.innerDot} />
+                          <View
+                            style={
+                              isConditionSearch
+                                ? styles.conditionSearchOuterCircle
+                                : styles.outerCircle
+                            }
+                          >
+                            <View
+                              style={
+                                isConditionSearch
+                                  ? styles.conditionSearchInnerDot
+                                  : styles.innerDot
+                              }
+                            />
                           </View>
                         ) : (
-                          <View style={styles.singleCircle} />
+                          <View
+                            style={
+                              isConditionSearch
+                                ? styles.conditionSearchSingleCircle
+                                : styles.singleCircle
+                            }
+                          />
                         )}
                         {index !== item.items.length - 1 && (
-                          <View style={styles.line} />
+                          <View
+                            style={
+                              isConditionSearch
+                                ? styles.conditionSearchLine
+                                : styles.line
+                            }
+                          />
                         )}
                       </View>
 
@@ -398,7 +428,9 @@ export default function AlertHistory() {
                           <Text
                             style={[
                               styles.alertTitle,
-                              isHighlighted && styles.highlightedTitle,
+                              isHighlighted &&
+                                !isConditionSearch &&
+                                styles.highlightedTitle,
                             ]}
                           >
                             {companyName} | {alert.title}
@@ -406,7 +438,9 @@ export default function AlertHistory() {
                           <Text
                             style={[
                               styles.alertTime,
-                              isHighlighted && styles.highlightedTime,
+                              isHighlighted &&
+                                !isConditionSearch &&
+                                styles.highlightedTime,
                             ]}
                           >
                             {alert.time}
@@ -415,7 +449,9 @@ export default function AlertHistory() {
                         <Text
                           style={[
                             styles.alertDesc,
-                            isHighlighted && styles.highlightedDesc,
+                            isHighlighted &&
+                              !isConditionSearch &&
+                              styles.highlightedDesc,
                           ]}
                         >
                           {alert.desc}
@@ -615,6 +651,38 @@ const styles = StyleSheet.create({
   highlightedDesc: {
     color: "#2E7D32",
     fontWeight: "500",
+  },
+
+  // 조건검색 알림 타임라인 스타일 (노란색)
+  conditionSearchOuterCircle: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: "#FFB300",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
+  },
+  conditionSearchInnerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#FFB300",
+  },
+  conditionSearchSingleCircle: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: "#FFB300",
+    backgroundColor: "#fff",
+  },
+  conditionSearchLine: {
+    width: 2,
+    flex: 1,
+    backgroundColor: "#FFB300",
+    marginTop: 2,
   },
 
   modalOverlay: {
