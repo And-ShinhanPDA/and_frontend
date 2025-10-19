@@ -494,21 +494,105 @@ export const alertService = {
         return [];
       }
 
-      //console.log(`[오늘의 알림 조회 성공] ${data.length}건`);
-
-      // // 오늘의 알림 잘 불러와지는지 콘솔찍어봄
-      // data.forEach((alert: any, i: number) => {
-      //   console.log(
-      //     `#${i + 1} [${alert.stockCode}] 알림ID: ${alert.alertId}, 생성일: ${
-      //       alert.createdAt
-      //     }`
-      //   );
-      // });
-
       return data;
     } catch (err: any) {
       console.error(
         "[오늘의 알림 조회 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
+    }
+  },
+
+  // 알림 히트맵 조회
+  async getAlertHeatmap(accessToken: string) {
+    const url = `${BASE_URL}/api/alerts/heatmap`;
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const { code, message, data } = res.data ?? {};
+
+      if (!data || !Array.isArray(data.alerts)) {
+        console.warn("[경고] data.alerts 필드가 배열이 아닙니다:", data);
+        return [];
+      }
+
+      console.log(`[알림 히트맵 조회 성공] ${data.alerts.length}개 기업`);
+
+      data.alerts.forEach((alert: any, i: number) => {
+        console.log(
+          `#${i + 1} [${alert.stockCode}] 알림 ${
+            alert.alertCount
+          }개, 가격변동률: ${alert.priceRate}%`
+        );
+      });
+
+      return data.alerts;
+    } catch (err: any) {
+      console.error(
+        "[알림 히트맵 조회 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
+    }
+  },
+
+  // 시가종가 on/off 여부 조회
+  async getPriceOnOffStatus(accessToken: string, alertId: number) {
+    const url = `${BASE_URL}/api/alerts/${alertId}/price`;
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const { message, data } = res.data ?? {};
+
+      return data;
+    } catch (err: any) {
+      console.error(
+        "[시가종가 on/off 여부 조회 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
+    }
+  },
+
+  // 시가/종가 on/off 상태 변경
+  async updatePriceOnOffStatus(
+    accessToken: string,
+    alertId: number,
+    isEnabled: boolean
+  ) {
+    const url = `${BASE_URL}/api/alerts/${alertId}/price`;
+
+    try {
+      const res = await axios.patch(
+        url,
+        { isPrice: isEnabled },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const { message, data } = res.data ?? {};
+
+      return data;
+    } catch (err: any) {
+      console.error(
+        "[시가/종가 on/off 상태 변경 실패]:",
         err.response?.data ?? err.message
       );
       throw err;

@@ -54,22 +54,16 @@ export default function AlertHistory() {
     null
   );
 
-  // 토스트에서 전달받은 파라미터
   const { highlightAlertId, highlightCompany } = useLocalSearchParams<{
     highlightAlertId?: string;
     highlightCompany?: string;
   }>();
 
-  // 토스트에서 전달받은 파라미터 처리
   useEffect(() => {
     if (highlightCompany) {
-      // 해당 기업으로 필터링
       const company = COMPANIES.find((c) => c.name === highlightCompany);
       if (company) {
         setSelectedCompany(company.id);
-        console.log(
-          `[히스토리] 토스트에서 전달받은 기업으로 필터링: ${highlightCompany}`
-        );
       }
     }
   }, [highlightCompany]);
@@ -79,19 +73,10 @@ export default function AlertHistory() {
     (alertId: string) => {
       if (!scrollViewRef.current || !alertsByDate.length) return;
 
-      // console.log(`[히스토리] 스크롤 시도 - alertId: ${alertId}`);
-      // console.log(
-      //   `[히스토리] alertsByDate 구조:`,
-      //   JSON.stringify(alertsByDate.slice(0, 2), null, 2)
-      // );
-
-      // 모든 알림을 평면화하여 특정 ID 찾기
       const allAlerts = alertsByDate.flatMap((group) => group.items);
-      console.log(`[히스토리] 평면화된 알림 수: ${allAlerts.length}`);
-      console.log(`[히스토리] 첫 번째 알림 구조:`, allAlerts[0]);
 
       const targetAlert = allAlerts.find((alert) => {
-        // title에서 알림 ID 추출 (예: "알림 2559" -> "2559")
+        // title에서 알림 ID 추출
         const titleMatch = alert?.title?.match(/알림 (\d+)/);
         const alertIdFromTitle = titleMatch ? titleMatch[1] : null;
         return alertIdFromTitle === alertId;
@@ -121,25 +106,21 @@ export default function AlertHistory() {
           // 정확한 스크롤 오프셋 계산
           setTimeout(() => {
             try {
-              // 실제 UI 높이 (스타일 기반)
-              const dateHeaderHeight = 25; // 날짜 헤더 + marginBottom (14px text + 10px margin)
-              const itemHeight = 70; // 알림 아이템 높이 (대략 50-60px + 18px marginBottom)
-              const sectionMargin = 25; // dateSection marginBottom
+              const dateHeaderHeight = 25;
+              const itemHeight = 70;
+              const sectionMargin = 25;
 
-              // 이전 그룹들의 높이 합산
               let offsetY = 0;
               for (let i = 0; i < groupIndex; i++) {
-                offsetY += dateHeaderHeight; // 날짜 헤더
-                offsetY += alertsByDate[i].items.length * itemHeight; // 아이템들
-                offsetY += sectionMargin; // 섹션 여백
+                offsetY += dateHeaderHeight;
+                offsetY += alertsByDate[i].items.length * itemHeight;
+                offsetY += sectionMargin;
               }
 
-              // 현재 그룹 내 타겟 아이템까지의 높이
-              offsetY += dateHeaderHeight; // 현재 그룹 날짜 헤더
-              offsetY += itemIndex * itemHeight; // 타겟 아이템까지의 높이
+              offsetY += dateHeaderHeight;
+              offsetY += itemIndex * itemHeight;
 
-              // 타겟 알림이 화면 상단에 오도록 조정 (한 아이템 높이만큼 더 빼기)
-              offsetY -= itemHeight + 100; // 아이템 높이 + 약간의 여백
+              offsetY -= itemHeight + 100;
 
               scrollViewRef.current?.scrollToOffset({
                 offset: Math.max(0, offsetY),
@@ -152,7 +133,7 @@ export default function AlertHistory() {
             } catch (error) {
               console.log(`[히스토리] 스크롤 실패:`, error);
             }
-          }, 300); // 데이터 로드 후 스크롤 (더 빠르게)
+          }, 300);
         }
       }
     },

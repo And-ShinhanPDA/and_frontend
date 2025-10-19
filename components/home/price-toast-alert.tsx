@@ -194,9 +194,9 @@ export default function PriceAlertToast() {
             const alertKey = `${currentAlert.id}-${currentAlert.name}`;
 
             if (lastLoggedAlert.current !== alertKey) {
-              console.log(
-                `[토스트 표시] ID: ${currentAlert.id}, 기업: ${currentAlert.name}, 메시지: ${currentAlert.message}`
-              );
+              // console.log(
+              //   `[토스트 표시] ID: ${currentAlert.id}, 기업: ${currentAlert.name}, 메시지: ${currentAlert.message}`
+              // );
               lastLoggedAlert.current = alertKey;
             }
           });
