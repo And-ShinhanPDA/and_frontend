@@ -1,7 +1,12 @@
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
-import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
+import PresetSelect from "@/components/preset/preset-select";
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
+import { getIndicatorCategoriesArray } from "@/utils/parseConditions";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Animated,
   Image,
@@ -13,11 +18,6 @@ import {
   View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
-import { useAuth } from "@/contexts/AuthContext";
-import { alertService } from "@/services/alert-service";
-import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
-import PresetSelect from "@/components/preset/preset-select";
-import { getIndicatorCategoriesArray } from "@/utils/parseConditions";
 
 // TODO: types로 빼기
 type AlertCondition = {
@@ -25,6 +25,44 @@ type AlertCondition = {
   name: string;
   enabled: boolean;
   tags: string[];
+  isTriggered?: boolean; // 조건 만족하여 활성화된 상태
+};
+
+// 깜빡이는 점 컴포넌트
+const BlinkingDot = () => {
+  const opacity = React.useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.2,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [opacity]);
+
+  return (
+    <Animated.View
+      style={{
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: "#EF4444",
+        opacity: opacity,
+        marginRight: 6,
+      }}
+    />
+  );
 };
 
 export default function CompanyAlertDetail() {
@@ -56,42 +94,62 @@ export default function CompanyAlertDetail() {
 
   // 프리셋 모달 상태
   const [isPresetOpen, setIsPresetOpen] = useState(false);
+  const [showOnlyActive, setShowOnlyActive] = useState(false); // 활성화된 알림만 보기
 
   // TODO: API 연결
   const [alerts, setAlerts] = useState<AlertCondition[]>([]);
 
-  useEffect(() => {
-    const fetchCompanyAlerts = async () => {
-      if (!accessToken || !id) return;
-      try {
-        console.log("[API 호출 시작] /api/alerts?stockCode=", id);
+  // 기업별 알림 조회 함수
+  const fetchCompanyAlerts = useCallback(async () => {
+    if (!accessToken || !id) return;
+    try {
+      console.log("[API 호출 시작] /api/alerts?stockCode=", id);
 
-        const res = await alertService.getUserAlerts(accessToken, {
-          stockCode: id,
-        });
+      // 1. 해당 기업의 전체 알림 조회
+      const res = await alertService.getUserAlerts(accessToken, {
+        stockCode: id,
+      });
 
-        console.log("[알림 응답]:", res);
+      // 2. Triggered 알림 조회 (조건 만족한 알림들)
+      const triggeredRes = await alertService.getTriggeredAlerts(
+        accessToken,
+        [id]
+      );
+      const triggeredAlertIds = new Set(
+        triggeredRes.map((a: any) => String(a.alertId))
+      );
 
-        if (res?.data && Array.isArray(res.data)) {
-          // TODO: 실제 구조에 맞게 변환 필요
-          const formatted = res.data.map((a: any) => ({
-            id: a.alertId?.toString() ?? "0",
+      console.log("[알림 응답]:", res);
+
+      if (res?.data && Array.isArray(res.data)) {
+        // TODO: 실제 구조에 맞게 변환 필요
+        const formatted = res.data.map((a: any) => {
+          const alertId = String(a.alertId ?? a.id ?? "0");
+          return {
+            id: alertId,
             name: a.title ?? "알림 이름 없음",
             enabled: a.isActive ?? true,
             tags: a.conditions
               ? getIndicatorCategoriesArray(a.conditions)
               : ["조건"],
-          }));
-          setAlerts(formatted);
-          console.log(`변환된 알림 수: ${formatted.length}`);
-        }
-      } catch (err) {
-        console.error("[기업별 알림 조회 실패]:", err);
+            isTriggered: triggeredAlertIds.has(alertId), // 조건 만족 여부
+          };
+        });
+        setAlerts(formatted);
+        console.log(`변환된 알림 수: ${formatted.length}`);
+        console.log(`Triggered 알림 수: ${triggeredAlertIds.size}`);
       }
-    };
-
-    fetchCompanyAlerts();
+    } catch (err) {
+      console.error("[기업별 알림 조회 실패]:", err);
+    }
   }, [accessToken, id]);
+
+  // 화면이 포커스될 때마다 데이터 새로고침
+  useFocusEffect(
+    useCallback(() => {
+      fetchCompanyAlerts();
+    }, [fetchCompanyAlerts])
+  );
 
   // 초기 애니메이션 설정
   useEffect(() => {
@@ -197,8 +255,30 @@ export default function CompanyAlertDetail() {
         onLogoutConfirm={handleLogout}
       />
 
+      {/* 활성화된 알림만 보기 버튼 */}
+      <View style={styles.filterButtonContainer}>
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            showOnlyActive && styles.filterButtonActive,
+          ]}
+          onPress={() => setShowOnlyActive(!showOnlyActive)}
+        >
+          <Text
+            style={[
+              styles.filterButtonText,
+              showOnlyActive && styles.filterButtonTextActive,
+            ]}
+          >
+            {showOnlyActive ? "전체 보기" : "활성화된 알림만 보기"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <SwipeListView
-        data={filteredAlerts}
+        data={filteredAlerts.filter((c) =>
+          showOnlyActive ? c.enabled && c.isTriggered : true
+        )}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         onRowOpen={handleRowOpen}
@@ -228,7 +308,10 @@ export default function CompanyAlertDetail() {
                 ]}
               >
                 <View style={styles.itemText}>
-                  <Text style={styles.name}>{item.name}</Text>
+                  <View style={styles.nameContainer}>
+                    {item.enabled && item.isTriggered && <BlinkingDot />}
+                    <Text style={styles.name}>{item.name}</Text>
+                  </View>
 
                   <View style={styles.tagContainer}>
                     {item.tags.map((tag, i) => (
@@ -313,6 +396,34 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
 
+  /* 필터 버튼 */
+  filterButtonContainer: {
+    paddingHorizontal: 22,
+    marginTop: 12,
+  },
+  filterButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: "#F5F5F5",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    alignItems: "center",
+  },
+  filterButtonActive: {
+    backgroundColor: "#4CC439",
+    borderColor: "#4CC439",
+  },
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666",
+    fontFamily: "Pretendard",
+  },
+  filterButtonTextActive: {
+    color: "#fff",
+  },
+
   /* 리스트 아이템 */
   itemRow: {
     flexDirection: "row",
@@ -324,6 +435,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
   },
   itemText: { flex: 1 },
+  nameContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   name: { fontSize: 15, fontWeight: "600", fontFamily: "Pretendard" },
 
   /* 태그 */

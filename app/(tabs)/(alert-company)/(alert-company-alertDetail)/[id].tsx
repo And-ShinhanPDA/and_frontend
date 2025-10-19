@@ -1,14 +1,12 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 
 import BollingerBandConditionReadonly from "@/components/add-card/bollingerband/bollingerband-condition-readonly";
@@ -23,6 +21,7 @@ import CustomHeader from "@/components/header/header";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { alertService } from "@/services/alert-service";
 import { presetService } from "@/services/preset-service";
 import { parseConditionsForCards } from "@/utils/parseConditions";
@@ -34,39 +33,50 @@ export default function CompanyAlertDetail() {
   const [isPresetOpen, setIsPresetOpen] = useState(false);
   const tabs = ["제목", "가격", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
   const { accessToken } = useAuth();
+  const { showAlert, AlertComponent } = useCustomAlert();
 
   // 알림 상세 데이터 state
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [alertData, setAlertData] = useState<any>(null);
   const [title, setTitle] = useState("");
 
-  // 알림 상세 조회
-  useEffect(() => {
-    const fetchAlertDetail = async () => {
-      if (!accessToken || !id) return;
+  // 알림 상세 조회 함수
+  const fetchAlertDetail = async () => {
+    if (!accessToken || !id) return;
 
-      try {
-        setLoading(true);
-        const response = await alertService.getAlertDetail(
-          accessToken,
-          String(id)
-        );
-        console.log("알림 상세 조회 응답:", response);
+    try {
+      setLoading(true);
+      const response = await alertService.getAlertDetail(
+        accessToken,
+        String(id)
+      );
+      console.log("🔄 [알림 상세] 조회 응답:", response);
 
-        if (response?.data) {
-          setAlertData(response.data);
-          setTitle(response.data.title || "");
-        }
-      } catch (error) {
-        console.error("알림 상세 조회 실패:", error);
-        alert("알림 정보를 불러오는데 실패했습니다.");
-      } finally {
-        setLoading(false);
+      if (response?.data) {
+        setAlertData(response.data);
+        setTitle(response.data.title || "");
+        console.log("✅ [알림 상세] 데이터 업데이트 완료");
+        console.log("🤖 [AI 피드백]:", response.data.aiFeedback || "(없음)");
       }
-    };
+    } catch (error) {
+      console.error("❌ [알림 상세] 조회 실패:", error);
+      showAlert({
+        message: "알림 정보를 불러오는데 실패했습니다.",
+        buttons: [{ text: "확인" }],
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchAlertDetail();
-  }, [id, accessToken]);
+  // 화면이 포커스될 때마다 데이터 새로고침
+  useFocusEffect(
+    useCallback(() => {
+      console.log("🎯 [useFocusEffect] 기업 알림 상세 화면 포커스 - 데이터 새로고침");
+      fetchAlertDetail();
+    }, [accessToken, id])
+  );
 
   // 파싱된 조건 데이터
   const parsedConditions = alertData?.conditions
@@ -74,38 +84,53 @@ export default function CompanyAlertDetail() {
     : null;
 
   const handlePresetAdd = () => {
-    Alert.alert("프리셋 추가", "이 조건을 프리셋으로 추가하시겠습니까?", [
-      {
-        text: "취소",
-        style: "cancel",
-      },
-      {
-        text: "추가",
-        onPress: async () => {
-          if (!accessToken || !alertData) return;
-
-          try {
-            const payload = {
-              title: alertData.title,
-              conditions: alertData.conditions,
-              category: "custom", // 사용자 프리셋으로 추가
-            };
-
-            console.log("[프리셋 추가] payload:", payload);
-            const response = await presetService.createPreset(
-              accessToken,
-              payload
-            );
-            console.log("[프리셋 추가 성공]:", response);
-
-            Alert.alert("성공", "프리셋이 추가되었습니다.");
-          } catch (error) {
-            console.error("[프리셋 추가 실패]:", error);
-            Alert.alert("실패", "프리셋 추가에 실패했습니다.");
-          }
+    showAlert({
+      title: "프리셋 추가",
+      message: "이 조건을 프리셋으로 추가하시겠습니까?",
+      buttons: [
+        {
+          text: "취소",
+          style: "cancel",
         },
-      },
-    ]);
+        {
+          text: "추가",
+          onPress: async () => {
+            if (!accessToken || !alertData) return;
+
+            setSaving(true);
+            try {
+              const payload = {
+                title: alertData.title,
+                conditions: alertData.conditions,
+                category: "custom", // 사용자 프리셋으로 추가
+              };
+
+              console.log("[프리셋 추가] payload:", payload);
+              const response = await presetService.createPreset(
+                accessToken,
+                payload
+              );
+              console.log("[프리셋 추가 성공]:", response);
+              setSaving(false);
+
+              showAlert({
+                title: "성공",
+                message: "프리셋이 추가되었습니다.",
+                buttons: [{ text: "확인" }],
+              });
+            } catch (error) {
+              console.error("[프리셋 추가 실패]:", error);
+              setSaving(false);
+              showAlert({
+                title: "실패",
+                message: "프리셋 추가에 실패했습니다.",
+                buttons: [{ text: "확인" }],
+              });
+            }
+          },
+        },
+      ],
+    });
   };
 
   if (loading) {
@@ -127,6 +152,14 @@ export default function CompanyAlertDetail() {
 
   return (
     <View style={styles.container}>
+      {/* 로딩 오버레이 */}
+      {saving && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#4CC439" />
+          <Text style={styles.savingText}>처리 중...</Text>
+        </View>
+      )}
+
       {/* 헤더 */}
       <CustomHeader
         title={alertData.title || "알림 상세"}
@@ -161,6 +194,14 @@ export default function CompanyAlertDetail() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContentContainer}
       >
+        {/* AI 리포트 */}
+        {alertData?.aiFeedback && (
+          <View style={styles.aiReportContainer}>
+            <Text style={styles.aiReportTitle}>AI 리포트</Text>
+            <Text style={styles.aiReportContent}>{alertData.aiFeedback}</Text>
+          </View>
+        )}
+
         {/* 이건 별로면 지우기 */}
         {/* 제목 (읽기 전용) */}
         <View style={styles.titleContainer}>
@@ -195,6 +236,9 @@ export default function CompanyAlertDetail() {
       >
         <PresetSelect onClose={() => setIsPresetOpen(false)} />
       </ConditionBottomSheet>
+
+      {/* 커스텀 Alert */}
+      <AlertComponent />
     </View>
   );
 }
@@ -223,13 +267,14 @@ const styles = StyleSheet.create({
 
   tabBarContainer: {
     position: "relative",
-    marginTop: 10,
-    marginBottom: 10,
+    marginTop: 16,
+    marginBottom: 12,
+    backgroundColor: "#fff",
   },
   tabBarContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   tabBarBorder: {
     position: "absolute",
@@ -240,88 +285,136 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E5E5",
   },
   tabItem: {
-    marginRight: 20,
-    paddingVertical: 4,
+    marginRight: 24,
+    paddingVertical: 6,
   },
   tabText: {
     fontSize: 15,
-    fontWeight: "500",
+    fontWeight: "600",
     color: "#333",
     lineHeight: 20,
+    fontFamily: "Pretendard",
   },
 
+  aiReportContainer: {
+    backgroundColor: "#F0FDF4",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    marginVertical: 12,
+  },
+  aiReportTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#15803D",
+    marginBottom: 10,
+    fontFamily: "Pretendard",
+  },
+  aiReportContent: {
+    fontSize: 14,
+    color: "#334155",
+    lineHeight: 22,
+    fontFamily: "Pretendard",
+  },
   titleContainer: {
-    backgroundColor: "#F7F7F7",
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    marginVertical: 10,
+    backgroundColor: "#F9F9F9",
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
   },
   titleLabel: {
     fontSize: 13,
     color: "#666",
-    marginBottom: 6,
+    marginBottom: 8,
+    fontWeight: "500",
+    fontFamily: "Pretendard",
   },
   titleValue: {
     fontSize: 16,
-    color: "#333",
+    color: "#111",
     fontWeight: "600",
+    fontFamily: "Pretendard",
+    lineHeight: 22,
   },
 
   divider: {
-    height: 7,
+    height: 8,
     backgroundColor: "#F5F6F8",
-    marginVertical: 10,
-    marginHorizontal: -16,
-    width: "100%",
-    alignSelf: "stretch",
+    marginVertical: 14,
+    marginHorizontal: -20,
+    width: "120%",
+    alignSelf: "center",
   },
 
   scrollContent: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
 
   scrollContentContainer: {
-    paddingBottom: 20,
+    paddingBottom: 30,
+    paddingTop: 4,
   },
 
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
     backgroundColor: "#fff",
     borderTopWidth: 1,
     borderTopColor: "#E5E5E5",
-    elevation: 5,
-    paddingBottom: 30,
+    paddingBottom: 32,
   },
   presetButton: {
     flex: 1,
     borderWidth: 1,
     borderColor: "#E5E5E5",
     borderRadius: 10,
-    paddingVertical: 13,
+    paddingVertical: 14,
     alignItems: "center",
     marginRight: 8,
-    backgroundColor: "#F7F7F7",
+    backgroundColor: "#F9F9F9",
   },
   presetText: {
     fontSize: 15,
     color: "#333",
-    fontWeight: "500",
+    fontWeight: "600",
+    fontFamily: "Pretendard",
   },
   saveButton: {
     flex: 1,
     backgroundColor: "#4CC439",
     borderRadius: 10,
-    paddingVertical: 13,
+    paddingVertical: 14,
     alignItems: "center",
     marginLeft: 8,
   },
   saveText: {
     fontSize: 15,
+    color: "#fff",
+    fontWeight: "700",
+    fontFamily: "Pretendard",
+  },
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
+  },
+  savingText: {
+    marginTop: 12,
+    fontSize: 16,
     color: "#fff",
     fontWeight: "600",
   },

@@ -1,6 +1,9 @@
+import { NativeModules } from "react-native";
 import SharedGroupPreferences from "react-native-shared-group-preferences";
 
 export const APP_GROUP_ID = "group.react.native.AND.widget";
+
+const { WidgetReloader } = NativeModules;
 
 /**
  * ✅ 조건 알림 데이터 저장
@@ -22,7 +25,10 @@ export const saveActivatedConditions = async (data: any) => {
     console.log(`📊 [Widget] 저장된 조건 수: ${data.length}개`);
 
     // 위젯 즉시 갱신
-    // NativeModules.SharedWidget?.reloadAllTimelines?.();
+    if (WidgetReloader) {
+      WidgetReloader.reloadAllWidgets();
+      console.log("🔄 [Widget] 위젯 새로고침 요청 완료");
+    }
   } catch (e) {
     console.error("❌ [Widget] 조건 알림 데이터 저장 실패:", e);
   }
@@ -48,7 +54,10 @@ export const saveActivatedCompanies = async (data: any) => {
     console.log(`📊 [Widget] 저장된 기업 수: ${data.length}개`);
 
     // 위젯 즉시 갱신
-    // NativeModules.SharedWidget?.reloadAllTimelines?.();
+    if (WidgetReloader) {
+      WidgetReloader.reloadAllWidgets();
+      console.log("🔄 [Widget] 위젯 새로고침 요청 완료");
+    }
   } catch (e) {
     console.error("❌ [Widget] 기업 알림 데이터 저장 실패:", e);
   }
@@ -63,8 +72,11 @@ export const setWidgetViewType = async (type: "conditions" | "companies") => {
     await SharedGroupPreferences.setItem("widgetViewType", type, APP_GROUP_ID);
     console.log("✅ [Widget] 뷰 타입 저장 성공:", type);
 
-    // TODO: 위젯 새로고침 → Swift에서 viewType 읽어서 조건/기업 탭 전환
-    // NativeModules.SharedWidget?.reloadAllTimelines?.();
+    // 위젯 새로고침
+    if (WidgetReloader) {
+      WidgetReloader.reloadAllWidgets();
+      console.log("🔄 [Widget] 위젯 새로고침 요청 완료");
+    }
   } catch (e) {
     console.error("❌ [Widget] 뷰 타입 저장 실패:", e);
   }
@@ -74,13 +86,14 @@ export const setWidgetViewType = async (type: "conditions" | "companies") => {
  * ✅ 위젯 강제 새로고침 (디버깅용)
  */
 export const refreshWidgetManually = () => {
-  console.log("🔄 위젯 강제 새로고침 (임시 비활성화)");
-  return;
-
-  // try {
-  //   // NativeModules.SharedWidget?.reloadAllTimelines?.();
-  //   console.log("🔄 위젯 강제 새로고침 요청 완료 (주석 처리됨)");
-  // } catch (e) {
-  //   console.error("❌ 위젯 강제 새로고침 실패:", e);
-  // }
+  try {
+    if (WidgetReloader) {
+      WidgetReloader.reloadAllWidgets();
+      console.log("🔄 [Widget] 위젯 강제 새로고침 요청 완료");
+    } else {
+      console.warn("⚠️ [Widget] WidgetReloader 모듈을 찾을 수 없습니다");
+    }
+  } catch (e) {
+    console.error("❌ [Widget] 위젯 강제 새로고침 실패:", e);
+  }
 };

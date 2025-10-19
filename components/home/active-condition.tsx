@@ -1,8 +1,9 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 import { saveActivatedConditions } from "@/services/widgetShare";
+import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import { Animated, Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 type Condition = {
   id: number;
@@ -50,6 +51,7 @@ const BlinkingDot = () => {
 export default function ActivatedConditionCard() {
   const [conditions, setConditions] = useState<Condition[]>([]);
   const { accessToken } = useAuth();
+  const router = useRouter();
 
   // 실제 API로부터 조건 알림 데이터 불러오기
   const fetchTriggeredConditionAlerts = async () => {
@@ -121,24 +123,38 @@ export default function ActivatedConditionCard() {
       </View>
       <View style={styles.card}>
         {conditions.length === 0 ? (
-          <Text style={{ color: "#666" }}>
-            현재 활성화된 조건 알림이 없습니다.
-          </Text>
+          <View style={styles.emptyContainer}>
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={styles.emptyIcon}
+              resizeMode="contain"
+            />
+            <Text style={styles.emptyText}>
+              현재 활성화된 조건 알림이 없습니다
+            </Text>
+          </View>
         ) : (
           conditions.map((item, index) => {
             const isLast = index === conditions.length - 1;
 
             return (
-              <View
-                style={[styles.row, isLast && styles.rowLast]}
+              <Pressable
                 key={item.id}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(tabs)/(alert-condition)/(alert-condition-companyList)/[id]",
+                    params: { id: String(item.id), name: item.name, tags: "[]" },
+                  })
+                }
               >
-                <View style={styles.left}>
-                  <View style={styles.dot} />
-                  <Text style={styles.name}>{item.name}</Text>
+                <View style={[styles.row, isLast && styles.rowLast]}>
+                  <View style={styles.left}>
+                    <View style={styles.dot} />
+                    <Text style={styles.name}>{item.name}</Text>
+                  </View>
+                  <Text style={styles.count}>{item.count}개 활성화</Text>
                 </View>
-                <Text style={styles.count}>{item.count}개 활성화</Text>
-              </View>
+              </Pressable>
             );
           })
         )}
@@ -161,6 +177,24 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     elevation: 3,
     marginBottom: 24,
+    minHeight: 120,
+    justifyContent: "center",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 20,
+  },
+  emptyIcon: {
+    width: 80,
+    height: 80,
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#999",
+    fontFamily: "Pretendard",
+    textAlign: "center",
   },
   cardTitle: {
     fontSize: 16,

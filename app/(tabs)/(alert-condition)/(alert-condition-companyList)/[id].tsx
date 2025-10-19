@@ -1,20 +1,22 @@
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
-  FlatList,
-  Image,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    FlatList,
+    Image,
+    NativeScrollEvent,
+    NativeSyntheticEvent,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import ShinhanLogo from "@/assets/images/companies/logo_12_신한금융그룹.svg";
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
+import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
+import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 
 type Company = {
@@ -34,6 +36,7 @@ export default function AlertConditionDetail() {
     tags: string;
   }>();
   const { signOut, user } = useAuth();
+  const [isPresetOpen, setIsPresetOpen] = useState(false);
 
   
   const parsedTags = tags ? JSON.parse(tags) : [];
@@ -223,7 +226,7 @@ export default function AlertConditionDetail() {
         title="조건 검색"
         showBackButton={true}
         rightButtons="preset-and-mypage"
-        onPresetPress={() => console.log("프리셋으로 추가")}
+        onPresetPress={() => setIsPresetOpen(true)}
         userName={user?.name || "사용자"}
         onLogoutConfirm={handleLogout}
       />
@@ -347,6 +350,16 @@ export default function AlertConditionDetail() {
           />
         </ScrollView>
       </View>
+
+      {/* 프리셋 모달 */}
+      <ConditionBottomSheet
+        visible={isPresetOpen}
+        onClose={() => setIsPresetOpen(false)}
+        ratio={0.8}
+      >
+        <PresetSelect onClose={() => setIsPresetOpen(false)} />
+      </ConditionBottomSheet>
+
       <CustomBottomTab activeTab="조건 검색" />
     </View>
   );

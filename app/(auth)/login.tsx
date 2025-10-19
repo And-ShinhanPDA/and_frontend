@@ -2,13 +2,12 @@ import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { AuthTextInput } from "@/components/ui/TextInput";
 import { Typography } from "@/components/ui/Typography";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { getDeviceId, getFCMToken } from "@/utils/deviceInfo";
 import { requestNotificationPermission } from "@/utils/notificationPermission";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    Alert,
-    Clipboard,
     Keyboard,
     Pressable,
     StyleSheet,
@@ -24,6 +23,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [tokenData, setTokenData] = useState({ fcmToken: "", deviceId: "" });
+  const { showAlert, AlertComponent } = useCustomAlert();
 
   // 로그인 상태가 변경되면 자동으로 메인 화면으로 이동
   useEffect(() => {
@@ -35,7 +35,11 @@ export default function LoginScreen() {
 
   const onSubmit = async () => {
     if (!email || !password) {
-      Alert.alert("입력 오류", "이메일과 비밀번호를 입력해주세요.");
+      showAlert({
+        title: "입력 오류",
+        message: "이메일과 비밀번호를 입력해주세요.",
+        buttons: [{ text: "확인" }],
+      });
       return;
     }
 
@@ -91,22 +95,27 @@ export default function LoginScreen() {
 
       console.log("📋 [LOGIN] 에러 상세:", errorDetails);
 
-      Alert.alert(
-        "로그인 실패",
-        `${errorDetails.message}\n\n` +
+      showAlert({
+        title: "로그인 실패",
+        message:
+          `${errorDetails.message}\n\n` +
           `Status: ${errorDetails.status}\n` +
           `URL: ${errorDetails.url}\n\n` +
           `백엔드 응답:\n${errorDetails.data}`,
-        [{ text: "확인" }]
-      );
+        buttons: [{ text: "확인" }],
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const copyToClipboard = (text: string, label: string) => {
-    Clipboard.setString(text);
-    Alert.alert("복사 완료", `${label}가 클립보드에 복사되었습니다.`);
+    // Clipboard.setString(text);
+    showAlert({
+      title: "복사 완료",
+      message: `${label}가 클립보드에 복사되었습니다.`,
+      buttons: [{ text: "확인" }],
+    });
   };
 
   return (
@@ -154,76 +163,8 @@ export default function LoginScreen() {
         </View>
       </TouchableWithoutFeedback>
 
-      {/* 토큰 정보 모달 */}
-      {/* <Modal
-        visible={showTokenModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => {
-          setShowTokenModal(false);
-          router.replace("/(tabs)");
-        }}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Typography weight="700" size={20} style={styles.modalTitle}>
-              로그인 성공 🎉
-            </Typography>
-
-            <ScrollView style={styles.modalContent}>
-              <Typography weight="600" size={16} style={styles.sectionTitle}>
-                📱 디바이스 정보
-              </Typography>
-
-              <View style={styles.tokenSection}>
-                <Typography weight="600" size={14} style={styles.label}>
-                  FCM Token:
-                </Typography>
-                <Pressable
-                  style={styles.tokenBox}
-                  onPress={() =>
-                    copyToClipboard(tokenData.fcmToken, "FCM Token")
-                  }
-                >
-                  <Typography weight="400" size={12} style={styles.tokenText}>
-                    {tokenData.fcmToken || "(권한 없음)"}
-                  </Typography>
-                </Pressable>
-                <Typography weight="400" size={12} style={styles.hint}>
-                  탭하여 복사
-                </Typography>
-              </View>
-
-              <View style={styles.tokenSection}>
-                <Typography weight="600" size={14} style={styles.label}>
-                  Device ID:
-                </Typography>
-                <Pressable
-                  style={styles.tokenBox}
-                  onPress={() =>
-                    copyToClipboard(tokenData.deviceId, "Device ID")
-                  }
-                >
-                  <Typography weight="400" size={12} style={styles.tokenText}>
-                    {tokenData.deviceId}
-                  </Typography>
-                </Pressable>
-                <Typography weight="400" size={12} style={styles.hint}>
-                  탭하여 복사
-                </Typography>
-              </View>
-            </ScrollView>
-
-            <PrimaryButton
-              title="확인"
-              onPress={() => {
-                setShowTokenModal(false);
-                router.replace("/(tabs)");
-              }}
-            />
-          </View>
-        </View>
-      </Modal> */}
+      {/* 커스텀 Alert */}
+      <AlertComponent />
     </>
   );
 }

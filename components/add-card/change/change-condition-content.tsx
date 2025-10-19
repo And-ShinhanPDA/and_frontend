@@ -2,14 +2,14 @@ import ConditionInput from "@/components/condition/condition-input";
 import ConditionSection from "@/components/condition/condition-section";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  LayoutAnimation,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  UIManager,
-  View,
+    LayoutAnimation,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    UIManager,
+    View,
 } from "react-native";
 import ConditionMinus from "../../../assets/images/condition-minus.svg";
 
@@ -121,7 +121,14 @@ export default function ChangeConditionContent({
   };
 
   return (
-    <ScrollView style={styles.wrapper}>
+    <ScrollView 
+      style={styles.wrapper}
+      showsVerticalScrollIndicator={true}
+      bounces={true}
+      scrollEventThrottle={16}
+      nestedScrollEnabled={true}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.container}>
         <Text style={styles.sectionTitle}>변동률 (%)</Text>
 
@@ -242,8 +249,14 @@ export default function ChangeConditionContent({
 }
 
 const styles = StyleSheet.create({
-  wrapper: { flex: 1, backgroundColor: "#fff" },
-  container: { paddingHorizontal: 16, paddingVertical: 10 },
+  wrapper: { 
+    flex: 1, 
+    backgroundColor: "#fff",
+  },
+  container: { 
+    paddingHorizontal: 0, 
+    paddingVertical: 10,
+  },
   sectionTitle: { fontSize: 15, fontWeight: "600", marginBottom: 10 },
   rowContainer: {
     flexDirection: "row",

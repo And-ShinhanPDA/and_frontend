@@ -4,12 +4,12 @@ import { Typography } from "@/components/ui/Typography";
 import { useRouter } from "expo-router";
 import React, { ReactNode, useState } from "react";
 import {
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Image,
+    Pressable,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 type RightButtonType =
@@ -60,6 +60,14 @@ export default function CustomHeader({
 }: CustomHeaderProps) {
   const router = useRouter();
   const [logoutVisible, setLogoutVisible] = useState(false);
+
+  // 제목 길이 제한 함수 (8글자 초과 시 ... 처리)
+  const truncateTitle = (text: string): string => {
+    if (text.length > 8) {
+      return text.substring(0, 8) + "...";
+    }
+    return text;
+  };
 
   const handleBackPress = () => {
     if (onBackPress) onBackPress();
@@ -214,7 +222,7 @@ export default function CustomHeader({
           (leftContent === "title" ? (
             typeof title === "string" ? (
               <Text style={styles.headerTitle} numberOfLines={1}>
-                {title}
+                {rightButtons === "preset-and-modify" ? truncateTitle(title) : title}
               </Text>
             ) : (
               title

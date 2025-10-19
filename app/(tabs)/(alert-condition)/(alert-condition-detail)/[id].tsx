@@ -1,4 +1,3 @@
-import { CustomBottomTab } from "@/components/bottom/bottom";
 import BollingerBandConditionReadonly from "@/components/add-card/bollingerband/bollingerband-condition-readonly";
 import RSIConditionReadonlyCard from "@/components/add-card/rsi/rsi-condition-readonly";
 import SMAConditionReadonlyCard from "@/components/add-card/sma/sma-condition-readonly";
@@ -7,23 +6,21 @@ import Week52ConditionReadonlyCard from "@/components/add-card/week52/week52-con
 import CustomHeader from "@/components/header/header";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
-import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { alertService } from "@/services/alert-service";
 import { presetService } from "@/services/preset-service";
 import { parseConditionsForCards } from "@/utils/parseConditions";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useState } from "react";
+import {
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from "react-native";
 
 // TODO: types로 빼기
 type AlertCondition = {
@@ -40,7 +37,9 @@ export default function ConditionAlertDetail() {
     tags: string;
   }>();
   const { accessToken, signOut, user } = useAuth();
+  const { showAlert, AlertComponent } = useCustomAlert();
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [alertData, setAlertData] = useState<any>(null);
   const [isPresetOpen, setIsPresetOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -61,7 +60,7 @@ export default function ConditionAlertDetail() {
   };
 
   // 특정 조건 알림 상세 조회
-  const fetchAlertDetail = useCallback(async () => {
+  const fetchAlertDetail = async () => {
     if (!accessToken || !id) return;
 
     try {
@@ -70,29 +69,31 @@ export default function ConditionAlertDetail() {
         accessToken,
         String(id)
       );
-      console.log("조건 알림 상세 조회 응답:", response);
+      console.log("🔄 [조건 알림 상세] 조회 응답:", response);
 
       if (response?.data) {
         setAlertData(response.data);
         setTitle(response.data.title || "");
+        console.log("✅ [조건 알림 상세] 데이터 업데이트 완료");
+        console.log("🤖 [AI 피드백]:", response.data.aiFeedback || "(없음)");
       }
     } catch (error) {
-      console.error("조건 알림 상세 조회 실패:", error);
-      alert("조건 정보를 불러오는데 실패했습니다.");
+      console.error("❌ [조건 알림 상세] 조회 실패:", error);
+      showAlert({
+        message: "조건 정보를 불러오는데 실패했습니다.",
+        buttons: [{ text: "확인" }],
+      });
     } finally {
       setLoading(false);
     }
-  }, [id, accessToken]);
-
-  useEffect(() => {
-    fetchAlertDetail();
-  }, [fetchAlertDetail]);
+  };
 
   // 화면 포커스 시 데이터 새로고침
   useFocusEffect(
     useCallback(() => {
+      console.log("🎯 [useFocusEffect] 조건 알림 상세 화면 포커스 - 데이터 새로고침");
       fetchAlertDetail();
-    }, [fetchAlertDetail])
+    }, [accessToken, id])
   );
 
   // 파싱된 조건 데이터
@@ -101,38 +102,53 @@ export default function ConditionAlertDetail() {
     : null;
 
   const handlePresetAdd = () => {
-    Alert.alert("프리셋 추가", "이 조건을 프리셋으로 추가하시겠습니까?", [
-      {
-        text: "취소",
-        style: "cancel",
-      },
-      {
-        text: "추가",
-        onPress: async () => {
-          if (!accessToken || !alertData) return;
-
-          try {
-            const payload = {
-              title: alertData.title,
-              conditions: alertData.conditions,
-              category: "custom", // 사용자 프리셋으로 추가
-            };
-
-            console.log("[프리셋 추가] payload:", payload);
-            const response = await presetService.createPreset(
-              accessToken,
-              payload
-            );
-            console.log("[프리셋 추가 성공]:", response);
-
-            Alert.alert("성공", "프리셋이 추가되었습니다.");
-          } catch (error) {
-            console.error("[프리셋 추가 실패]:", error);
-            Alert.alert("실패", "프리셋 추가에 실패했습니다.");
-          }
+    showAlert({
+      title: "프리셋 추가",
+      message: "이 조건을 프리셋으로 추가하시겠습니까?",
+      buttons: [
+        {
+          text: "취소",
+          style: "cancel",
         },
-      },
-    ]);
+        {
+          text: "추가",
+          onPress: async () => {
+            if (!accessToken || !alertData) return;
+
+            setSaving(true);
+            try {
+              const payload = {
+                title: alertData.title,
+                conditions: alertData.conditions,
+                category: "custom", // 사용자 프리셋으로 추가
+              };
+
+              console.log("[프리셋 추가] payload:", payload);
+              const response = await presetService.createPreset(
+                accessToken,
+                payload
+              );
+              console.log("[프리셋 추가 성공]:", response);
+              setSaving(false);
+
+              showAlert({
+                title: "성공",
+                message: "프리셋이 추가되었습니다.",
+                buttons: [{ text: "확인" }],
+              });
+            } catch (error) {
+              console.error("[프리셋 추가 실패]:", error);
+              setSaving(false);
+              showAlert({
+                title: "실패",
+                message: "프리셋 추가에 실패했습니다.",
+                buttons: [{ text: "확인" }],
+              });
+            }
+          },
+        },
+      ],
+    });
   };
 
   if (loading) {
@@ -154,6 +170,14 @@ export default function ConditionAlertDetail() {
 
   return (
     <View style={styles.container}>
+      {/* 로딩 오버레이 */}
+      {saving && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#4CC439" />
+          <Text style={styles.savingText}>처리 중...</Text>
+        </View>
+      )}
+
       {/* 헤더 */}
       <CustomHeader
         title={alertData.title || "조건 상세"}
@@ -189,6 +213,14 @@ export default function ConditionAlertDetail() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContentContainer}
       >
+        {/* AI 리포트 */}
+        {alertData?.aiFeedback && (
+          <View style={styles.aiReportContainer}>
+            <Text style={styles.aiReportTitle}>AI 리포트</Text>
+            <Text style={styles.aiReportContent}>{alertData.aiFeedback}</Text>
+          </View>
+        )}
+
         {/* 제목 (읽기 전용) */}
         <View style={styles.titleContainer}>
           <Text style={styles.titleLabel}>알림 제목</Text>
@@ -217,6 +249,9 @@ export default function ConditionAlertDetail() {
       >
         <PresetSelect onClose={() => setIsPresetOpen(false)} />
       </ConditionBottomSheet>
+
+      {/* 커스텀 Alert */}
+      <AlertComponent />
     </View>
   );
 }
@@ -245,13 +280,14 @@ const styles = StyleSheet.create({
 
   tabBarContainer: {
     position: "relative",
-    marginTop: 10,
-    marginBottom: 10,
+    marginTop: 16,
+    marginBottom: 12,
+    backgroundColor: "#fff",
   },
   tabBarContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   tabBarBorder: {
     position: "absolute",
@@ -262,49 +298,96 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E5E5",
   },
   tabItem: {
-    marginRight: 20,
-    paddingVertical: 4,
+    marginRight: 24,
+    paddingVertical: 6,
   },
   tabText: {
     fontSize: 15,
-    fontWeight: "500",
+    fontWeight: "600",
     color: "#333",
     lineHeight: 20,
+    fontFamily: "Pretendard",
   },
 
+  aiReportContainer: {
+    backgroundColor: "#F0FDF4",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    marginVertical: 12,
+  },
+  aiReportTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#15803D",
+    marginBottom: 10,
+    fontFamily: "Pretendard",
+  },
+  aiReportContent: {
+    fontSize: 14,
+    color: "#334155",
+    lineHeight: 22,
+    fontFamily: "Pretendard",
+  },
   titleContainer: {
-    backgroundColor: "#F7F7F7",
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    marginVertical: 10,
+    backgroundColor: "#F9F9F9",
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
   },
   titleLabel: {
     fontSize: 13,
     color: "#666",
-    marginBottom: 6,
+    marginBottom: 8,
+    fontWeight: "500",
+    fontFamily: "Pretendard",
   },
   titleValue: {
     fontSize: 16,
-    color: "#333",
+    color: "#111",
     fontWeight: "600",
+    fontFamily: "Pretendard",
+    lineHeight: 22,
   },
 
   divider: {
-    height: 7,
+    height: 8,
     backgroundColor: "#F5F6F8",
-    marginVertical: 10,
-    marginHorizontal: -16,
-    width: "100%",
-    alignSelf: "stretch",
+    marginVertical: 14,
+    marginHorizontal: -20,
+    width: "120%",
+    alignSelf: "center",
   },
 
   scrollContent: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
 
   scrollContentContainer: {
-    paddingBottom: 20,
+    paddingBottom: 30,
+    paddingTop: 4,
+  },
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
+  },
+  savingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#fff",
+    fontWeight: "600",
   },
 });

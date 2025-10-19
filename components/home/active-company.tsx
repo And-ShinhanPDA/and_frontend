@@ -2,11 +2,13 @@ import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 import { saveActivatedCompanies } from "@/services/widgetShare";
+import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
     Animated,
     Image,
     ImageSourcePropType,
+    Pressable,
     StyleSheet,
     Text,
     View,
@@ -52,6 +54,7 @@ const BlinkingDot = () => {
 export default function ActivatedCompanyCard() {
   const [companies, setCompanies] = useState<CompanyAlert[]>([]);
   const { accessToken } = useAuth();
+  const router = useRouter();
 
   // 실제 API로부터 데이터 불러오기
   const fetchTriggeredAlerts = async () => {
@@ -135,30 +138,44 @@ export default function ActivatedCompanyCard() {
 
       <View style={styles.card}>
         {companies.length === 0 ? (
-          <Text style={{ color: "#666" }}>
-            현재 활성화된 기업 알림이 없습니다.
-          </Text>
+          <View style={styles.emptyContainer}>
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={styles.emptyIcon}
+              resizeMode="contain"
+            />
+            <Text style={styles.emptyText}>
+              현재 활성화된 기업 알림이 없습니다
+            </Text>
+          </View>
         ) : (
           companies.map((item, index) => {
             const isLast = index === companies.length - 1;
             return (
-              <View
+              <Pressable
                 key={item.id}
-                style={[styles.row, isLast && styles.rowLast]}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+                    params: { id: item.stockCode, name: item.name },
+                  })
+                }
               >
-                <View style={styles.left}>
-                  <Image
-                    source={item.logo}
-                    style={styles.logo}
-                    resizeMode="contain"
-                  />
-                  <View style={{ marginLeft: 8 }}>
-                    <Text style={styles.name}>{item.name}</Text>
-                    <Text style={styles.price}>{item.price}</Text>
+                <View style={[styles.row, isLast && styles.rowLast]}>
+                  <View style={styles.left}>
+                    <Image
+                      source={item.logo}
+                      style={styles.logo}
+                      resizeMode="contain"
+                    />
+                    <View style={{ marginLeft: 8 }}>
+                      <Text style={styles.name}>{item.name}</Text>
+                      <Text style={styles.price}>{item.price}</Text>
+                    </View>
                   </View>
+                  <Text style={styles.count}>{item.count}개</Text>
                 </View>
-                <Text style={styles.count}>{item.count}개</Text>
-              </View>
+              </Pressable>
             );
           })
         )}
@@ -183,6 +200,24 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     elevation: 3,
     marginBottom: 24,
+    minHeight: 120,
+    justifyContent: "center",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 20,
+  },
+  emptyIcon: {
+    width: 80,
+    height: 80,
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#999",
+    fontFamily: "Pretendard",
+    textAlign: "center",
   },
   cardTitle: {
     fontSize: 16,

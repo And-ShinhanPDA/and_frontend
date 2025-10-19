@@ -1,5 +1,7 @@
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
+import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
+import PresetSelect from "@/components/preset/preset-select";
 import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
@@ -18,8 +20,6 @@ import {
   View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
-import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
-import PresetSelect from "@/components/preset/preset-select";
 
 type CompanyAlert = {
   stockCode: string;
@@ -27,6 +27,44 @@ type CompanyAlert = {
   logo?: ImageSourcePropType;
   alertCount: number;
   isToggle: boolean;
+  isTriggered?: boolean; // 조건 만족하여 활성화된 상태
+};
+
+// 깜빡이는 점 컴포넌트
+const BlinkingDot = () => {
+  const opacity = React.useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.2,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [opacity]);
+
+  return (
+    <Animated.View
+      style={{
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: "#EF4444",
+        opacity: opacity,
+        marginRight: 6,
+      }}
+    />
+  );
 };
 
 export default function AlertCompany() {
@@ -38,6 +76,7 @@ export default function AlertCompany() {
   const [deleteWidth, setDeleteWidth] = useState(80);
   const [companies, setCompanies] = useState<CompanyAlert[]>([]);
   const [isPresetOpen, setIsPresetOpen] = useState(false);
+  const [showOnlyActive, setShowOnlyActive] = useState(false); // 활성화된 알림만 보기
 
   // 로그아웃 핸들러
   const handleLogout = async () => {
@@ -57,8 +96,17 @@ export default function AlertCompany() {
       return;
     }
     try {
+      // 1. 기업 알림 리스트 조회
       const res = await alertService.getAlertedCompanies(accessToken);
       console.log("[알림 기업 응답]:", res);
+
+      // 2. Triggered 알림 조회 (조건 만족한 알림들)
+      const triggeredRes = await alertService.getTriggeredAlerts(accessToken);
+      const triggeredStockCodes = new Set(
+        triggeredRes
+          .filter((a: any) => a.stockCode)
+          .map((a: any) => a.stockCode)
+      );
 
       const rawList = Array.isArray(res) ? res : [];
 
@@ -72,11 +120,13 @@ export default function AlertCompany() {
             logo: matchedCompany?.logo,
             alertCount: c.alertCount ?? 0,
             isToggle: c.isToggle ?? false,
+            isTriggered: triggeredStockCodes.has(c.id), // 조건 만족 여부
           };
         });
 
         setCompanies(formatted);
         console.log(`변환된 기업 수: ${formatted.length}`);
+        console.log(`Triggered 기업 수: ${triggeredStockCodes.size}`);
       }
     } catch (err) {
       console.error("[알림 조회 실패]:", err);
@@ -202,18 +252,47 @@ export default function AlertCompany() {
         />
       </View>
 
-      <SwipeListView
-        data={companies.filter((c) =>
-          c.name.toLowerCase().includes(search.toLowerCase())
-        )}
-        showsVerticalScrollIndicator={false}
-        keyExtractor={(item) => item.stockCode}
-        onRowOpen={handleRowOpen}
-        onRowClose={handleRowClose}
-        rightOpenValue={-deleteWidth}
-        disableRightSwipe
-        closeOnRowPress
-        renderItem={({ item, index }) => {
+      {/* 활성화된 알림만 보기 버튼 */}
+      <View style={styles.filterButtonContainer}>
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            showOnlyActive && styles.filterButtonActive,
+          ]}
+          onPress={() => setShowOnlyActive(!showOnlyActive)}
+        >
+          <Text
+            style={[
+              styles.filterButtonText,
+              showOnlyActive && styles.filterButtonTextActive,
+            ]}
+          >
+            {showOnlyActive ? "전체 보기" : "활성화된 기업만 보기"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {companies.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Image
+            source={require("@/assets/images/icon.png")}
+            style={styles.emptyIcon}
+          />
+          <Text style={styles.emptyText}>기업 알림을 추가해보세요!</Text>
+        </View>
+      ) : (
+        <SwipeListView
+          data={companies
+            .filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+            .filter((c) => (showOnlyActive ? c.isToggle && c.isTriggered : true))}
+          showsVerticalScrollIndicator={false}
+          keyExtractor={(item) => item.stockCode}
+          onRowOpen={handleRowOpen}
+          onRowClose={handleRowClose}
+          rightOpenValue={-deleteWidth}
+          disableRightSwipe
+          closeOnRowPress
+          renderItem={({ item, index }) => {
           const fadeAnim =
             fadeAnimations[item.stockCode] || new Animated.Value(1);
           const filtered = companies.filter((c) =>
@@ -239,12 +318,15 @@ export default function AlertCompany() {
               >
                 <Image
                   source={item.logo}
-                  style={{ width: 44, height: 44 }}
+                  style={{ width: 44, height: 44, borderRadius: 8 }}
                   resizeMode="contain"
                 />
 
                 <View style={styles.itemText}>
-                  <Text style={styles.name}>{item.name}</Text>
+                  <View style={styles.nameContainer}>
+                    {item.isToggle && item.isTriggered && <BlinkingDot />}
+                    <Text style={styles.name}>{item.name}</Text>
+                  </View>
                   <Text style={styles.subText}>
                     현재 설정 알림: {item.isToggle ? item.alertCount ?? 0 : 0}개
                   </Text>
@@ -286,7 +368,8 @@ export default function AlertCompany() {
             </TouchableOpacity>
           </View>
         )}
-      />
+        />
+      )}
 
       <TouchableOpacity
         style={styles.fab}
@@ -320,9 +403,35 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
     borderRadius: 10,
     paddingHorizontal: 14,
-    marginBottom: 18,
+    marginBottom: 12,
     height: 40,
     margin: 22,
+  },
+  filterButtonContainer: {
+    paddingHorizontal: 22,
+    marginBottom: 12,
+  },
+  filterButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: "#F5F5F5",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    alignItems: "center",
+  },
+  filterButtonActive: {
+    backgroundColor: "#4CC439",
+    borderColor: "#4CC439",
+  },
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666",
+    fontFamily: "Pretendard",
+  },
+  filterButtonTextActive: {
+    color: "#fff",
   },
   searchBar: { flex: 1, marginLeft: 6 },
   itemRow: {
@@ -333,6 +442,10 @@ const styles = StyleSheet.create({
     borderColor: "#F5F6F8",
     backgroundColor: "#fff",
     paddingHorizontal: 28,
+  },
+  nameContainer: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   itemText: { flex: 1, marginLeft: 14 },
   name: { fontSize: 15, fontWeight: "600", fontFamily: "Pretendard" },
@@ -386,5 +499,22 @@ const styles = StyleSheet.create({
     height: 15,
     resizeMode: "contain",
     marginBottom: 2,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingBottom: 100,
+  },
+  emptyIcon: {
+    width: 80,
+    height: 80,
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#999",
+    fontFamily: "Pretendard",
+    textAlign: "center",
   },
 });

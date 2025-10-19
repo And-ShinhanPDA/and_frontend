@@ -1,23 +1,23 @@
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
-import { Ionicons } from "@expo/vector-icons";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import React, { useCallback, useMemo, useState } from "react";
-import {
-  FlatList,
-  Image,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useFocusEffect, useRouter } from "expo-router";
-import { COMPANIES } from "@/constants/companies";
+import React, { useCallback, useMemo, useState } from "react";
+import {
+    FlatList,
+    Image,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type AlertHistoryItem = {
   id: number;
@@ -294,12 +294,60 @@ export default function AlertHistory() {
       <Modal
         visible={showPicker}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setShowPicker(false)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>조회 기간 설정</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>조회 기간 설정</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setStartDate(null);
+                  setEndDate(null);
+                }}
+                style={styles.resetButton}
+              >
+                <Text style={styles.resetButtonText}>초기화</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.quickButtonsContainer}>
+              <TouchableOpacity
+                style={styles.quickButton}
+                onPress={() => {
+                  const today = new Date();
+                  setStartDate(today);
+                  setEndDate(today);
+                }}
+              >
+                <Text style={styles.quickButtonText}>오늘</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickButton}
+                onPress={() => {
+                  const today = new Date();
+                  const weekAgo = new Date(today);
+                  weekAgo.setDate(today.getDate() - 7);
+                  setStartDate(weekAgo);
+                  setEndDate(today);
+                }}
+              >
+                <Text style={styles.quickButtonText}>최근 7일</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickButton}
+                onPress={() => {
+                  const today = new Date();
+                  const monthAgo = new Date(today);
+                  monthAgo.setMonth(today.getMonth() - 1);
+                  setStartDate(monthAgo);
+                  setEndDate(today);
+                }}
+              >
+                <Text style={styles.quickButtonText}>최근 1개월</Text>
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.datePickerRow}>
               <View style={styles.pickerColumn}>
@@ -311,6 +359,7 @@ export default function AlertHistory() {
                   locale="ko-KR"
                   onChange={(e, d) => d && setStartDate(d)}
                   style={styles.datePicker}
+                  maximumDate={endDate || new Date()}
                 />
               </View>
               <View style={styles.pickerColumn}>
@@ -322,6 +371,8 @@ export default function AlertHistory() {
                   locale="ko-KR"
                   onChange={(e, d) => d && setEndDate(d)}
                   style={styles.datePicker}
+                  minimumDate={startDate || undefined}
+                  maximumDate={new Date()}
                 />
               </View>
             </View>
@@ -454,38 +505,96 @@ const styles = StyleSheet.create({
 
   modalOverlay: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
-    width: "88%",
+    width: "100%",
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 18,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 24,
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: "700",
-    marginBottom: 10,
-    textAlign: "center",
+    color: "#111",
+    fontFamily: "Pretendard",
+  },
+  resetButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    backgroundColor: "#F5F5F5",
+  },
+  resetButtonText: {
+    fontSize: 13,
+    color: "#666",
+    fontWeight: "600",
+    fontFamily: "Pretendard",
+  },
+  quickButtonsContainer: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 20,
+  },
+  quickButton: {
+    flex: 1,
+    paddingVertical: 10,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 8,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  quickButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#333",
+    fontFamily: "Pretendard",
   },
   datePickerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     width: "100%",
+    marginBottom: 20,
   },
-  pickerColumn: { flex: 1, alignItems: "center" },
-  pickerLabel: { fontSize: 14, color: "#333", marginTop: 35 },
-  datePicker: { transform: [{ scale: 0.65 }], height: 90 },
+  pickerColumn: { 
+    flex: 1, 
+    alignItems: "center",
+  },
+  pickerLabel: { 
+    fontSize: 15, 
+    color: "#111", 
+    fontWeight: "600",
+    marginBottom: 10,
+    fontFamily: "Pretendard",
+  },
+  datePicker: { 
+    transform: [{ scale: 0.75 }], 
+    height: 120,
+  },
   closeBtn: {
-    marginTop: 12,
+    marginTop: 8,
     backgroundColor: "#4CC53A",
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 20,
+    borderRadius: 10,
+    paddingVertical: 14,
+    width: "100%",
+    alignItems: "center",
   },
-  closeText: { color: "#fff", fontWeight: "600" },
+  closeText: { 
+    color: "#fff", 
+    fontWeight: "700",
+    fontSize: 16,
+    fontFamily: "Pretendard",
+  },
 });

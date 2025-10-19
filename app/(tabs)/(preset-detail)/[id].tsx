@@ -1,12 +1,11 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 import BollingerBandConditionReadonly from "@/components/add-card/bollingerband/bollingerband-condition-readonly";
@@ -19,6 +18,7 @@ import VolumeConditionReadonlyCard from "@/components/add-card/volume/volume-con
 import Week52ConditionReadonlyCard from "@/components/add-card/week52/week52-condition-readonly";
 import CustomHeader from "@/components/header/header";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { presetService } from "@/services/preset-service";
 import { parseConditionsForCards } from "@/utils/parseConditions";
 
@@ -26,6 +26,7 @@ export default function PresetDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { accessToken } = useAuth();
+  const { showAlert, AlertComponent } = useCustomAlert();
 
   const [loading, setLoading] = useState(true);
   const [presetData, setPresetData] = useState<any>(null);
@@ -51,14 +52,18 @@ export default function PresetDetail() {
           if (preset) {
             setPresetData(preset);
           } else {
-            alert("프리셋을 찾을 수 없습니다.");
-            router.back();
+            showAlert({
+              message: "프리셋을 찾을 수 없습니다.",
+              buttons: [{ text: "확인", onPress: () => router.back() }],
+            });
           }
         }
       } catch (error) {
         console.error("프리셋 조회 실패:", error);
-        alert("프리셋 정보를 불러오는데 실패했습니다.");
-        router.back();
+        showAlert({
+          message: "프리셋 정보를 불러오는데 실패했습니다.",
+          buttons: [{ text: "확인", onPress: () => router.back() }],
+        });
       } finally {
         setLoading(false);
       }
@@ -90,14 +95,17 @@ export default function PresetDetail() {
   // 프리셋 삭제 (내 프리셋만)
   const handleDelete = () => {
     if (presetData?.category !== "custom") {
-      alert("내 프리셋만 삭제할 수 있습니다.");
+      showAlert({
+        message: "내 프리셋만 삭제할 수 있습니다.",
+        buttons: [{ text: "확인" }],
+      });
       return;
     }
 
-    Alert.alert(
-      "프리셋 삭제",
-      `"${presetData.title}" 프리셋을 삭제하시겠습니까?`,
-      [
+    showAlert({
+      title: "프리셋 삭제",
+      message: `"${presetData.title}" 프리셋을 삭제하시겠습니까?`,
+      buttons: [
         {
           text: "취소",
           style: "cancel",
@@ -112,22 +120,30 @@ export default function PresetDetail() {
               console.log("[프리셋 삭제 요청]:", id);
               await presetService.deletePreset(accessToken, String(id));
               console.log("[프리셋 삭제 성공]:", id);
-              alert("프리셋이 삭제되었습니다.");
-              router.back();
+              showAlert({
+                message: "프리셋이 삭제되었습니다.",
+                buttons: [{ text: "확인", onPress: () => router.back() }],
+              });
             } catch (error) {
               console.error("[프리셋 삭제 실패]:", error);
-              alert("프리셋 삭제에 실패했습니다.");
+              showAlert({
+                message: "프리셋 삭제에 실패했습니다.",
+                buttons: [{ text: "확인" }],
+              });
             }
           },
         },
-      ]
-    );
+      ],
+    });
   };
 
   // 프리셋 수정 (내 프리셋만)
   const handleModify = () => {
     if (presetData?.category !== "custom") {
-      alert("내 프리셋만 수정할 수 있습니다.");
+      showAlert({
+        message: "내 프리셋만 수정할 수 있습니다.",
+        buttons: [{ text: "확인" }],
+      });
       return;
     }
 
@@ -230,6 +246,9 @@ export default function PresetDetail() {
           </View>
         )}
       </ScrollView>
+
+      {/* 커스텀 Alert */}
+      <AlertComponent />
     </View>
   );
 }

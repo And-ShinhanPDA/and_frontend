@@ -1,18 +1,18 @@
-import React, { useEffect, useState, useRef } from "react";
-import {
-  Alert,
-  Animated,
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { useRouter } from "expo-router";
-import { presetService } from "@/services/preset-service";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCustomAlert } from "@/hooks/use-custom-alert";
+import { presetService } from "@/services/preset-service";
 import { extractIndicatorCategories } from "@/utils/parseConditions";
+import { useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import {
+    Animated,
+    Dimensions,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import Benjamin from "../../assets/images/preset/benjamin.svg";
 import Charlie from "../../assets/images/preset/charlie.svg";
 import GoldenCross from "../../assets/images/preset/goldencross.svg";
@@ -78,6 +78,7 @@ export default function PresetSelect({
   const fadeAnimations = useRef<{ [key: number]: Animated.Value }>({});
   const scaleAnimations = useRef<{ [key: number]: Animated.Value }>({});
   const { accessToken } = useAuth();
+  const { showAlert, AlertComponent } = useCustomAlert();
   const router = useRouter();
 
   useEffect(() => {
@@ -239,7 +240,10 @@ export default function PresetSelect({
       console.log("프리셋 삭제 완료:", id);
     } catch (error) {
       console.error("프리셋 삭제 실패:", error);
-      alert("프리셋 삭제에 실패했습니다.");
+      showAlert({
+        message: "프리셋 삭제에 실패했습니다.",
+        buttons: [{ text: "확인" }],
+      });
     }
   };
 
@@ -253,10 +257,10 @@ export default function PresetSelect({
 
     if (mode === "select") {
       // select 모드: 프리셋 적용 확인
-      Alert.alert(
-        "프리셋 적용",
-        `"${selectedPreset.title}" 프리셋을 적용하시겠습니까?\n현재 입력된 조건은 사라집니다.`,
-        [
+      showAlert({
+        title: "프리셋 적용",
+        message: `"${selectedPreset.title}" 프리셋을 적용하시겠습니까?\n현재 입력된 조건은 사라집니다.`,
+        buttons: [
           {
             text: "아니오",
             style: "cancel",
@@ -271,8 +275,8 @@ export default function PresetSelect({
               onClose(); // 선택 후 모달 닫기
             },
           },
-        ]
-      );
+        ],
+      });
     } else {
       // view 모드: 세부사항 보기
       console.log("프리셋 세부사항 보기:", id);
@@ -380,6 +384,9 @@ export default function PresetSelect({
           {mode === "select" ? "취소" : "닫기"}
         </Text>
       </TouchableOpacity>
+
+      {/* 커스텀 Alert */}
+      <AlertComponent />
     </View>
   );
 }

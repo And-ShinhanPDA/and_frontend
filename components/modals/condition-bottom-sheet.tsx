@@ -1,16 +1,16 @@
 // 조건 설정을 위한 기본 모달 디자인 정의
 import React, { useEffect, useRef } from "react";
 import {
-  Animated,
-  Dimensions,
-  Easing,
-  KeyboardAvoidingView,
-  Modal,
-  PanResponder,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    Animated,
+    Dimensions,
+    Easing,
+    KeyboardAvoidingView,
+    Modal,
+    PanResponder,
+    Platform,
+    StyleSheet,
+    TouchableWithoutFeedback,
+    View
 } from "react-native";
 
 interface ConditionBottomSheetProps {
@@ -31,21 +31,29 @@ export default function ConditionBottomSheet({
   const slideAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   const screenHeight = Dimensions.get("window").height;
+  
+  // 최대 높이를 화면의 90%로 제한
+  const maxHeight = screenHeight * 0.9;
   const sheetHeight =
-    typeof height === "number" ? height : ratio ? screenHeight * ratio : 700;
+    typeof height === "number" 
+      ? Math.min(height, maxHeight)
+      : ratio 
+      ? Math.min(screenHeight * ratio, maxHeight)
+      : Math.min(700, maxHeight);
+
   useEffect(() => {
     if (visible) {
       Animated.timing(slideAnim, {
         toValue: 1,
-        duration: 250,
-        easing: Easing.out(Easing.ease),
+        duration: 300,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }).start();
     } else {
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 250,
-        easing: Easing.in(Easing.ease),
+        easing: Easing.in(Easing.cubic),
         useNativeDriver: true,
       }).start(() => translateY.setValue(0));
     }
@@ -53,17 +61,25 @@ export default function ConditionBottomSheet({
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // 세로 스와이프가 가로 스와이프보다 클 때만 활성화
+        return Math.abs(gestureState.dy) > Math.abs(gestureState.dx) && Math.abs(gestureState.dy) > 5;
+      },
       onPanResponderMove: (_, gestureState) => {
         if (gestureState.dy > 0) translateY.setValue(gestureState.dy);
       },
       onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy > 120) onClose();
-        else
+        if (gestureState.dy > 100 || gestureState.vy > 0.5) {
+          onClose();
+        } else {
           Animated.spring(translateY, {
             toValue: 0,
             useNativeDriver: true,
+            tension: 80,
+            friction: 10,
           }).start();
+        }
       },
     })
   ).current;
@@ -74,7 +90,7 @@ export default function ConditionBottomSheet({
         translateY: Animated.add(
           slideAnim.interpolate({
             inputRange: [0, 1],
-            outputRange: [400, 0],
+            outputRange: [sheetHeight, 0],
           }),
           translateY
         ),
@@ -88,22 +104,32 @@ export default function ConditionBottomSheet({
       visible={visible}
       animationType="none"
       onRequestClose={onClose}
+      statusBarTranslucent
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        <View style={styles.overlay}>
-          <TouchableOpacity style={styles.dimmed} onPress={onClose} />
+      <View style={styles.overlay}>
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={styles.dimmed} />
+        </TouchableWithoutFeedback>
+        
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardAvoidingView}
+          keyboardVerticalOffset={0}
+        >
           <Animated.View
-            style={[styles.bottomSheet, { minHeight: sheetHeight }, slideUp]}
-            {...panResponder.panHandlers}
+            style={[
+              styles.bottomSheet,
+              { height: sheetHeight },
+              slideUp,
+            ]}
           >
-            <View style={styles.handleBar} />
+            <View style={styles.handleBarContainer} {...panResponder.panHandlers}>
+              <View style={styles.handleBar} />
+            </View>
             {children}
           </Animated.View>
-        </View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }
@@ -112,22 +138,31 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: "rgba(0,0,0,0.4)",
   },
-  dimmed: { flex: 1 },
+  dimmed: { 
+    flex: 1,
+  },
+  keyboardAvoidingView: {
+    width: "100%",
+  },
   bottomSheet: {
     backgroundColor: "#fff",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    width: "100%",
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingBottom: 20,
+  },
+  handleBarContainer: {
+    paddingVertical: 12,
+    alignItems: "center",
+    marginHorizontal: -20,
   },
   handleBar: {
-    width: 45,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: "#C4C4C4",
-    alignSelf: "center",
-    marginVertical: 8,
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#D1D1D6",
   },
 });
