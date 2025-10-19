@@ -19,6 +19,8 @@ type CompanyAlert = {
   logo: ImageSourcePropType;
   indicatorSnapshot?: string; // 위젯용 지표 데이터
   iconName?: string; // 위젯용 아이콘 이름
+  stockCode?: string; // 위젯용 stockCode
+  title?: string; // 위젯용 알림 제목
 };
 
 // 깜빡이는 점 컴포넌트
@@ -89,6 +91,13 @@ export default function ActivatedCompanyCard() {
             ? JSON.stringify(indicators) 
             : undefined;
 
+          // iconName은 PNG 파일명 (예: "logo_1_삼성전자")
+          let iconName: string | undefined = undefined;
+          if (matched) {
+            // logo_N_기업명 형식으로 파일명 생성
+            iconName = `logo_${matched.id}_${matched.name}`;
+          }
+
           return {
             id: Number(stockCode),
             name: matched?.name || stockCode,
@@ -98,7 +107,9 @@ export default function ActivatedCompanyCard() {
               matched?.logo ||
               require("../../assets/images/companies/logo_1_삼성전자.png"),
             indicatorSnapshot,
-            iconName: matched?.name,
+            iconName, // 예: "logo_1_삼성전자"
+            stockCode, // 위젯에서 이미지 찾는데 사용
+            title: data.alert.title, // 위젯용 알림 제목
           };
         }
       );
