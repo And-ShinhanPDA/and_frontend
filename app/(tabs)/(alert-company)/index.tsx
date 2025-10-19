@@ -58,7 +58,7 @@ export default function AlertCompany() {
     }
     try {
       const res = await alertService.getAlertedCompanies(accessToken);
-      console.log("[알림 기업 응답]:", res);
+      // console.log("[알림 기업 응답]:", res);
 
       const rawList = Array.isArray(res) ? res : [];
 

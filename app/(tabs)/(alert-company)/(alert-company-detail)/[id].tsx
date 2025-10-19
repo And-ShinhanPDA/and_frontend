@@ -1,5 +1,10 @@
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
+import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
+import PresetSelect from "@/components/preset/preset-select";
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
+import { getIndicatorCategoriesArray } from "@/utils/parseConditions";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -13,11 +18,6 @@ import {
   View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
-import { useAuth } from "@/contexts/AuthContext";
-import { alertService } from "@/services/alert-service";
-import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
-import PresetSelect from "@/components/preset/preset-select";
-import { getIndicatorCategoriesArray } from "@/utils/parseConditions";
 
 // TODO: types로 빼기
 type AlertCondition = {
@@ -52,7 +52,7 @@ export default function CompanyAlertDetail() {
 
   // 고정 "시가/종가 알림" 스위치 상태
   const [priceOpenCloseEnabled, setPriceOpenCloseEnabled] =
-    useState<boolean>(true);
+    useState<boolean>(false);
 
   // 프리셋 모달 상태
   const [isPresetOpen, setIsPresetOpen] = useState(false);
@@ -90,8 +90,27 @@ export default function CompanyAlertDetail() {
       }
     };
 
+    const fetchPriceStatus = async () => {
+      if (!accessToken || !id) return;
+      try {
+        // 첫 번째 알림의 ID를 사용하여 시가/종가 상태 조회
+        const firstAlert = alerts[0];
+        if (firstAlert) {
+          const priceStatus = await alertService.getPriceOnOffStatus(
+            accessToken,
+            parseInt(firstAlert.id)
+          );
+          setPriceOpenCloseEnabled(priceStatus);
+          console.log(`[시가/종가 상태] ${priceStatus ? "켜짐" : "꺼짐"}`);
+        }
+      } catch (err) {
+        console.error("[시가/종가 상태 조회 실패]:", err);
+      }
+    };
+
     fetchCompanyAlerts();
-  }, [accessToken, id]);
+    fetchPriceStatus();
+  }, [accessToken, id, alerts.length]);
 
   // 초기 애니메이션 설정
   useEffect(() => {
@@ -101,6 +120,31 @@ export default function CompanyAlertDetail() {
     });
     setFadeAnimations(anims);
   }, [alerts]);
+
+  // 시가/종가 토글 핸들러
+  const togglePriceOpenClose = async () => {
+    if (!accessToken || alerts.length === 0) return;
+    try {
+      const newState = !priceOpenCloseEnabled;
+      const firstAlert = alerts[0];
+
+      // UI 상태 먼저 업데이트
+      setPriceOpenCloseEnabled(newState);
+
+      // 시가/종가 전용 PATCH API 호출
+      await alertService.updatePriceOnOffStatus(
+        accessToken,
+        parseInt(firstAlert.id),
+        newState
+      );
+
+      console.log(`[시가/종가 토글] ${newState ? "켜짐" : "꺼짐"}`);
+    } catch (err) {
+      console.error("[시가/종가 토글 실패]:", err);
+      // 실패 시 원래 상태로 되돌리기
+      setPriceOpenCloseEnabled(!priceOpenCloseEnabled);
+    }
+  };
 
   // 토글 스위치
   const toggleSwitch = async (id: string, isActive: boolean) => {
@@ -176,7 +220,7 @@ export default function CompanyAlertDetail() {
           trackColor={{ false: "#ccc", true: "#4CC439" }}
           thumbColor="#fff"
           ios_backgroundColor="#E9E9EA"
-          onValueChange={() => setPriceOpenCloseEnabled((v) => !v)}
+          onValueChange={togglePriceOpenClose}
           value={priceOpenCloseEnabled}
         />
       </View>

@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Image,
@@ -12,19 +12,87 @@ import {
   View,
 } from "react-native";
 
-import ShinhanLogo from "@/assets/images/companies/logo_12_신한금융그룹.svg";
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
+import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
 
 type Company = {
-  id: string;
-  name: string;
-  logo: any;
-  currentPrice: string;
-  openPrice: string;
-  volume: string;
-  sma: string;
+  stockCode: string;
+  triggerDate: string;
+  values: {
+    [key: string]: any;
+  };
+  name?: string;
+  logo?: any;
+  formattedValues?: { [key: string]: string };
+};
+
+// Redis 필드명과 UI 표시명 매핑
+const FIELD_MAPPING: { [key: string]: string } = {
+  price: "현재가",
+  volume: "거래량",
+  openPrice: "시가",
+  highPrice: "52주 최고가",
+  lowPrice: "52주 최저가",
+  rsi14: "RSI(14)",
+  bbUpper: "볼린저밴드 상단",
+  bbLower: "볼린저밴드 하단",
+  sma5: "SMA(5)",
+  sma10: "SMA(10)",
+  sma20: "SMA(20)",
+  sma30: "SMA(30)",
+  sma50: "SMA(50)",
+  sma100: "SMA(100)",
+  sma200: "SMA(200)",
+};
+
+const formatValue = (fieldName: string, value: any): string => {
+  if (value === null || value === undefined) return "-";
+
+  const priceFields = [
+    "price",
+    "openPrice",
+    "highPrice",
+    "lowPrice",
+    "bbUpper",
+    "bbLower",
+  ];
+  if (priceFields.includes(fieldName)) {
+    return `${value.toLocaleString()}원`;
+  }
+
+  if (fieldName === "volume") {
+    return value.toLocaleString();
+  }
+
+  const decimalFields = [
+    "rsi14",
+    "sma5",
+    "sma10",
+    "sma20",
+    "sma30",
+    "sma50",
+    "sma100",
+    "sma200",
+  ];
+  if (decimalFields.includes(fieldName)) {
+    return value.toFixed(2);
+  }
+
+  return String(value);
+};
+
+const getCompanyLogo = (stockCode: string) => {
+  const company = COMPANIES.find((comp) => comp.code === stockCode);
+  return (
+    company?.logo || COMPANIES.find((comp) => comp.code === "055550")?.logo
+  );
+};
+const getCompanyName = (stockCode: string) => {
+  const company = COMPANIES.find((comp) => comp.code === stockCode);
+  return company?.name || `기업${stockCode}`;
 };
 
 export default function AlertConditionDetail() {
@@ -33,9 +101,8 @@ export default function AlertConditionDetail() {
     name: string;
     tags: string;
   }>();
-  const { signOut, user } = useAuth();
+  const { signOut, user, accessToken } = useAuth();
 
-  
   const parsedTags = tags ? JSON.parse(tags) : [];
   const headerScrollRef = useRef<ScrollView | null>(null);
   const dataScrollRef = useRef<ScrollView | null>(null);
@@ -45,7 +112,70 @@ export default function AlertConditionDetail() {
   const verticalScrollingRef = useRef(false);
   const [isHorizontalScrolling, setIsHorizontalScrolling] = useState(false);
 
-  // 로그아웃 핸들러
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [availableFields, setAvailableFields] = useState<string[]>([]);
+
+  const fetchConditionResults = async () => {
+    if (!accessToken || !id) {
+      setError("인증 토큰 또는 알림 ID가 없습니다.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const results = await alertService.getConditionSearchResults(
+        accessToken,
+        id
+      );
+
+      const firstItem = results[0];
+      const fields = firstItem ? Object.keys(firstItem.values || {}) : [];
+      const validFields = fields.filter((field) => FIELD_MAPPING[field]);
+
+      console.log("사용 가능한 필드들:", validFields);
+      setAvailableFields(validFields);
+
+      const formattedCompanies: Company[] = results.map((item: any) => {
+        const formattedValues: { [key: string]: string } = {};
+
+        validFields.forEach((field) => {
+          formattedValues[field] = formatValue(field, item.values?.[field]);
+        });
+
+        return {
+          stockCode: item.stockCode,
+          triggerDate: item.triggerDate,
+          values: item.values,
+          name: getCompanyName(item.stockCode),
+          logo: getCompanyLogo(item.stockCode),
+          formattedValues,
+        };
+      });
+
+      setCompanies(formattedCompanies);
+      console.log(
+        `조건 검색 결과 ${formattedCompanies.length}개 기업 로드 완료`
+      );
+      console.log("포맷팅된 값들:", formattedCompanies[0]?.formattedValues);
+    } catch (err: any) {
+      console.error("조건 검색 결과 조회 실패:", err);
+      setError(
+        err.response?.data?.message || "데이터를 불러오는데 실패했습니다."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchConditionResults();
+  }, [id, accessToken]);
+
   const handleLogout = async () => {
     try {
       await signOut();
@@ -87,135 +217,6 @@ export default function AlertConditionDetail() {
       verticalScrollingRef.current = false;
     }, 10);
   };
-
-  const companies: Company[] = [
-    {
-      id: "1",
-      name: "신한지주",
-      logo: ShinhanLogo,
-      currentPrice: "50,000원",
-      openPrice: "50,000원",
-      volume: "50",
-      sma: "50",
-    },
-    {
-      id: "2",
-      name: "구글",
-      logo: ShinhanLogo,
-      currentPrice: "50,000원",
-      openPrice: "50,000원",
-      volume: "50",
-      sma: "50",
-    },
-    {
-      id: "3",
-      name: "삼성전자",
-      logo: ShinhanLogo,
-      currentPrice: "50,000원",
-      openPrice: "50,000원",
-      volume: "50",
-      sma: "50",
-    },
-    {
-      id: "4",
-      name: "네이버",
-      logo: ShinhanLogo,
-      currentPrice: "50,000원",
-      openPrice: "50,000원",
-      volume: "50",
-      sma: "50",
-    },
-    {
-      id: "5",
-      name: "카카오",
-      logo: ShinhanLogo,
-      currentPrice: "50,000원",
-      openPrice: "50,000원",
-      volume: "50",
-      sma: "50",
-    },
-    {
-      id: "6",
-      name: "LG전자",
-      logo: ShinhanLogo,
-      currentPrice: "50,000원",
-      openPrice: "50,000원",
-      volume: "50",
-      sma: "50",
-    },
-    {
-      id: "7",
-      name: "SK하이닉스",
-      logo: ShinhanLogo,
-      currentPrice: "50,000원",
-      openPrice: "50,000원",
-      volume: "50",
-      sma: "50",
-    },
-    {
-      id: "8",
-      name: "현대차",
-      logo: ShinhanLogo,
-      currentPrice: "50,000원",
-      openPrice: "50,000원",
-      volume: "50",
-      sma: "50",
-    },
-    {
-      id: "9",
-      name: "LG전자",
-      logo: ShinhanLogo,
-      currentPrice: "50,000원",
-      openPrice: "50,000원",
-      volume: "50",
-      sma: "50",
-    },
-    {
-      id: "10",
-      name: "SK하이닉스",
-      logo: ShinhanLogo,
-      currentPrice: "50,000원",
-      openPrice: "50,000원",
-      volume: "50",
-      sma: "50",
-    },
-    {
-      id: "11",
-      name: "현대차",
-      logo: ShinhanLogo,
-      currentPrice: "50,000원",
-      openPrice: "50,000원",
-      volume: "50",
-      sma: "50",
-    },
-    {
-      id: "12",
-      name: "LG전자",
-      logo: ShinhanLogo,
-      currentPrice: "50,000원",
-      openPrice: "50,000원",
-      volume: "50",
-      sma: "50",
-    },
-    {
-      id: "13",
-      name: "SK하이닉스",
-      logo: ShinhanLogo,
-      currentPrice: "50,000원",
-      openPrice: "50,000원",
-      volume: "50",
-      sma: "50",
-    },
-    {
-      id: "14",
-      name: "현대차",
-      logo: ShinhanLogo,
-      currentPrice: "50,000원",
-      openPrice: "50,000원",
-      volume: "50",
-      sma: "50",
-    },
-  ];
 
   return (
     <View style={styles.container}>
@@ -260,93 +261,131 @@ export default function AlertConditionDetail() {
         </View>
       </View>
 
-      {/* 테이블 헤더 */}
-      <View style={styles.tableHeaderRow}>
-        <View style={styles.fixedColumn}></View>
-
-        <ScrollView
-          horizontal
-          ref={headerScrollRef}
-          showsHorizontalScrollIndicator={false}
-          scrollEventThrottle={16}
-          scrollEnabled={false}
-          bounces={false}
-          style={styles.headerScrollView}
-        >
-          <View style={styles.tableHeader}>
-            <Text style={styles.headerText}>현재가</Text>
-            <Text style={styles.headerText}>시가</Text>
-            <Text style={styles.headerText}>거래량</Text>
-            <Text style={styles.headerText}>SMA</Text>
-          </View>
-        </ScrollView>
-      </View>
-
-      {/* 테이블 바디 */}
-      <View style={styles.tableBody}>
-        {/* 왼쪽 고정 영역 (로고) */}
-        <View style={styles.fixedColumnContainer}>
-          <FlatList
-            ref={leftFlatListRef}
-            data={companies}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-            scrollEnabled={!isHorizontalScrolling}
-            scrollEventThrottle={16}
-            removeClippedSubviews={true}
-            maxToRenderPerBatch={10}
-            windowSize={10}
-            onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
-              syncVerticalScroll(e.nativeEvent.contentOffset.y);
-            }}
-            renderItem={({ item }) => (
-              <View style={styles.fixedCell}>
-                <item.logo width={48} height={48} style={styles.logo} />
-              </View>
-            )}
-          />
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>
+            조건 검색 결과를 불러오는 중...
+          </Text>
         </View>
+      )}
 
-        {/* 오른쪽 스크롤 영역 (데이터) */}
-        <ScrollView
-          horizontal
-          ref={dataScrollRef}
-          showsHorizontalScrollIndicator={false}
-          onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
-            syncScroll(e.nativeEvent.contentOffset.x);
-          }}
-          onScrollBeginDrag={() => setIsHorizontalScrolling(true)}
-          onScrollEndDrag={() => setIsHorizontalScrolling(false)}
-          onMomentumScrollEnd={() => setIsHorizontalScrolling(false)}
-          directionalLockEnabled={true}
-          bounces={false}
-          style={styles.dataScrollView}
-        >
-          <FlatList
-            ref={rightFlatListRef}
-            data={companies}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-            scrollEnabled={!isHorizontalScrolling}
+      {/* 에러 상태 */}
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={fetchConditionResults}
+          >
+            <Text style={styles.retryButtonText}>다시 시도</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* 테이블 헤더 - 데이터가 있을 때만 표시 */}
+      {!loading && !error && companies.length > 0 && (
+        <View style={styles.tableHeaderRow}>
+          <View style={styles.fixedColumn}></View>
+
+          <ScrollView
+            horizontal
+            ref={headerScrollRef}
+            showsHorizontalScrollIndicator={false}
             scrollEventThrottle={16}
-            removeClippedSubviews={true}
-            maxToRenderPerBatch={10}
-            windowSize={10}
+            scrollEnabled={false}
+            bounces={false}
+            style={styles.headerScrollView}
+          >
+            <View style={styles.tableHeader}>
+              {availableFields.map((field) => (
+                <Text key={field} style={styles.headerText}>
+                  {FIELD_MAPPING[field]}
+                </Text>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      )}
+
+      {/* 테이블 바디 - 데이터가 있을 때만 표시 */}
+      {!loading && !error && companies.length > 0 && (
+        <View style={styles.tableBody}>
+          {/* 왼쪽 고정 영역 (로고) */}
+          <View style={styles.fixedColumnContainer}>
+            <FlatList
+              ref={leftFlatListRef}
+              data={companies}
+              keyExtractor={(item) => item.stockCode}
+              showsVerticalScrollIndicator={false}
+              scrollEnabled={!isHorizontalScrolling}
+              scrollEventThrottle={16}
+              removeClippedSubviews={true}
+              maxToRenderPerBatch={10}
+              windowSize={10}
+              onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+                syncVerticalScroll(e.nativeEvent.contentOffset.y);
+              }}
+              renderItem={({ item }) => (
+                <View style={styles.fixedCell}>
+                  <Image
+                    source={item.logo}
+                    style={styles.logo}
+                    resizeMode="contain"
+                  />
+                </View>
+              )}
+            />
+          </View>
+
+          {/* 오른쪽 스크롤 영역 (데이터) */}
+          <ScrollView
+            horizontal
+            ref={dataScrollRef}
+            showsHorizontalScrollIndicator={false}
             onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
-              syncVerticalScroll(e.nativeEvent.contentOffset.y);
+              syncScroll(e.nativeEvent.contentOffset.x);
             }}
-            nestedScrollEnabled={true}
-            renderItem={({ item }) => (
-              <View style={styles.dataRow}>
-                <Text style={styles.dataText}>{item.currentPrice}</Text>
-                <Text style={styles.dataText}>{item.openPrice}</Text>
-                <Text style={styles.dataText}>{item.volume}</Text>
-                <Text style={styles.dataText}>{item.sma}</Text>
-              </View>
-            )}
-          />
-        </ScrollView>
-      </View>
+            onScrollBeginDrag={() => setIsHorizontalScrolling(true)}
+            onScrollEndDrag={() => setIsHorizontalScrolling(false)}
+            onMomentumScrollEnd={() => setIsHorizontalScrolling(false)}
+            directionalLockEnabled={true}
+            bounces={false}
+            style={styles.dataScrollView}
+          >
+            <FlatList
+              ref={rightFlatListRef}
+              data={companies}
+              keyExtractor={(item) => item.stockCode}
+              showsVerticalScrollIndicator={false}
+              scrollEnabled={!isHorizontalScrolling}
+              scrollEventThrottle={16}
+              removeClippedSubviews={true}
+              maxToRenderPerBatch={10}
+              windowSize={10}
+              onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+                syncVerticalScroll(e.nativeEvent.contentOffset.y);
+              }}
+              nestedScrollEnabled={true}
+              renderItem={({ item }) => (
+                <View style={styles.dataRow}>
+                  {availableFields.map((field) => (
+                    <Text key={field} style={styles.dataText}>
+                      {item.formattedValues?.[field] || "-"}
+                    </Text>
+                  ))}
+                </View>
+              )}
+            />
+          </ScrollView>
+        </View>
+      )}
+
+      {/* 데이터가 없을 때 메시지 */}
+      {!loading && !error && companies.length === 0 && (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>조건에 해당하는 기업이 없습니다.</Text>
+        </View>
+      )}
       <CustomBottomTab activeTab="조건 검색" />
     </View>
   );
@@ -462,6 +501,61 @@ const styles = StyleSheet.create({
   dataText: {
     width: 100,
     fontSize: 13,
+    textAlign: "center",
+    fontFamily: "Pretendard",
+  },
+
+  // 로딩 상태 스타일
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
+    fontFamily: "Pretendard",
+  },
+
+  // 에러 상태 스타일
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#FF6B6B",
+    textAlign: "center",
+    marginBottom: 20,
+    fontFamily: "Pretendard",
+  },
+  retryButton: {
+    backgroundColor: "#007AFF",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "600",
+    fontFamily: "Pretendard",
+  },
+
+  // 빈 데이터 상태 스타일
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#999",
     textAlign: "center",
     fontFamily: "Pretendard",
   },

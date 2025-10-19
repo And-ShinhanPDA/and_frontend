@@ -8,6 +8,12 @@ type Condition = {
   count: number;
 };
 
+// API 응답 타입
+type TriggeredCondition = {
+  conditionName: string;
+  activeCompanyCount: number;
+};
+
 const sampleConditions: Condition[] = [
   { id: 1, name: "알림1", count: 3 },
   { id: 2, name: "알림2", count: 4 },
@@ -51,13 +57,26 @@ const BlinkingDot = () => {
 
 export default function ActivatedConditionCard({
   data = sampleConditions,
+  triggeredConditions,
+  loading = false,
 }: {
   data?: Condition[];
+  triggeredConditions?: TriggeredCondition[];
+  loading?: boolean;
 }) {
+  // API 데이터를 UI용 데이터로 변환
+  const displayData = triggeredConditions
+    ? triggeredConditions.map((item, index) => ({
+        id: index + 1,
+        name: item.conditionName,
+        count: item.activeCompanyCount,
+      }))
+    : data;
+
   // 위젯으로 데이터 전달
   useEffect(() => {
-    saveActivatedConditions(data);
-  }, [data]);
+    saveActivatedConditions(displayData);
+  }, [displayData]);
 
   return (
     <View>
@@ -66,19 +85,32 @@ export default function ActivatedConditionCard({
         <BlinkingDot />
       </View>
       <View style={styles.card}>
-        {data.map((item, index) => {
-          const isLast = index === data.length - 1;
+        {loading ? (
+          <Text style={styles.loadingText}>
+            활성화된 조건 알림을 불러오는 중...
+          </Text>
+        ) : displayData.length === 0 ? (
+          <Text style={styles.emptyText}>
+            현재 활성화된 조건 알림이 없습니다.
+          </Text>
+        ) : (
+          displayData.map((item, index) => {
+            const isLast = index === displayData.length - 1;
 
-          return (
-            <View style={[styles.row, isLast && styles.rowLast]} key={item.id}>
-              <View style={styles.left}>
-                <View style={styles.dot} />
-                <Text style={styles.name}>{item.name}</Text>
+            return (
+              <View
+                style={[styles.row, isLast && styles.rowLast]}
+                key={item.id}
+              >
+                <View style={styles.left}>
+                  <View style={styles.dot} />
+                  <Text style={styles.name}>{item.name}</Text>
+                </View>
+                <Text style={styles.count}>{item.count}개 활성화</Text>
               </View>
-              <Text style={styles.count}>{item.count}개 활성화</Text>
-            </View>
-          );
-        })}
+            );
+          })
+        )}
       </View>
     </View>
   );
@@ -141,5 +173,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
     fontFamily: "Pretendard",
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    fontFamily: "Pretendard",
+    paddingVertical: 20,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#999",
+    textAlign: "center",
+    fontFamily: "Pretendard",
+    paddingVertical: 20,
   },
 });

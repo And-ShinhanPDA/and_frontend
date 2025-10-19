@@ -1,9 +1,11 @@
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
+import { chartService } from "@/services/chart-service";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { WebView, WebViewMessageEvent } from "react-native-webview";
 import ChartHeader, { Candle } from "./chart-header";
 import { chartHtml } from "./chart-html";
-import { chartService } from "@/services/chart-service";
 
 type Period = "1m" | "1D";
 const fmt = (n?: number) =>
@@ -43,6 +45,11 @@ export default function ChartScreen({
   stockCode: string;
   onPriceUpdate?: (price: any) => void;
 }) {
+  // console.log("[차트] ChartScreen 컴포넌트 렌더링됨:", {
+  //   companyName,
+  //   stockCode,
+  // });
+  const { accessToken } = useAuth();
   const [period, setPeriod] = useState<Period>("1D");
   const [smaOn, setSmaOn] = useState({
     sma5: true,
@@ -53,7 +60,9 @@ export default function ChartScreen({
   const [ohlc, setOhlc] = useState<Candle | null>(null);
   const [smaVals, setSmaVals] = useState<any>({});
   const [headerAlert, setHeaderAlert] = useState<string | null>(null);
+  const [headerAlerts, setHeaderAlerts] = useState<any[]>([]);
   const [webViewLoaded, setWebViewLoaded] = useState(false);
+  const [alertHistoryMarkers, setAlertHistoryMarkers] = useState<any[]>([]);
 
   const data = useMemo(() => genCandles(period, 250, 79200), [period]);
 
@@ -185,6 +194,126 @@ export default function ChartScreen({
     fetchData();
   }, [stockCode, period]);
 
+  // 알림 히스토리 가져오기 (일봉일 때만)
+  useEffect(() => {
+    console.log("[차트] useEffect 실행됨:", {
+      accessToken: !!accessToken,
+      stockCode,
+      period,
+    });
+
+    const fetchAlertHistory = async () => {
+      console.log("[차트] 알림 히스토리 fetch 시작:", {
+        accessToken: !!accessToken,
+        stockCode,
+        period,
+      });
+
+      if (!accessToken || !stockCode || period !== "1D") {
+        console.log("[차트] 알림 히스토리 fetch 조건 불만족:", {
+          accessToken: !!accessToken,
+          stockCode,
+          period,
+        });
+        setAlertHistoryMarkers([]);
+        return;
+      }
+
+      try {
+        console.log("[차트] alertService.getAlertHistory 호출:", stockCode);
+        const history = await alertService.getAlertHistory(
+          accessToken,
+          stockCode
+        );
+        //console.log("[차트] 알림 히스토리 API 응답:", history);
+
+        // 날짜별로 그룹화하여 하루에 하나의 마커만 표시
+        const groupedByDate: { [key: string]: any[] } = {};
+
+        history.forEach((item: any) => {
+          const date = new Date(item.createdAt);
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          const hours = String(date.getHours()).padStart(2, "0");
+          const minutes = String(date.getMinutes()).padStart(2, "0");
+
+          const dateKey = `${year}-${month}-${day}`;
+          const timeStr = `${hours}:${minutes}`;
+
+          if (!groupedByDate[dateKey]) {
+            groupedByDate[dateKey] = [];
+          }
+
+          groupedByDate[dateKey].push({
+            time: dateKey,
+            alertContent: item.indicatorSnapshot || "조건 충족",
+            timeStr,
+            id: item.id,
+            alertId: item.alertId,
+            createdAt: item.createdAt,
+          });
+        });
+
+        // 날짜별로 그룹화된 마커 생성 (하루에 하나의 점만)
+        const markers = Object.entries(groupedByDate).map(
+          ([dateKey, alerts]) => {
+            const firstAlert = alerts[0];
+            const alertCount = alerts.length;
+
+            return {
+              time: dateKey,
+              alertText:
+                alertCount > 1
+                  ? `${alertCount}개 알림`
+                  : firstAlert.alertContent,
+              alertTitle: "알림",
+              alertContent: firstAlert.alertContent,
+              timeStr: firstAlert.timeStr,
+              id: firstAlert.id,
+              alertId: firstAlert.alertId,
+              alertCount,
+              allAlerts: alerts, // 모든 알림 데이터 저장
+            };
+          }
+        );
+
+        // console.log(
+        //   `[차트] 알림 히스토리 마커 ${markers.length}개 로드 완료 (원본 ${history.length}개에서 그룹화)`
+        // );
+        // //console.log("[차트] 마커 데이터:", markers);
+        setAlertHistoryMarkers(markers);
+      } catch (err) {
+        console.error("알림 히스토리 조회 실패:", err);
+        setAlertHistoryMarkers([]);
+      }
+    };
+
+    fetchAlertHistory();
+  }, [accessToken, stockCode, period]);
+
+  // 강제로 알림 히스토리 fetch (테스트용)
+  useEffect(() => {
+    console.log("[차트] 강제 useEffect 실행됨!");
+    const testFetch = async () => {
+      if (!accessToken) {
+        console.log("[차트] accessToken이 없어서 강제 fetch 건너뜀");
+        return;
+      }
+      console.log("[차트] 강제 fetch 시작!");
+      try {
+        const history = await alertService.getAlertHistory(
+          accessToken,
+          stockCode
+        );
+        console.log("[차트] 강제 fetch 결과:", history);
+      } catch (err) {
+        console.error("[차트] 강제 fetch 실패:", err);
+      }
+    };
+    testFetch();
+  }, []);
+
   // 1분마다 자동 갱신 (주석처리 - 업데이트 안되는 문제로)
   // useEffect(() => {
   //   console.log("자동 갱신 설정:", period, stockCode);
@@ -229,27 +358,68 @@ export default function ChartScreen({
     if (webViewLoaded && webRef.current && candles.length > 0) {
       console.log("WebView에 일봉 데이터 전송:", candles.length, "개");
       setTimeout(() => {
+        // console.log("[차트] WebView로 전송할 데이터:", {
+        //   period,
+        //   candlesCount: candles.length,
+        //   smaOn,
+        //   alertMarkersCount: alertHistoryMarkers.length,
+        //   alertMarkers: alertHistoryMarkers,
+        // });
         webRef.current?.postMessage(
           JSON.stringify({
             type: "setAll",
-            payload: { period, data: candles, smaOn },
+            payload: {
+              period,
+              data: candles,
+              smaOn,
+              alertMarkers: alertHistoryMarkers,
+            },
           })
         );
       }, 200);
     }
-  }, [webViewLoaded, candles, period, smaOn]);
+  }, [webViewLoaded, candles, period, smaOn, alertHistoryMarkers]);
 
   const onMessage = (e: WebViewMessageEvent) => {
     try {
       const msg = JSON.parse(e.nativeEvent.data);
+      //console.log("[차트] WebView 메시지 수신:", msg.type, msg.payload);
+
       if (msg.type === "crosshair") {
         setOhlc(msg.payload.candle ?? null);
         setSmaVals(msg.payload.sma ?? {});
-        setHeaderAlert(msg.payload.alert ?? null);
+
+        // 알림이 있을 때 로그 출력
+        if (msg.payload.alert) {
+          console.log("[차트 헤더] 알림 표시:", msg.payload.alert);
+
+          // 해당 날짜의 모든 알림 찾기
+          const currentDate = msg.payload.candle?.time;
+          const markerForDate = alertHistoryMarkers.find(
+            (marker) => marker.time === currentDate
+          );
+
+          if (markerForDate && markerForDate.allAlerts) {
+            // console.log(
+            //   "[차트 헤더] 해당 날짜 알림들:",
+            //   markerForDate.allAlerts
+            // );
+            setHeaderAlerts(markerForDate.allAlerts);
+          } else {
+            setHeaderAlerts([]);
+          }
+          setHeaderAlert(msg.payload.alert);
+        } else {
+          console.log("[차트 헤더] 알림 없음");
+          setHeaderAlert(null);
+          setHeaderAlerts([]);
+        }
       } else if (msg.type === "webviewReady") {
         setWebViewLoaded(true);
       }
-    } catch {}
+    } catch (err) {
+      console.error("[차트] WebView 메시지 파싱 오류:", err);
+    }
   };
 
   const toggle = (k: keyof typeof smaOn) =>
@@ -273,6 +443,7 @@ export default function ChartScreen({
           ohlc={ohlc ?? lastCandle}
           smaVals={smaVals}
           headerAlert={headerAlert}
+          headerAlerts={headerAlerts}
           fmt={fmt}
           ymd={ymd}
           weekday={weekday}

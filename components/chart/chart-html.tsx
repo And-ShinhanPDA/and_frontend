@@ -80,6 +80,7 @@ export const chartHtml = `
       
       let chart,volChart,rsiChart,candle,s5,s20,s60,s120,upper,lower,vol,rsi;
       let markers=[],s5Arr=[],s20Arr=[],s60Arr=[],s120Arr=[];
+      let alertMarkers=[];
       let crosshairHooked = false;
 
       const COLORS = {
@@ -140,8 +141,11 @@ export const chartHtml = `
         }
       };
 
-      const applyAll=({period,data,smaOn})=>{
+      const applyAll=({period,data,smaOn,alertMarkers:receivedMarkers})=>{
         if(!window.LightweightCharts)return;
+        
+        // 알림 마커 저장
+        alertMarkers = receivedMarkers || [];
         
         // 시간 형식 설정 (분봉용)
         const timeScaleOptions = period === '1m' ? {
@@ -230,14 +234,30 @@ export const chartHtml = `
           rsi.setData([]);
         }
 
-        // 골/데드크로스 마커 (일봉일 때만)
+        // 알림 히스토리 마커 (일봉일 때만)
         markers=[];
-        if (period === '1D' && s5Arr.length > 0 && s20Arr.length > 0) {
-          for(let i=1;i<data.length;i++){
-            const a1=s5Arr[i-1].value,b1=s20Arr[i-1].value,a2=s5Arr[i].value,b2=s20Arr[i].value;
-            if(a1<b1&&a2>b2)markers.push({time:data[i].time,position:'aboveBar',color:'#FFD700',shape:'circle'});
-            if(a1>b1&&a2<b2)markers.push({time:data[i].time,position:'belowBar',color:'#007BFF',shape:'circle'});
-          }
+        console.log('[Chart HTML] alertMarkers received:', alertMarkers);
+        if (period === '1D' && alertMarkers && alertMarkers.length > 0) {
+          // 이미 그룹화된 알림들을 마커로 변환
+          alertMarkers.forEach(function(alert) {
+            console.log('[Chart HTML] Processing alert:', alert);
+            markers.push({
+              time: alert.time,
+              position: 'aboveBar',
+              color: '#FFB300', // 노란색
+              shape: 'circle',
+              text: '',
+              alertText: alert.alertText,
+              id: alert.id,
+              alertId: alert.alertId,
+              alertCount: alert.alertCount || 1
+            });
+          });
+          
+          console.log('[Chart HTML] Alert markers created: ' + markers.length);
+          console.log('[Chart HTML] Final markers:', markers);
+        } else {
+          console.log('[Chart HTML] No alert markers - period:', period, 'alertMarkers:', alertMarkers);
         }
         candle.setMarkers(markers);
 
@@ -247,11 +267,27 @@ export const chartHtml = `
             if(!param.time)return;
             const c=param.seriesData.get(candle); if(!c)return;
             const t=param.time;
+            console.log('[Crosshair] Time:', t, 'Markers:', markers.length);
+            
             const alertAt = (t) => {
+              console.log('[Crosshair] Looking for alert at time:', t);
+              console.log('[Crosshair] Available markers times:', markers.map(m => m.time));
+              
+              // 시간 형식 매칭 (일봉은 문자열, 분봉은 숫자일 수 있음)
               const m = markers.find(x => x.time === t);
-              if (!m) return null;
-              if (m.color === '#FFD700') return 'SMA5가 SMA20 상향 돌파 (골든크로스)';
-              if (m.color === '#007BFF') return 'SMA5가 SMA20 하향 돌파 (데드크로스)';
+              
+              if (!m) {
+                console.log('[Crosshair] No marker found for time:', t);
+                return null;
+              }
+              
+              if (m.alertText) {
+                const result = m.alertCount > 1 ? 
+                  m.alertText + ' (총 ' + m.alertCount + '개 알림)' : 
+                  m.alertText;
+                console.log('[Crosshair] Alert found:', result);
+                return result;
+              }
               return null;
             };
             const candleData = data.find(d => d.time === t);
@@ -269,6 +305,9 @@ export const chartHtml = `
               sma200:candleData?.sma200
             } : {};
             
+            const alertText = alertAt(t);
+            console.log('[Crosshair] Sending alert:', alertText);
+            
             send({type:'crosshair',payload:{
               candle:{
                 ...c,
@@ -277,7 +316,7 @@ export const chartHtml = `
                 diffFromPrev: candleData?.diffFromPrev
               },
               sma: smaData,
-              alert:alertAt(t)
+              alert: alertText
             }});
           });
           crosshairHooked = true;
