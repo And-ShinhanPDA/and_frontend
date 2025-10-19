@@ -12,30 +12,9 @@ import {
   View,
 } from "react-native";
 
-// 기업 로고들 import
-import SamsungLogo from "@/assets/images/companies/logo_1_삼성전자.svg";
-import HynixLogo from "@/assets/images/companies/logo_2_하이닉스.svg";
-import EnergyLogo from "@/assets/images/companies/logo_3_에너지솔루션.svg";
-import HanwhaLogo from "@/assets/images/companies/logo_4_한화에어로스페이스.svg";
-import HyundaiLogo from "@/assets/images/companies/logo_5_현대차.svg";
-import KBLogo from "@/assets/images/companies/logo_6_KB.svg";
-import NaverLogo from "@/assets/images/companies/logo_7_네이버.svg";
-import HDLogo from "@/assets/images/companies/logo_8_HD현대중공업.svg";
-import CelltrionLogo from "@/assets/images/companies/logo_9_셀트리온.svg";
-import DoosanLogo from "@/assets/images/companies/logo_10_두산.svg";
-import KiaLogo from "@/assets/images/companies/logo_11_기아.svg";
-import ShinhanLogo from "@/assets/images/companies/logo_12_신한금융그룹.svg";
-import KakaoLogo from "@/assets/images/companies/logo_13_카카오.svg";
-import HanaLogo from "@/assets/images/companies/logo_14_하나금융지주.svg";
-import KepcoLogo from "@/assets/images/companies/logo_15_한국전력공사.svg";
-import PoscoLogo from "@/assets/images/companies/logo_16_포스코홀딩스.svg";
-import HMMLogo from "@/assets/images/companies/logo_17_HMM.svg";
-import MeritzLogo from "@/assets/images/companies/logo_18_메리츠금융지주.svg";
-import WooriLogo from "@/assets/images/companies/logo_19_우리금융지주.svg";
-import KoreaZincLogo from "@/assets/images/companies/logo_20_고려아연.svg";
-
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
+import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 
@@ -45,7 +24,6 @@ type Company = {
   values: {
     [key: string]: any;
   };
-  // UI 표시용 추가 필드
   name?: string;
   logo?: any;
   formattedValues?: { [key: string]: string };
@@ -70,11 +48,9 @@ const FIELD_MAPPING: { [key: string]: string } = {
   sma200: "SMA(200)",
 };
 
-// 값 포맷팅 함수
 const formatValue = (fieldName: string, value: any): string => {
   if (value === null || value === undefined) return "-";
 
-  // 가격 관련 필드들 (원 단위)
   const priceFields = [
     "price",
     "openPrice",
@@ -87,12 +63,10 @@ const formatValue = (fieldName: string, value: any): string => {
     return `${value.toLocaleString()}원`;
   }
 
-  // 거래량 (숫자만)
   if (fieldName === "volume") {
     return value.toLocaleString();
   }
 
-  // RSI, SMA 등 (소수점 2자리)
   const decimalFields = [
     "rsi14",
     "sma5",
@@ -107,64 +81,18 @@ const formatValue = (fieldName: string, value: any): string => {
     return value.toFixed(2);
   }
 
-  // 기본값
   return String(value);
 };
 
-// 기업 로고 매핑 함수
 const getCompanyLogo = (stockCode: string) => {
-  const logoMap: { [key: string]: any } = {
-    "005930": SamsungLogo, // 삼성전자
-    "000660": HynixLogo, // SK하이닉스
-    "066570": EnergyLogo, // LG에너지솔루션
-    "012450": HanwhaLogo, // 한화에어로스페이스
-    "005380": HyundaiLogo, // 현대차
-    "105560": KBLogo, // KB금융
-    "035420": NaverLogo, // 네이버
-    "009540": HDLogo, // HD현대중공업
-    "068270": CelltrionLogo, // 셀트리온
-    "000150": DoosanLogo, // 두산
-    "000270": KiaLogo, // 기아
-    "055550": ShinhanLogo, // 신한지주
-    "035720": KakaoLogo, // 카카오
-    "086790": HanaLogo, // 하나금융지주
-    "015760": KepcoLogo, // 한국전력공사
-    "005490": PoscoLogo, // 포스코홀딩스
-    "011200": HMMLogo, // HMM
-    "138040": MeritzLogo, // 메리츠금융지주
-    "316140": WooriLogo, // 우리금융지주
-    "010130": KoreaZincLogo, // 고려아연
-  };
-
-  return logoMap[stockCode] || ShinhanLogo; // 기본값으로 신한 로고 사용
+  const company = COMPANIES.find((comp) => comp.code === stockCode);
+  return (
+    company?.logo || COMPANIES.find((comp) => comp.code === "055550")?.logo
+  );
 };
-
-// 기업명 매핑 함수
 const getCompanyName = (stockCode: string) => {
-  const nameMap: { [key: string]: string } = {
-    "005930": "삼성전자",
-    "000660": "SK하이닉스",
-    "066570": "LG에너지솔루션",
-    "012450": "한화에어로스페이스",
-    "005380": "현대차",
-    "105560": "KB금융",
-    "035420": "네이버",
-    "009540": "HD현대중공업",
-    "068270": "셀트리온",
-    "000150": "두산",
-    "000270": "기아",
-    "055550": "신한지주",
-    "035720": "카카오",
-    "086790": "하나금융지주",
-    "015760": "한국전력공사",
-    "005490": "포스코홀딩스",
-    "011200": "HMM",
-    "138040": "메리츠금융지주",
-    "316140": "우리금융지주",
-    "010130": "고려아연",
-  };
-
-  return nameMap[stockCode] || `기업${stockCode}`;
+  const company = COMPANIES.find((comp) => comp.code === stockCode);
+  return company?.name || `기업${stockCode}`;
 };
 
 export default function AlertConditionDetail() {
@@ -184,13 +112,11 @@ export default function AlertConditionDetail() {
   const verticalScrollingRef = useRef(false);
   const [isHorizontalScrolling, setIsHorizontalScrolling] = useState(false);
 
-  // API 데이터 상태 관리
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [availableFields, setAvailableFields] = useState<string[]>([]);
 
-  // 조건 검색 결과 조회 함수
   const fetchConditionResults = async () => {
     if (!accessToken || !id) {
       setError("인증 토큰 또는 알림 ID가 없습니다.");
@@ -207,19 +133,16 @@ export default function AlertConditionDetail() {
         id
       );
 
-      // 사용 가능한 필드들 추출 (첫 번째 아이템 기준)
       const firstItem = results[0];
       const fields = firstItem ? Object.keys(firstItem.values || {}) : [];
-      const validFields = fields.filter((field) => FIELD_MAPPING[field]); // 매핑이 있는 필드만
+      const validFields = fields.filter((field) => FIELD_MAPPING[field]);
 
       console.log("사용 가능한 필드들:", validFields);
       setAvailableFields(validFields);
 
-      // API 응답 데이터를 UI용 데이터로 변환
       const formattedCompanies: Company[] = results.map((item: any) => {
         const formattedValues: { [key: string]: string } = {};
 
-        // 각 필드에 대해 포맷팅된 값 생성
         validFields.forEach((field) => {
           formattedValues[field] = formatValue(field, item.values?.[field]);
         });
@@ -228,7 +151,6 @@ export default function AlertConditionDetail() {
           stockCode: item.stockCode,
           triggerDate: item.triggerDate,
           values: item.values,
-          // UI 표시용 필드 추가
           name: getCompanyName(item.stockCode),
           logo: getCompanyLogo(item.stockCode),
           formattedValues,
@@ -250,12 +172,10 @@ export default function AlertConditionDetail() {
     }
   };
 
-  // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
     fetchConditionResults();
   }, [id, accessToken]);
 
-  // 로그아웃 핸들러
   const handleLogout = async () => {
     try {
       await signOut();
@@ -341,7 +261,6 @@ export default function AlertConditionDetail() {
         </View>
       </View>
 
-      {/* 로딩 상태 */}
       {loading && (
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>
@@ -408,7 +327,11 @@ export default function AlertConditionDetail() {
               }}
               renderItem={({ item }) => (
                 <View style={styles.fixedCell}>
-                  <item.logo width={48} height={48} style={styles.logo} />
+                  <Image
+                    source={item.logo}
+                    style={styles.logo}
+                    resizeMode="contain"
+                  />
                 </View>
               )}
             />
