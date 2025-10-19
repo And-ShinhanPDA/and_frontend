@@ -1,8 +1,7 @@
 import { AuthResponse, SignInPayload, SignUpPayload, User } from "@/types/auth";
 import axios from "axios";
 
-// 🚨 iOS ATS 우회: HTTP 사용 (ATS 예외로 허용)
-const BASE_URL = "http://43.203.153.18/alert";
+const BASE_URL = process.env.EXPO_PUBLIC_USER_URL;
 
 export const authService = {
   // 회원가입
@@ -130,9 +129,10 @@ export const authService = {
   },
 
   // 로그아웃
-  async logout(accessToken: string, refreshTokenId: string): Promise<void> {
-    await axios.delete(`${BASE_URL}/api/auth/logout/${refreshTokenId}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-  },
+  // 로그아웃 API 바뀌어서 다시 바꿔야할듯 (deviceID넣어야할듯)
+  // async logout(accessToken: string, refreshTokenId: string): Promise<void> {
+  //   await axios.delete(`${BASE_URL}/api/auth/logout/${refreshTokenId}`, {
+  //     headers: { Authorization: `Bearer ${accessToken}` },
+  //   });
+  // },
 };

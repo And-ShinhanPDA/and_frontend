@@ -15,6 +15,7 @@ import {
 import ShinhanLogo from "@/assets/images/companies/logo_12_신한금융그룹.svg";
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Company = {
   id: string;
@@ -27,7 +28,15 @@ type Company = {
 };
 
 export default function AlertConditionDetail() {
-  const { name } = useLocalSearchParams<{ name: string }>();
+  const { id, name, tags } = useLocalSearchParams<{
+    id: string;
+    name: string;
+    tags: string;
+  }>();
+  const { signOut, user } = useAuth();
+
+  
+  const parsedTags = tags ? JSON.parse(tags) : [];
   const headerScrollRef = useRef<ScrollView | null>(null);
   const dataScrollRef = useRef<ScrollView | null>(null);
   const leftFlatListRef = useRef<FlatList | null>(null);
@@ -35,6 +44,17 @@ export default function AlertConditionDetail() {
   const scrollingRef = useRef(false);
   const verticalScrollingRef = useRef(false);
   const [isHorizontalScrolling, setIsHorizontalScrolling] = useState(false);
+
+  // 로그아웃 핸들러
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      console.log("로그아웃 성공");
+      router.replace("/(auth)/login");
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+    }
+  };
 
   const syncScroll = (offsetX: number) => {
     if (scrollingRef.current) return;
@@ -204,6 +224,8 @@ export default function AlertConditionDetail() {
         showBackButton={true}
         rightButtons="preset-and-mypage"
         onPresetPress={() => console.log("프리셋으로 추가")}
+        userName={user?.name || "사용자"}
+        onLogoutConfirm={handleLogout}
       />
 
       <View style={styles.conditionBox}>
@@ -212,7 +234,7 @@ export default function AlertConditionDetail() {
             {name || "제목 없는 조건 알림"}
           </Text>
           <View style={styles.tagContainer}>
-            {["가격", "RSI", "52주", "SMA"].map((tag, idx) => (
+            {parsedTags.map((tag: string, idx: number) => (
               <View key={idx} style={styles.tag}>
                 <Text style={styles.tagText}>{tag}</Text>
               </View>
@@ -223,9 +245,11 @@ export default function AlertConditionDetail() {
         <View style={styles.conditionRight}>
           <TouchableOpacity
             onPress={() =>
-              router.push(
-                "/(tabs)/(alert-condition)/(alert-condition-detail)/[id]"
-              )
+              router.push({
+                pathname:
+                  "/(tabs)/(alert-condition)/(alert-condition-detail)/[id]",
+                params: { id: id, name: name, tags: tags },
+              })
             }
           >
             <Image

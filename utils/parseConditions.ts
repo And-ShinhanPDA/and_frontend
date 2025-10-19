@@ -104,6 +104,9 @@ export const parseConditionsForCards = (conditions: any[]) => {
   // SMA 조건 파싱
   let smaData: any = { target: null, shortCross: false, longCross: false };
 
+  // RSI 조건 파싱
+  let rsiData: any = { overbought: false, oversold: false };
+
   // Bollinger 조건 파싱
   let bollingerData: any = { upper: false, lower: false };
 
@@ -174,11 +177,9 @@ export const parseConditionsForCards = (conditions: any[]) => {
     }
     // RSI 조건
     else if (indicator === "RSI_OVER") {
-      if (!parsed.rsi) parsed.rsi = { overbought: false, oversold: false };
-      parsed.rsi.overbought = true;
+      rsiData.overbought = true;
     } else if (indicator === "RSI_UNDER") {
-      if (!parsed.rsi) parsed.rsi = { overbought: false, oversold: false };
-      parsed.rsi.oversold = true;
+      rsiData.oversold = true;
     }
     // 볼린저밴드 조건
     else if (indicator === "BOLLINGER_UPPER_TOUCH") {
@@ -242,6 +243,11 @@ export const parseConditionsForCards = (conditions: any[]) => {
   // SMA 조건 설정
   if (smaData.target || smaData.shortCross || smaData.longCross) {
     parsed.sma = smaData;
+  }
+
+  // RSI 조건 설정
+  if (rsiData.overbought || rsiData.oversold) {
+    parsed.rsi = rsiData;
   }
 
   // 볼린저밴드 조건 설정

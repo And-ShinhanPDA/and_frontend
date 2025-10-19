@@ -59,9 +59,9 @@ export const presetService = {
   // 프리셋 수정
   async updatePreset(accessToken: string, presetId: string, payload: any) {
     const url = `${BASE_URL}/api/presets/${presetId}`;
-    console.log("[PATCH] 프리셋 수정 요청:", url);
+    console.log("[PUT] 프리셋 수정 요청:", url);
     try {
-      const res = await axios.patch(url, payload, {
+      const res = await axios.put(url, payload, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       console.log("[프리셋 수정 성공]:", res.data);

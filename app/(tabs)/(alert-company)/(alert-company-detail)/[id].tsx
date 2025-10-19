@@ -29,7 +29,18 @@ type AlertCondition = {
 
 export default function CompanyAlertDetail() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
-  const { accessToken } = useAuth();
+  const { accessToken, signOut, user } = useAuth();
+
+  // 로그아웃 핸들러
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      console.log("로그아웃 성공");
+      router.replace("/(auth)/login");
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+    }
+  };
 
   // console.log("id : stockId:", id);
   // console.log("name:", name);
@@ -182,6 +193,8 @@ export default function CompanyAlertDetail() {
         showBackButton={true}
         rightButtons="preset-and-mypage"
         onPresetPress={() => setIsPresetOpen(true)}
+        userName={user?.name || "사용자"}
+        onLogoutConfirm={handleLogout}
       />
 
       <SwipeListView

@@ -227,7 +227,7 @@ export default function ChartScreen({
 
   useEffect(() => {
     if (webViewLoaded && webRef.current && candles.length > 0) {
-      console.log("📊 WebView에 일봉 데이터 전송:", candles.length, "개");
+      console.log("WebView에 일봉 데이터 전송:", candles.length, "개");
       setTimeout(() => {
         webRef.current?.postMessage(
           JSON.stringify({
@@ -247,7 +247,6 @@ export default function ChartScreen({
         setSmaVals(msg.payload.sma ?? {});
         setHeaderAlert(msg.payload.alert ?? null);
       } else if (msg.type === "webviewReady") {
-        // WebView가 준비되었다는 신호를 받으면 데이터 전송
         setWebViewLoaded(true);
       }
     } catch {}
@@ -335,7 +334,6 @@ export default function ChartScreen({
             domStorageEnabled
             onMessage={onMessage}
             onLoadEnd={() => {
-              // WebView 로드 완료 시 초기 데이터 전송
               setTimeout(() => {
                 setWebViewLoaded(true);
               }, 200);
