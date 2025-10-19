@@ -5,21 +5,19 @@ type PrimaryButtonProps = {
   title: string;
   onPress: () => void;
   style?: ViewStyle;
-  disabled?: boolean;
 };
 
-export function PrimaryButton({ title, onPress, style, disabled = false }: PrimaryButtonProps) {
+export function PrimaryButton({ title, onPress, style }: PrimaryButtonProps) {
   return (
     <Pressable
-      onPress={disabled ? undefined : onPress}
+      onPress={onPress}
       style={({ pressed }) => [
         styles.button,
         style,
-        disabled && styles.disabled,
-        pressed && !disabled && { opacity: 0.8 },
+        pressed && { opacity: 0.8 },
       ]}
     >
-      <Text style={[styles.text, disabled && styles.disabledText]}>
+      <Text style={styles.text}>
         <Typography weight="600" size={19}>
           {title}
         </Typography>
@@ -36,14 +34,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  disabled: {
-    backgroundColor: "#CCCCCC",
-    opacity: 0.6,
-  },
   text: {
     color: "white",
-  },
-  disabledText: {
-    color: "#888888",
   },
 });
