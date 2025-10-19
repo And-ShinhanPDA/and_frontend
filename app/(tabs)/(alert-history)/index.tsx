@@ -1,8 +1,18 @@
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
+import { COMPANIES } from "@/constants/companies";
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import React, { useCallback, useMemo, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   FlatList,
   Image,
@@ -14,10 +24,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "@/contexts/AuthContext";
-import { alertService } from "@/services/alert-service";
-import { useFocusEffect, useRouter } from "expo-router";
-import { COMPANIES } from "@/constants/companies";
 
 type AlertHistoryItem = {
   id: number;
@@ -43,6 +49,130 @@ export default function AlertHistory() {
   const { accessToken, signOut, user } = useAuth();
   const [alertsByDate, setAlertsByDate] = useState<any[]>([]);
   const router = useRouter();
+  const scrollViewRef = useRef<FlatList>(null);
+  const [highlightedAlertId, setHighlightedAlertId] = useState<string | null>(
+    null
+  );
+
+  // 토스트에서 전달받은 파라미터
+  const { highlightAlertId, highlightCompany } = useLocalSearchParams<{
+    highlightAlertId?: string;
+    highlightCompany?: string;
+  }>();
+
+  // 토스트에서 전달받은 파라미터 처리
+  useEffect(() => {
+    if (highlightCompany) {
+      // 해당 기업으로 필터링
+      const company = COMPANIES.find((c) => c.name === highlightCompany);
+      if (company) {
+        setSelectedCompany(company.id);
+        console.log(
+          `[히스토리] 토스트에서 전달받은 기업으로 필터링: ${highlightCompany}`
+        );
+      }
+    }
+  }, [highlightCompany]);
+
+  // 특정 알림 ID로 스크롤하는 함수
+  const scrollToAlert = useCallback(
+    (alertId: string) => {
+      if (!scrollViewRef.current || !alertsByDate.length) return;
+
+      // console.log(`[히스토리] 스크롤 시도 - alertId: ${alertId}`);
+      // console.log(
+      //   `[히스토리] alertsByDate 구조:`,
+      //   JSON.stringify(alertsByDate.slice(0, 2), null, 2)
+      // );
+
+      // 모든 알림을 평면화하여 특정 ID 찾기
+      const allAlerts = alertsByDate.flatMap((group) => group.items);
+      console.log(`[히스토리] 평면화된 알림 수: ${allAlerts.length}`);
+      console.log(`[히스토리] 첫 번째 알림 구조:`, allAlerts[0]);
+
+      const targetAlert = allAlerts.find((alert) => {
+        // title에서 알림 ID 추출 (예: "알림 2559" -> "2559")
+        const titleMatch = alert?.title?.match(/알림 (\d+)/);
+        const alertIdFromTitle = titleMatch ? titleMatch[1] : null;
+        return alertIdFromTitle === alertId;
+      });
+
+      if (targetAlert) {
+        console.log(`[히스토리] 알림 ID ${alertId}로 스크롤 시도`);
+        setHighlightedAlertId(alertId); // 하이라이트할 알림 ID 설정
+
+        // 해당 알림이 포함된 그룹 찾기
+        const targetGroup = alertsByDate.find((group) =>
+          group.items.some((item: any) => {
+            const titleMatch = item?.title?.match(/알림 (\d+)/);
+            const alertIdFromTitle = titleMatch ? titleMatch[1] : null;
+            return alertIdFromTitle === alertId;
+          })
+        );
+
+        if (targetGroup) {
+          const groupIndex = alertsByDate.indexOf(targetGroup);
+          const itemIndex = targetGroup.items.findIndex((item: any) => {
+            const titleMatch = item?.title?.match(/알림 (\d+)/);
+            const alertIdFromTitle = titleMatch ? titleMatch[1] : null;
+            return alertIdFromTitle === alertId;
+          });
+
+          // 정확한 스크롤 오프셋 계산
+          setTimeout(() => {
+            try {
+              // 실제 UI 높이 (스타일 기반)
+              const dateHeaderHeight = 25; // 날짜 헤더 + marginBottom (14px text + 10px margin)
+              const itemHeight = 70; // 알림 아이템 높이 (대략 50-60px + 18px marginBottom)
+              const sectionMargin = 25; // dateSection marginBottom
+
+              // 이전 그룹들의 높이 합산
+              let offsetY = 0;
+              for (let i = 0; i < groupIndex; i++) {
+                offsetY += dateHeaderHeight; // 날짜 헤더
+                offsetY += alertsByDate[i].items.length * itemHeight; // 아이템들
+                offsetY += sectionMargin; // 섹션 여백
+              }
+
+              // 현재 그룹 내 타겟 아이템까지의 높이
+              offsetY += dateHeaderHeight; // 현재 그룹 날짜 헤더
+              offsetY += itemIndex * itemHeight; // 타겟 아이템까지의 높이
+
+              // 타겟 알림이 화면 상단에 오도록 조정 (한 아이템 높이만큼 더 빼기)
+              offsetY -= itemHeight + 100; // 아이템 높이 + 약간의 여백
+
+              scrollViewRef.current?.scrollToOffset({
+                offset: Math.max(0, offsetY),
+                animated: true,
+              });
+
+              console.log(
+                `[히스토리] 알림 ID ${alertId}로 정확히 스크롤 (그룹: ${groupIndex}, 아이템: ${itemIndex}, offset: ${offsetY})`
+              );
+            } catch (error) {
+              console.log(`[히스토리] 스크롤 실패:`, error);
+            }
+          }, 300); // 데이터 로드 후 스크롤 (더 빠르게)
+        }
+      }
+    },
+    [alertsByDate]
+  );
+
+  // highlightAlertId가 있을 때 스크롤 실행
+  useEffect(() => {
+    if (highlightAlertId && alertsByDate.length > 0) {
+      scrollToAlert(highlightAlertId);
+
+      // 5초 후 하이라이트 자동 해제
+      const timer = setTimeout(() => {
+        setHighlightedAlertId(null);
+        console.log(`[히스토리] 하이라이트 자동 해제`);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [highlightAlertId, alertsByDate, scrollToAlert]);
 
   // 로그아웃 핸들러
   const handleLogout = async () => {
@@ -236,6 +366,7 @@ export default function AlertHistory() {
         {/* 스크롤 가능한 히스토리 영역 */}
         <View style={styles.historyContainer}>
           <FlatList
+            ref={scrollViewRef}
             data={filteredAlerts}
             keyExtractor={(item) => item.date}
             contentContainerStyle={{ paddingBottom: 120, flexGrow: 1 }}
@@ -254,8 +385,20 @@ export default function AlertHistory() {
                   const companyName =
                     COMPANIES.find((c) => c.id === alert.company)?.name ??
                     alert.company;
+
+                  // 하이라이트된 알림인지 확인
+                  const titleMatch = alert?.title?.match(/알림 (\d+)/);
+                  const alertIdFromTitle = titleMatch ? titleMatch[1] : null;
+                  const isHighlighted = highlightedAlertId === alertIdFromTitle;
+
                   return (
-                    <View key={index} style={styles.timelineRow}>
+                    <View
+                      key={index}
+                      style={[
+                        styles.timelineRow,
+                        isHighlighted && styles.highlightedRow,
+                      ]}
+                    >
                       <View style={styles.timeline}>
                         {index === 0 ? (
                           <View style={styles.outerCircle}>
@@ -271,12 +414,31 @@ export default function AlertHistory() {
 
                       <View style={styles.alertContent}>
                         <View style={styles.alertHeader}>
-                          <Text style={styles.alertTitle}>
+                          <Text
+                            style={[
+                              styles.alertTitle,
+                              isHighlighted && styles.highlightedTitle,
+                            ]}
+                          >
                             {companyName} | {alert.title}
                           </Text>
-                          <Text style={styles.alertTime}>{alert.time}</Text>
+                          <Text
+                            style={[
+                              styles.alertTime,
+                              isHighlighted && styles.highlightedTime,
+                            ]}
+                          >
+                            {alert.time}
+                          </Text>
                         </View>
-                        <Text style={styles.alertDesc}>{alert.desc}</Text>
+                        <Text
+                          style={[
+                            styles.alertDesc,
+                            isHighlighted && styles.highlightedDesc,
+                          ]}
+                        >
+                          {alert.desc}
+                        </Text>
                       </View>
                     </View>
                   );
@@ -451,6 +613,28 @@ const styles = StyleSheet.create({
   alertTime: { fontSize: 13, color: "#999" },
   alertDesc: { fontSize: 13, color: "#555", marginTop: 3, lineHeight: 18 },
   noAlert: { textAlign: "center", color: "#aaa", marginTop: 30 },
+
+  // 하이라이트 스타일
+  highlightedRow: {
+    backgroundColor: "#E8F5E9", // 연한 초록색 배경
+    borderRadius: 8,
+    padding: 8,
+    marginVertical: 2,
+    borderLeftWidth: 4,
+    borderLeftColor: "#4CC53A", // 브랜드 초록색 왼쪽 테두리
+  },
+  highlightedTitle: {
+    color: "#2E7D32", // 진한 초록색 텍스트
+    fontWeight: "700",
+  },
+  highlightedTime: {
+    color: "#2E7D32",
+    fontWeight: "600",
+  },
+  highlightedDesc: {
+    color: "#2E7D32",
+    fontWeight: "500",
+  },
 
   modalOverlay: {
     flex: 1,
