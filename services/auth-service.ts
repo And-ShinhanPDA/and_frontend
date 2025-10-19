@@ -9,12 +9,26 @@ export const authService = {
     const url = `${BASE_URL}/api/auth/signup`;
     console.log("🔗 [auth-service] 회원가입 URL:", url);
     console.log(
-      "📝 [auth-service] 회원가입 데이터:",
+      "📝 [auth-service] 회원가입 데이터 (전송 전):",
       JSON.stringify(payload, null, 2)
     );
 
+    // 실제로 전송되는 데이터 확인
+    const requestBody = {
+      name: payload.name,
+      email: payload.email,
+      password: payload.password,
+      fcmToken: payload.fcmToken,
+      deviceId: payload.deviceId,
+    };
+
+    console.log(
+      "📤 [auth-service] 실제 전송 데이터:",
+      JSON.stringify(requestBody, null, 2)
+    );
+
     try {
-      const res = await axios.post<AuthResponse<User>>(url, payload, {
+      const res = await axios.post<AuthResponse<User>>(url, requestBody, {
         timeout: 15000,
         validateStatus: (status) => status >= 200 && status < 500,
       });

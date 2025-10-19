@@ -65,14 +65,31 @@ export default function SignUpScreen() {
         deviceId,
       };
 
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("📦 [SIGNUP] 회원가입 요청 페이로드:");
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("👤 name:", payload.name);
+      console.log("📧 email:", payload.email);
+      console.log(
+        "🔒 password:",
+        payload.password ? "***" + payload.password.slice(-3) : "(empty)"
+      );
+      console.log(
+        "🔥 fcmToken:",
+        payload.fcmToken ? payload.fcmToken.substring(0, 30) + "..." : "(empty)"
+      );
+      console.log("🆔 deviceId:", payload.deviceId || "(empty)");
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("📤 [SIGNUP] JSON.stringify(payload):");
+      console.log(JSON.stringify(payload, null, 2));
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
       await signUp(payload);
 
       // 토큰 정보 확인 모달
-      Alert.alert(
-        "회원가입 성공",
-        `환영합니다!\n\n📱 디바이스 정보\n\nFCM Token:\n${fcmToken || "(권한 없음)"}\n\nDevice ID:\n${deviceId}`,
-        [{ text: "확인", onPress: () => router.replace("/login") }]
-      );
+      Alert.alert("회원가입 성공", `환영합니다!`, [
+        { text: "확인", onPress: () => router.replace("/login") },
+      ]);
     } catch (error: any) {
       console.error("❌ [SIGNUP] 실패:", error);
       const errorMessage =

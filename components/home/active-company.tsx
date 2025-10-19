@@ -4,12 +4,12 @@ import { alertService } from "@/services/alert-service";
 import { saveActivatedCompanies } from "@/services/widgetShare";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Image,
-  ImageSourcePropType,
-  StyleSheet,
-  Text,
-  View,
+    Animated,
+    Image,
+    ImageSourcePropType,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 type CompanyAlert = {
   id: number;
@@ -17,6 +17,8 @@ type CompanyAlert = {
   price: string;
   count: number;
   logo: ImageSourcePropType;
+  indicatorSnapshot?: string; // 위젯용 지표 데이터
+  iconName?: string; // 위젯용 아이콘 이름
 };
 
 // 깜빡이는 점 컴포넌트
@@ -58,23 +60,45 @@ export default function ActivatedCompanyCard() {
     try {
       const res = await alertService.getTriggeredAlerts(accessToken);
 
-      // 기업별 알림 개수 카운트
-      const grouped: Record<string, number> = {};
+      // 기업별 알림 데이터 그룹핑 (최신 것만)
+      const grouped: Record<string, { count: number; alert: any }> = {};
       res.forEach((a: any) => {
-        grouped[a.stockCode] = (grouped[a.stockCode] || 0) + 1;
+        if (a.stockCode) {
+          if (!grouped[a.stockCode]) {
+            grouped[a.stockCode] = { count: 0, alert: a };
+          }
+          grouped[a.stockCode].count += 1;
+        }
       });
 
       const formatted: CompanyAlert[] = Object.entries(grouped).map(
-        ([stockCode, count]) => {
+        ([stockCode, data]) => {
           const matched = COMPANIES.find((c) => c.code === stockCode);
+          
+          // conditions를 indicatorSnapshot으로 변환
+          const indicators: Record<string, string> = {};
+          if (data.alert.conditions && Array.isArray(data.alert.conditions)) {
+            data.alert.conditions.forEach((cond: any, index: number) => {
+              const indicatorName = cond.indicator || `조건${index + 1}`;
+              const description = cond.description || indicatorName;
+              indicators[indicatorName] = description;
+            });
+          }
+          
+          const indicatorSnapshot = Object.keys(indicators).length > 0 
+            ? JSON.stringify(indicators) 
+            : undefined;
+
           return {
             id: Number(stockCode),
             name: matched?.name || stockCode,
-            price: "-", // 나중에 실제 현재값으로 교체필요
-            count: count as number,
+            price: "-",
+            count: data.count,
             logo:
               matched?.logo ||
               require("../../assets/images/companies/logo_1_삼성전자.png"),
+            indicatorSnapshot,
+            iconName: matched?.name,
           };
         }
       );
@@ -82,6 +106,7 @@ export default function ActivatedCompanyCard() {
       setCompanies(formatted);
       saveActivatedCompanies(formatted); // 위젯 공유용 저장
       console.log("[홈] 활성화된 기업:", formatted.length);
+      console.log("📊 [기업 알림 상세]:", formatted);
     } catch (err) {
       console.error("활성화된 기업 조회 실패:", err);
     }

@@ -309,6 +309,7 @@ export const alertService = {
       const parsed = filtered.map((a: any) => ({
         alertId: a.alertId,
         stockCode: a.stockCode,
+        title: a.title,
         message: a.message,
         isActive: a.isActive,
         conditions: a.conditions,
@@ -326,6 +327,7 @@ export const alertService = {
       throw err;
     }
   },
+
   // 울린 알림들 조회(전체 / 기간)
   async getAlertHistory(
     accessToken: string,

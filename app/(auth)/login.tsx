@@ -5,27 +5,33 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getDeviceId, getFCMToken } from "@/utils/deviceInfo";
 import { requestNotificationPermission } from "@/utils/notificationPermission";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  Alert,
-  Clipboard,
-  Keyboard,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TouchableWithoutFeedback,
-  View,
+    Alert,
+    Clipboard,
+    Keyboard,
+    Pressable,
+    StyleSheet,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, isLoggedIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [tokenData, setTokenData] = useState({ fcmToken: "", deviceId: "" });
+
+  // 로그인 상태가 변경되면 자동으로 메인 화면으로 이동
+  useEffect(() => {
+    if (isLoggedIn && !loading) {
+      console.log("✅ [LOGIN] 로그인 상태 확인 - 메인 화면으로 이동");
+      router.replace("/(tabs)");
+    }
+  }, [isLoggedIn, loading]);
 
   const onSubmit = async () => {
     if (!email || !password) {
@@ -41,7 +47,10 @@ export default function LoginScreen() {
       await signIn({ email, password });
       console.log("✅ [LOGIN] 성공!");
 
-      // 2. 로그인 성공 후 알림 권한 요청
+      // 2. 상태 업데이트 완료를 위한 짧은 대기
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // 3. 로그인 성공 후 알림 권한 요청
       console.log("🔔 [Notification] 권한 요청 시작...");
       const permissionGranted = await requestNotificationPermission();
 
@@ -49,7 +58,7 @@ export default function LoginScreen() {
       let deviceId = "";
 
       if (permissionGranted) {
-        // 3. FCM 토큰 발급 및 서버 전송
+        // 4. FCM 토큰 발급 및 서버 전송
         const token = await getFCMToken();
         deviceId = await getDeviceId();
         fcmToken = token || "";
@@ -63,18 +72,11 @@ export default function LoginScreen() {
           console.log("✅ [FCM] 토큰 서버 전송 준비 완료");
         }
 
-        // 토큰 정보 저장 및 모달 표시
         setTokenData({ fcmToken, deviceId });
-        setShowTokenModal(true);
-      } else {
-        console.log("⚠️ [Notification] 사용자가 권한을 거부했습니다");
-        // 권한 거부해도 로그인은 계속 진행
-        Alert.alert(
-          "알림 권한",
-          "알림을 받으려면 설정에서 권한을 허용해주세요.",
-          [{ text: "확인", onPress: () => router.replace("/(tabs)") }]
-        );
       }
+      
+      console.log("🔥 [LOGIN] FCM Token & Device ID 저장 완료");
+      console.log("📱 [LOGIN] useEffect가 자동으로 화면 전환을 처리합니다...");
     } catch (error: any) {
       console.error("❌ [LOGIN] 실패:", error);
 
@@ -153,7 +155,7 @@ export default function LoginScreen() {
       </TouchableWithoutFeedback>
 
       {/* 토큰 정보 모달 */}
-      <Modal
+      {/* <Modal
         visible={showTokenModal}
         transparent={true}
         animationType="fade"
@@ -167,7 +169,7 @@ export default function LoginScreen() {
             <Typography weight="700" size={20} style={styles.modalTitle}>
               로그인 성공 🎉
             </Typography>
-            
+
             <ScrollView style={styles.modalContent}>
               <Typography weight="600" size={16} style={styles.sectionTitle}>
                 📱 디바이스 정보
@@ -179,7 +181,9 @@ export default function LoginScreen() {
                 </Typography>
                 <Pressable
                   style={styles.tokenBox}
-                  onPress={() => copyToClipboard(tokenData.fcmToken, "FCM Token")}
+                  onPress={() =>
+                    copyToClipboard(tokenData.fcmToken, "FCM Token")
+                  }
                 >
                   <Typography weight="400" size={12} style={styles.tokenText}>
                     {tokenData.fcmToken || "(권한 없음)"}
@@ -196,7 +200,9 @@ export default function LoginScreen() {
                 </Typography>
                 <Pressable
                   style={styles.tokenBox}
-                  onPress={() => copyToClipboard(tokenData.deviceId, "Device ID")}
+                  onPress={() =>
+                    copyToClipboard(tokenData.deviceId, "Device ID")
+                  }
                 >
                   <Typography weight="400" size={12} style={styles.tokenText}>
                     {tokenData.deviceId}
@@ -217,7 +223,7 @@ export default function LoginScreen() {
             />
           </View>
         </View>
-      </Modal>
+      </Modal> */}
     </>
   );
 }

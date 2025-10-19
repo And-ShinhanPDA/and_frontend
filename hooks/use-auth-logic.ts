@@ -64,8 +64,15 @@ export function useAuthLogic() {
 
   // 회원가입
   const signUp = useCallback(
-    async ({ name, email, password }: SignUpPayload) => {
-      const user = await authService.signUp({ name, email, password });
+    async ({ name, email, password, fcmToken, deviceId }: SignUpPayload) => {
+      console.log("🔄 [useAuthLogic] signUp 호출:", { name, email, fcmToken, deviceId });
+      const user = await authService.signUp({ 
+        name, 
+        email, 
+        password, 
+        fcmToken, 
+        deviceId 
+      });
       setUser(user);
     },
     []
