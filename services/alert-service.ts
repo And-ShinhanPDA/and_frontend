@@ -220,7 +220,6 @@ export const alertService = {
       throw new Error(getErrorMessage(err));
     }
   },
-
   // 현재 활성화 된 기업 알림 (홈)
   async getTriggeredAlerts(accessToken: string, stockCodes?: string[]) {
     const url = `${BASE_URL}/api/alerts/triggered`;
@@ -300,6 +299,161 @@ export const alertService = {
       }));
 
       return parsed;
+    } catch (err: any) {
+      throw new Error(getErrorMessage(err));
+    }
+  },
+
+  // 조건 검색된 기업 조회
+  async getConditionSearchResults(accessToken: string, alertId: string) {
+    const url = `${BASE_URL}/api/alerts/condition/${alertId}`;
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const { data } = res.data ?? {};
+
+      if (!Array.isArray(data)) {
+        return [];
+      }
+
+      const formatted = data.map((item: any) => ({
+        stockCode: item.stockCode,
+        triggerDate: item.triggerDate,
+        values: item.values || {},
+      }));
+
+      return formatted;
+    } catch (err: any) {
+      throw new Error(getErrorMessage(err));
+    }
+  },
+
+  // 현재 올리고 있는 알림 조회(조건별 알림)
+  async getTriggeredConditionAlerts(accessToken: string) {
+    const url = `${BASE_URL}/api/alerts/condition/triggered`;
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const { data } = res.data ?? {};
+
+      if (!Array.isArray(data)) {
+        return [];
+      }
+
+      const formatted = data.map((item: any) => ({
+        conditionName: item.conditionName,
+        activeCompanyCount: item.activeCompanyCount,
+      }));
+
+      return formatted;
+    } catch (err: any) {
+      throw new Error(getErrorMessage(err));
+    }
+  },
+
+  // 오늘 발생한 알림 조회
+  async getTodayAlerts(accessToken: string) {
+    const url = `${BASE_URL}/api/alerts/today`;
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const { data } = res.data ?? {};
+      
+      if (!Array.isArray(data)) {
+        return [];
+      }
+
+      return data;
+    } catch (err: any) {
+      throw new Error(getErrorMessage(err));
+    }
+  },
+
+  // 알림 히트맵 조회
+  async getAlertHeatmap(accessToken: string) {
+    const url = `${BASE_URL}/api/alerts/heatmap`;
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const { data } = res.data ?? {};
+
+      if (!data || !Array.isArray(data.alerts)) {
+        return [];
+      }
+
+      return data.alerts;
+    } catch (err: any) {
+      throw new Error(getErrorMessage(err));
+    }
+  },
+
+  // 시가종가 on/off 여부 조회
+  async getPriceOnOffStatus(accessToken: string, alertId: number) {
+    const url = `${BASE_URL}/api/alerts/${alertId}/price`;
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const { data } = res.data ?? {};
+
+      return data;
+    } catch (err: any) {
+      throw new Error(getErrorMessage(err));
+    }
+  },
+
+  // 시가/종가 on/off 상태 변경
+  async updatePriceOnOffStatus(
+    accessToken: string,
+    alertId: number,
+    isEnabled: boolean
+  ) {
+    const url = `${BASE_URL}/api/alerts/${alertId}/price`;
+
+    try {
+      const res = await axios.patch(
+        url,
+        { isPrice: isEnabled },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const { data } = res.data ?? {};
+
+      return data;
     } catch (err: any) {
       throw new Error(getErrorMessage(err));
     }

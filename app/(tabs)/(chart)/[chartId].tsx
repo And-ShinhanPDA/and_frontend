@@ -11,8 +11,12 @@ export default function ChartDetail() {
   }>();
   const router = useRouter();
 
+  console.log("[차트 페이지] ChartDetail 렌더링됨:", { name, stockCode });
+
   const companyName = name || "기업명 없음";
   const code = stockCode || "005930"; // 기본값으로 삼성전자
+
+  console.log("[차트 페이지] 최종 값:", { companyName, code });
 
   const [currentPrice, setCurrentPrice] = useState<any>(null);
 

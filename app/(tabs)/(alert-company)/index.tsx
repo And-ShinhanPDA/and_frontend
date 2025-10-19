@@ -98,7 +98,7 @@ export default function AlertCompany() {
     try {
       // 1. 기업 알림 리스트 조회
       const res = await alertService.getAlertedCompanies(accessToken);
-      console.log("[알림 기업 응답]:", res);
+      // console.log("[알림 기업 응답]:", res);
 
       // 2. Triggered 알림 조회 (조건 만족한 알림들)
       const triggeredRes = await alertService.getTriggeredAlerts(accessToken);

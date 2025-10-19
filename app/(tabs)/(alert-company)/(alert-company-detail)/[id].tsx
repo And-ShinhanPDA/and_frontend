@@ -90,7 +90,7 @@ export default function CompanyAlertDetail() {
 
   // 고정 "시가/종가 알림" 스위치 상태
   const [priceOpenCloseEnabled, setPriceOpenCloseEnabled] =
-    useState<boolean>(true);
+    useState<boolean>(false);
 
   // 프리셋 모달 상태
   const [isPresetOpen, setIsPresetOpen] = useState(false);
@@ -138,6 +138,19 @@ export default function CompanyAlertDetail() {
         setAlerts(formatted);
         console.log(`변환된 알림 수: ${formatted.length}`);
         console.log(`Triggered 알림 수: ${triggeredAlertIds.size}`);
+
+        // 시가/종가 상태 조회 (첫 번째 알림이 있을 때)
+        if (formatted.length > 0) {
+          try {
+            const priceStatus = await alertService.getPriceOnOffStatus(
+              accessToken,
+              parseInt(formatted[0].id)
+            );
+            setPriceOpenCloseEnabled(priceStatus);
+          } catch (err) {
+            console.error("[시가/종가 상태 조회 실패]:", err);
+          }
+        }
       }
     } catch (err) {
       console.error("[기업별 알림 조회 실패]:", err);
@@ -159,6 +172,31 @@ export default function CompanyAlertDetail() {
     });
     setFadeAnimations(anims);
   }, [alerts]);
+
+  // 시가/종가 토글 핸들러
+  const togglePriceOpenClose = async () => {
+    if (!accessToken || alerts.length === 0) return;
+    try {
+      const newState = !priceOpenCloseEnabled;
+      const firstAlert = alerts[0];
+
+      // UI 상태 먼저 업데이트
+      setPriceOpenCloseEnabled(newState);
+
+      // 시가/종가 전용 PATCH API 호출
+      await alertService.updatePriceOnOffStatus(
+        accessToken,
+        parseInt(firstAlert.id),
+        newState
+      );
+
+      console.log(`[시가/종가 토글] ${newState ? "켜짐" : "꺼짐"}`);
+    } catch (err) {
+      console.error("[시가/종가 토글 실패]:", err);
+      // 실패 시 원래 상태로 되돌리기
+      setPriceOpenCloseEnabled(!priceOpenCloseEnabled);
+    }
+  };
 
   // 토글 스위치
   const toggleSwitch = async (id: string, isActive: boolean) => {
@@ -234,7 +272,7 @@ export default function CompanyAlertDetail() {
           trackColor={{ false: "#ccc", true: "#4CC439" }}
           thumbColor="#fff"
           ios_backgroundColor="#E9E9EA"
-          onValueChange={() => setPriceOpenCloseEnabled((v) => !v)}
+          onValueChange={togglePriceOpenClose}
           value={priceOpenCloseEnabled}
         />
       </View>

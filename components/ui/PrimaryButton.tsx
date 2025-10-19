@@ -12,14 +12,15 @@ export function PrimaryButton({ title, onPress, style, disabled = false }: Prima
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
+      disabled={disabled}
       style={({ pressed }) => [
         styles.button,
         style,
-        disabled && styles.disabled,
         pressed && !disabled && { opacity: 0.8 },
+        disabled && { opacity: 0.5 },
       ]}
     >
-      <Text style={[styles.text, disabled && styles.disabledText]}>
+      <Text style={styles.text}>
         <Typography weight="600" size={19}>
           {title}
         </Typography>
@@ -36,14 +37,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  disabled: {
-    backgroundColor: "#CCCCCC",
-    opacity: 0.6,
-  },
   text: {
     color: "white",
-  },
-  disabledText: {
-    color: "#888888",
   },
 });

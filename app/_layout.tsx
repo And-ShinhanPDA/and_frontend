@@ -1,6 +1,4 @@
-import notifee from '@notifee/react-native';
-import messaging from "@react-native-firebase/messaging";
-import * as Notifications from 'expo-notifications';
+// app/_layout.tsx
 import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, View } from "react-native";
@@ -8,40 +6,69 @@ import "react-native-reanimated";
 
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+// import { setWidgetViewType } from "@/services/widgetShare"; // ✅ 위젯 관련 주석처리
+// import messaging from "@react-native-firebase/messaging"; // ✅ 임시 주석처리
 import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
+import Constants from "expo-constants";
+import * as Device from "expo-device";
 import { useFonts } from "expo-font";
+// import * as Linking from "expo-linking"; // ✅ 위젯 관련 주석처리
 import { useEffect } from "react";
 
 SplashScreen.preventAutoHideAsync();
 
-// ✅ 알림 표시 방식 설정
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// ✅ 앱이 background/quit(종료) 상태인 경우 메시지를 받기 위함
+// messaging().setBackgroundMessageHandler(async (remoteMessage: any) => {
+//   console.log("[Background Message] ", remoteMessage);
+// });
 
-// ✅ 백그라운드 메시지 핸들러 (최상위 레벨에서 설정 - 필수!)
-// 주의: iOS에서는 notification 필드가 있으면 자동으로 시스템 알림이 표시됩니다.
-// 이 핸들러는 data-only 메시지나 추가 처리가 필요한 경우에 사용됩니다.
-messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-  console.log("🔔 [Background Message]", JSON.stringify(remoteMessage));
-  
-  // 백그라운드 데이터 처리 (예: 로컬 DB 업데이트 등)
-  // iOS는 notification 필드가 있으면 자동으로 알림을 표시합니다.
-});
+// ✅ FCM 권한 요청 및 토큰 생성
+const requestUserPermission = async () => {
+  try {
+    // ✅ 임시 주석처리
+    // const authorizationStatus = await messaging().requestPermission();
+
+    // if (authorizationStatus) {
+    //   // FCM 토큰 생성
+    //   const token = await messaging().getToken();
+
+    // 디바이스 정보
+    const deviceId = Constants.sessionId; // 세션 ID
+    const deviceName = Device.deviceName; // 기기 이름 (예: "여은동의 iPhone")
+    const modelName = Device.modelName; // 모델명 (예: "iPhone 16 Pro")
+    const osVersion = Device.osVersion; // OS 버전
+    const brand = Device.brand; // 브랜드 (Apple)
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("📱 Device Information");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("🆔 Device ID (Session):", deviceId);
+    console.log("📱 Device Name:", deviceName);
+    console.log("📲 Model Name:", modelName);
+    console.log("🍎 Brand:", brand);
+    console.log("📊 OS Version:", osVersion);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    // console.log("🔥 FCM Token Information");
+    // console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    // console.log("🔑 FCM Token:", token);
+    // console.log("✅ Authorization Status:", authorizationStatus);
+    // console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    // return token;
+    // }
+  } catch (error) {
+    console.error("❌ Error requesting permission:", error);
+  }
+};
 
 function RouterGate() {
-  const { isReady } = useAuth();
+  const { isReady, isLoggedIn } = useAuth();
 
+  // 로딩 중
   if (!isReady) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -50,6 +77,8 @@ function RouterGate() {
     );
   }
 
+  // 로그인 여부와 관계없이 Stack만 보여줌
+  // KeyboardAvoidingView 제거 - 화면이 밀리는 것 방지
   return (
     <View style={{ flex: 1 }}>
       <Stack
@@ -74,108 +103,76 @@ export default function RootLayout() {
     Pretendard900: require("../assets/fonts/Pretendard-Black.ttf"),
   });
 
-  // ✅ Notifee 권한 요청 및 설정
+  // ✅ iOS 권한 요청 및 FCM 토큰 받기
   useEffect(() => {
-    const setupNotifications = async () => {
-      try {
-        // Notifee 알림 권한 요청
-        const settings = await notifee.requestPermission();
-        console.log('📋 [Notifee] 알림 권한 상태:', settings);
-        
-        // iOS 카테고리 설정
-        await notifee.setNotificationCategories([
-          {
-            id: 'default',
-            actions: [
-              {
-                id: 'default',
-                title: '확인',
-              },
-            ],
-          },
-        ]);
-        
-        // 알림 채널 생성 (Android용)
-        await notifee.createChannel({
-          id: 'default',
-          name: '기본 알림',
-          sound: 'default',
-        });
-        
-        console.log('✅ [Notifee] 초기화 완료');
-      } catch (error) {
-        console.error('❌ [Notifee] 초기화 실패:', error);
-      }
-    };
-    
-    setupNotifications();
+    requestUserPermission();
   }, []);
 
-  // ✅ 포어그라운드 메시지 → iOS 시스템 알림으로 표시
-  useEffect(() => {
-    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
-      console.log("🔔 [Foreground Message]", JSON.stringify(remoteMessage));
-      
-      try {
-        // iOS에서 제대로 표시되도록 채널 ID와 함께 알림 생성
-        const channelId = await notifee.createChannel({
-          id: 'important',
-          name: '중요 알림',
-          importance: 4, // AndroidImportance.HIGH
-          sound: 'default',
-        });
-        
-        // Notifee를 사용하여 iOS 시스템 알림 표시
-        const notificationId = await notifee.displayNotification({
-          title: remoteMessage.notification?.title || "알림",
-          body: remoteMessage.notification?.body || "",
-          ios: {
-            sound: 'default',
-            categoryId: 'default',
-            foregroundPresentationOptions: {
-              alert: true,
-              badge: true,
-              sound: true,
-              banner: true,
-              list: true,
-            },
-          },
-          android: {
-            channelId,
-            sound: 'default',
-            pressAction: {
-              id: 'default',
-            },
-          },
-          data: remoteMessage.data,
-        });
-        
-        console.log("✅ 알림 표시 완료, ID:", notificationId);
-      } catch (error) {
-        console.error("❌ 알림 표시 실패:", error);
-      }
-    });
-    return unsubscribe;
-  }, []);
+  // ✅ 앱이 foreground(실행) 상태인 경우 메시지를 받기 위함
+  // useEffect(() => {
+  //   const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+  //     console.log("[Foreground Message] ", JSON.stringify(remoteMessage));
 
-  // ✅ 알림 클릭 시 처리
-  useEffect(() => {
-    // Notifee 알림 클릭 이벤트
-    const unsubscribe = notifee.onForegroundEvent(({ type, detail }) => {
-      console.log("👆 [Notification Event]", type, detail);
-      
-      if (type === 1) { // EventType.PRESS
-        const data = detail.notification?.data;
-        console.log("👆 [Notification Clicked]", data);
-        // TODO: 알림 클릭 시 특정 화면으로 이동
-        // router.push(`/detail/${data.id}`);
-      }
-    });
+  //     // 필요하면 Alert 표시
+  //     if (remoteMessage.notification) {
+  //       Alert.alert(
+  //         remoteMessage.notification.title || "알림",
+  //         remoteMessage.notification.body || ""
+  //       );
+  //     }
+  //   });
 
-    return () => {
-      unsubscribe();
-    };
-  }, []);
+  //   return unsubscribe;
+  // }, []);
+
+  // ✅ FCM 토큰 갱신 감지
+  // useEffect(() => {
+  //   const unsubscribe = messaging().onTokenRefresh((token) => {
+  //     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  //     console.log("🔄 FCM Token Refreshed!");
+  //     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  //     console.log("🔑 New FCM Token:", token);
+  //     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  //   });
+
+  //   return unsubscribe;
+  // }, []);
+
+  // ✅ 위젯 관련 딥링크 처리 - 전체 주석처리
+  // useEffect(() => {
+  //   const handleDeepLink = (event: Linking.EventType) => {
+  //     const { path, queryParams } = Linking.parse(event.url);
+
+  //     if (
+  //       queryParams?.view === "companies" ||
+  //       queryParams?.view === "conditions"
+  //     ) {
+  //       const viewType = queryParams.view as "companies" | "conditions";
+  //       console.log("📲 위젯에서 받은 요청:", viewType);
+
+  //       // App Group에 viewType 저장 → Swift 위젯이 읽어서 전환
+  //       setWidgetViewType(viewType);
+  //     }
+  //   };
+
+  //   // 앱 실행 중 수신되는 URL
+  //   const sub = Linking.addEventListener("url", handleDeepLink);
+
+  //   // 앱 처음 켜질 때 URL이 있었는지 확인
+  //   Linking.getInitialURL().then((url) => {
+  //     if (!url) return;
+  //     const { queryParams } = Linking.parse(url);
+  //     if (
+  //       queryParams?.view === "companies" ||
+  //       queryParams?.view === "conditions"
+  //     ) {
+  //       const viewType = queryParams.view as "companies" | "conditions";
+  //       setWidgetViewType(viewType);
+  //     }
+  //   });
+
+  //   return () => sub.remove();
+  // }, []);
 
   // 글꼴 로딩 후 스플래시 종료
   useEffect(() => {

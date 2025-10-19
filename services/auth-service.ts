@@ -1,7 +1,6 @@
 import { AuthResponse, SignInPayload, SignUpPayload, User } from "@/types/auth";
 import { getErrorMessage } from "@/utils/errorHandler";
 import axios from "axios";
-
 const BASE_URL = process.env.EXPO_PUBLIC_USER_URL;
 
 export const authService = {
