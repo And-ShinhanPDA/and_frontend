@@ -8,13 +8,61 @@ import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
+import { alertService } from "@/services/alert-service";
+
+// API 응답 타입
+type TriggeredCondition = {
+  conditionName: string;
+  activeCompanyCount: number;
+};
 
 export default function HomeScreen() {
   const [isPresetOpen, setIsPresetOpen] = useState(false);
-  const { signOut, user } = useAuth();
+  const { signOut, user, accessToken } = useAuth();
   const router = useRouter();
+
+  // 활성화된 조건 알림 상태 관리
+  const [triggeredConditions, setTriggeredConditions] = useState<
+    TriggeredCondition[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 활성화된 조건 알림 조회 함수
+  const fetchTriggeredConditions = async () => {
+    if (!accessToken) {
+      console.log("accessToken 없음");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const results = await alertService.getTriggeredConditionAlerts(
+        accessToken
+      );
+      setTriggeredConditions(results);
+
+      console.log(`홈 화면 - 활성화된 조건 알림 ${results.length}개 로드 완료`);
+    } catch (err: any) {
+      console.error("홈 화면 - 활성화된 조건 알림 조회 실패:", err);
+      setError(
+        err.response?.data?.message ||
+          "활성화된 조건 알림을 불러오는데 실패했습니다."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 컴포넌트 마운트 시 데이터 로드
+  useEffect(() => {
+    fetchTriggeredConditions();
+  }, [accessToken]);
 
   // 로그아웃 핸들러
   const handleLogout = async () => {
@@ -48,7 +96,10 @@ export default function HomeScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        <ActivatedConditionCard />
+        <ActivatedConditionCard
+          triggeredConditions={triggeredConditions}
+          loading={loading}
+        />
         <ActivatedCompanyCard />
         <TreemapChart />
       </ScrollView>
