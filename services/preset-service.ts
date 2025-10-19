@@ -5,7 +5,6 @@ export const presetService = {
   // 전체 프리셋 조회
   async getPresetList(accessToken: string) {
     const url = `${BASE_URL}/api/presets`;
-    console.log("[GET] 프리셋 조회 요청:", url);
     try {
       const res = await axios.get(url, {
         headers: {
@@ -13,7 +12,7 @@ export const presetService = {
           "Content-Type": "application/json",
         },
       });
-      console.log("[프리셋 조회 성공]:", res.data);
+
       return res.data;
     } catch (err: any) {
       console.error("[프리셋 조회 실패]:", err.response?.data ?? err.message);
