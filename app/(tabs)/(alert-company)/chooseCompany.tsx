@@ -1,6 +1,7 @@
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
 import { COMPANIES } from "@/constants/companies";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -16,6 +17,18 @@ import {
 export default function AlertAdditional() {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const { signOut, user } = useAuth();
+
+  // 로그아웃 핸들러
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      console.log("로그아웃 성공");
+      router.replace("/(auth)/login");
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+    }
+  };
 
   const filtered = COMPANIES.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
@@ -43,6 +56,8 @@ export default function AlertAdditional() {
         title="기업 선택"
         showBackButton={true}
         rightButtons="mypage"
+        userName={user?.name || "사용자"}
+        onLogoutConfirm={handleLogout}
       />
 
       {/* 검색 바 */}

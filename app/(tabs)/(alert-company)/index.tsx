@@ -18,6 +18,8 @@ import {
   View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
+import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
+import PresetSelect from "@/components/preset/preset-select";
 
 type CompanyAlert = {
   stockCode: string;
@@ -28,13 +30,25 @@ type CompanyAlert = {
 };
 
 export default function AlertCompany() {
-  const { accessToken } = useAuth();
+  const { accessToken, signOut, user } = useAuth();
   const [search, setSearch] = useState("");
   const [fadeAnimations, setFadeAnimations] = useState<
     Record<string, Animated.Value>
   >({});
   const [deleteWidth, setDeleteWidth] = useState(80);
   const [companies, setCompanies] = useState<CompanyAlert[]>([]);
+  const [isPresetOpen, setIsPresetOpen] = useState(false);
+
+  // 로그아웃 핸들러
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      console.log("로그아웃 성공");
+      router.replace("/(auth)/login");
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+    }
+  };
 
   /* 기업 리스트 조회 */
   const fetchAlertedCompanies = async () => {
@@ -170,7 +184,9 @@ export default function AlertCompany() {
         title="기업 알림"
         showBackButton={false}
         rightButtons="preset-and-mypage"
-        onPresetPress={() => console.log("프리셋 열기")}
+        onPresetPress={() => setIsPresetOpen(true)}
+        userName={user?.name || "사용자"}
+        onLogoutConfirm={handleLogout}
       />
 
       <View style={styles.searchWrapper}>
@@ -281,6 +297,15 @@ export default function AlertCompany() {
           style={styles.plusIcon}
         />
       </TouchableOpacity>
+
+      {/* 프리셋 모달 */}
+      <ConditionBottomSheet
+        visible={isPresetOpen}
+        onClose={() => setIsPresetOpen(false)}
+        ratio={0.8}
+      >
+        <PresetSelect onClose={() => setIsPresetOpen(false)} />
+      </ConditionBottomSheet>
 
       <CustomBottomTab activeTab="기업 알림" />
     </View>

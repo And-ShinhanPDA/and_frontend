@@ -48,9 +48,186 @@ export default function CompanyAlertDetail() {
     [k: string]: () => any[];
   }>({});
 
+  // 프리셋 적용을 위한 상태
+  const [presetConditions, setPresetConditions] = useState<{
+    price?: any;
+    trailing?: any;
+    change?: any;
+    week52?: any;
+    volume?: any;
+    sma?: any;
+    rsi?: any;
+    bollingerband?: any;
+  }>({});
+
   const handleTempSave = useCallback((id: string, getter: () => any[]) => {
     setConditionGetters((prev) => ({ ...prev, [id]: getter }));
   }, []);
+
+  // 프리셋 조건을 각 카드 형식으로 변환
+  const parsePresetConditions = (conditions: any[]) => {
+    const parsed: any = {
+      price: { limits: [], openChanges: [], currentChanges: [] },
+      trailing: {
+        stopPrice: "",
+        stopPercent: "",
+        buyPrice: "",
+        buyPercent: "",
+      },
+      change: { dailyChanges: [], baseChanges: [] },
+      week52: {
+        highAlert: false,
+        lowAlert: false,
+        highProximity: null,
+        lowProximity: null,
+      },
+      volume: {
+        avgRise: null,
+        avgDrop: null,
+        spike: false,
+        drop: false,
+      },
+      sma: { shortCross: false, longCross: false, target: null },
+      rsi: { overbought: false, oversold: false },
+      bollingerband: { upper: false, lower: false },
+    };
+
+    conditions.forEach((cond) => {
+      const { indicator, threshold } = cond;
+
+      // threshold가 null이 아닐 때만 문자열로 변환
+      const thresholdStr = threshold !== null ? String(threshold) : "";
+      // +/- 부호가 있는 필드는 절댓값만 사용
+      const absThresholdStr =
+        threshold !== null ? String(Math.abs(threshold)) : "";
+
+      // 가격 관련
+      if (indicator === "PRICE_ABOVE") {
+        if (threshold !== null) {
+          parsed.price.limits.push({
+            comparison: "이상",
+            amount: thresholdStr,
+          });
+        }
+      } else if (indicator === "PRICE_BELOW") {
+        if (threshold !== null) {
+          parsed.price.limits.push({
+            comparison: "이하",
+            amount: thresholdStr,
+          });
+        }
+      } else if (indicator === "PRICE_CHANGE_DAILY_UP") {
+        parsed.price.openChanges.push({
+          direction: "+",
+          amount: absThresholdStr,
+        });
+      } else if (indicator === "PRICE_CHANGE_DAILY_DOWN") {
+        parsed.price.openChanges.push({
+          direction: "-",
+          amount: absThresholdStr,
+        });
+      } else if (indicator === "PRICE_CHANGE_BASE_UP") {
+        parsed.price.currentChanges.push({
+          direction: "+",
+          amount: absThresholdStr,
+        });
+      } else if (indicator === "PRICE_CHANGE_BASE_DOWN") {
+        parsed.price.currentChanges.push({
+          direction: "-",
+          amount: absThresholdStr,
+        });
+      }
+
+      // 후행 (Trailing)
+      else if (indicator === "TRAILING_STOP_PRICE") {
+        parsed.trailing.stopPrice = absThresholdStr;
+      } else if (indicator === "TRAILING_STOP_PERCENT") {
+        parsed.trailing.stopPercent = absThresholdStr;
+      } else if (indicator === "TRAILING_BUY_PRICE") {
+        parsed.trailing.buyPrice = absThresholdStr;
+      } else if (indicator === "TRAILING_BUY_PERCENT") {
+        parsed.trailing.buyPercent = absThresholdStr;
+      }
+
+      // 일간 등락률 (Change)
+      else if (indicator === "PRICE_RATE_DAILY_UP") {
+        parsed.change.dailyChanges.push({
+          direction: "+",
+          amount: absThresholdStr,
+        });
+      } else if (indicator === "PRICE_RATE_DAILY_DOWN") {
+        parsed.change.dailyChanges.push({
+          direction: "-",
+          amount: absThresholdStr,
+        });
+      } else if (indicator === "PRICE_RATE_BASE_UP") {
+        parsed.change.baseChanges.push({
+          direction: "+",
+          amount: absThresholdStr,
+        });
+      } else if (indicator === "PRICE_RATE_BASE_DOWN") {
+        parsed.change.baseChanges.push({
+          direction: "-",
+          amount: absThresholdStr,
+        });
+      }
+
+      // 52주 관련
+      else if (indicator === "HIGH_52W") {
+        parsed.week52.highAlert = true;
+      } else if (indicator === "LOW_52W") {
+        parsed.week52.lowAlert = true;
+      } else if (indicator === "NEAR_HIGH_52W") {
+        parsed.week52.highProximity = { value: thresholdStr };
+      } else if (indicator === "NEAR_LOW_52W") {
+        parsed.week52.lowProximity = { value: thresholdStr };
+      }
+
+      // 거래량 관련
+      else if (indicator === "VOLUME_AVG_DEV_UP") {
+        parsed.volume.avgRise = thresholdStr;
+      } else if (indicator === "VOLUME_AVG_DEV_DOWN") {
+        parsed.volume.avgDrop = thresholdStr;
+      } else if (indicator === "VOLUME_CHANGE_PERCENT_UP") {
+        parsed.volume.spike = true;
+      } else if (indicator === "VOLUME_CHANGE_PERCENT_DOWN") {
+        parsed.volume.drop = true;
+      }
+
+      // SMA 관련
+      else if (indicator.startsWith("SMA_")) {
+        parsed.sma.target = { indicator, threshold };
+      } else if (indicator === "GOLDEN_CROSS") {
+        parsed.sma.shortCross = true;
+      } else if (indicator === "DEAD_CROSS") {
+        parsed.sma.longCross = true;
+      }
+
+      // RSI 관련
+      else if (indicator === "RSI_OVER") {
+        parsed.rsi.overbought = true;
+      } else if (indicator === "RSI_UNDER") {
+        parsed.rsi.oversold = true;
+      }
+
+      // 볼린저 밴드 관련
+      else if (indicator === "BOLLINGER_UPPER_TOUCH") {
+        parsed.bollingerband.upper = true;
+      } else if (indicator === "BOLLINGER_LOWER_TOUCH") {
+        parsed.bollingerband.lower = true;
+      }
+    });
+
+    return parsed;
+  };
+
+  // 프리셋 선택 시 호출
+  const handlePresetSelect = (presetId: number, conditions: any[]) => {
+    console.log("프리셋 적용:", presetId, conditions);
+    const parsed = parsePresetConditions(conditions);
+    console.log("파싱된 조건:", parsed);
+    setPresetConditions(parsed);
+  };
 
   const handleSave = async () => {
     try {
@@ -186,16 +363,40 @@ export default function CompanyAlertDetail() {
           onChangeText={setTitle}
         />
         <View style={styles.divider} />
-        <PriceConditionCard onTempSave={handleTempSave} />
-        <ChangeConditionCard onTempSave={handleTempSave} />
-        <TrailingConditionCard onTempSave={handleTempSave} />
-        <Week52ConditionCard onTempSave={handleTempSave} />
+        <PriceConditionCard
+          onTempSave={handleTempSave}
+          initialValue={presetConditions.price}
+        />
+        <ChangeConditionCard
+          onTempSave={handleTempSave}
+          initialValue={presetConditions.change}
+        />
+        <TrailingConditionCard
+          onTempSave={handleTempSave}
+          initialValue={presetConditions.trailing}
+        />
+        <Week52ConditionCard
+          onTempSave={handleTempSave}
+          initialValue={presetConditions.week52}
+        />
 
-        <VolumeConditionCard onTempSave={handleTempSave} />
-        <SMAConditionCard onTempSave={handleTempSave} />
+        <VolumeConditionCard
+          onTempSave={handleTempSave}
+          initialValue={presetConditions.volume}
+        />
+        <SMAConditionCard
+          onTempSave={handleTempSave}
+          initialValue={presetConditions.sma}
+        />
 
-        <RSIConditionCard onTempSave={handleTempSave} />
-        <BollingerBandCondition onTempSave={handleTempSave} />
+        <RSIConditionCard
+          onTempSave={handleTempSave}
+          initialValue={presetConditions.rsi}
+        />
+        <BollingerBandCondition
+          onTempSave={handleTempSave}
+          initialValue={presetConditions.bollingerband}
+        />
       </ScrollView>
 
       {/* 하단 버튼 */}
@@ -217,7 +418,11 @@ export default function CompanyAlertDetail() {
         onClose={() => setIsPresetOpen(false)}
         ratio={0.8}
       >
-        <PresetSelect onClose={() => setIsPresetOpen(false)} />
+        <PresetSelect
+          mode="select"
+          onClose={() => setIsPresetOpen(false)}
+          onPresetSelect={handlePresetSelect}
+        />
       </ConditionBottomSheet>
     </View>
   );

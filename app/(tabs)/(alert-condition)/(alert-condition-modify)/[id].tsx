@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,7 +11,6 @@ import {
 } from "react-native";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
-import ChangeConditionCard from "@/components/add-card/change/change-condition";
 import RSIConditionCard from "@/components/add-card/rsi/rsi-condition";
 import SMAConditionCard from "@/components/add-card/sma/sma-condition";
 import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
@@ -20,26 +20,70 @@ import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import { parseConditionsForCards } from "@/utils/parseConditions";
 
-export default function ConditionAlertDetail() {
+export default function ConditionAlertModify() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const [isPresetOpen, setIsPresetOpen] = useState(false);
-  const tabs = ["제목", "가격", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
+  const tabs = ["제목", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
   const { accessToken } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [alertData, setAlertData] = useState<any>(null);
+  const [title, setTitle] = useState("");
 
   const [conditionGetters, setConditionGetters] = useState<{
     [k: string]: () => any[];
   }>({});
 
-  const handleTempSave = (id: string, getter: () => any[]) => {
+  const handleTempSave = useCallback((id: string, getter: () => any[]) => {
     setConditionGetters((prev) => ({ ...prev, [id]: getter }));
-  };
+  }, []);
+
+  // 알림 상세 조회
+  useEffect(() => {
+    const fetchAlertDetail = async () => {
+      if (!accessToken || !id) return;
+
+      try {
+        setLoading(true);
+        const response = await alertService.getAlertDetail(
+          accessToken,
+          String(id)
+        );
+        console.log("알림 상세 조회 응답:", response);
+
+        if (response?.data) {
+          setAlertData(response.data);
+          setTitle(response.data.title || "");
+        }
+      } catch (error) {
+        console.error("알림 상세 조회 실패:", error);
+        alert("알림 정보를 불러오는데 실패했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAlertDetail();
+  }, [id, accessToken]);
+
+  // 파싱된 조건 데이터
+  const parsedConditions = useMemo(() => {
+    return alertData?.conditions
+      ? parseConditionsForCards(alertData.conditions)
+      : null;
+  }, [alertData?.conditions]);
 
   const handleSave = async () => {
     try {
       if (!accessToken) {
         alert("로그인이 필요합니다.");
+        return;
+      }
+
+      if (!alertData) {
+        alert("알림 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
         return;
       }
 
@@ -52,30 +96,77 @@ export default function ConditionAlertDetail() {
         );
 
       const payload = {
-        stockCode: "005930",
-        title: "알람1번조건",
+        stockCode: null, // 조건 검색은 stockCode가 null
+        title: title || alertData.title,
         isActive: true,
         isPreset: false,
         conditions: mergedConditions,
       };
 
-      const res = await alertService.createAlert(payload, accessToken);
-      console.log("알림 등록 성공:", res);
-      alert("알림이 성공적으로 등록되었습니다!");
-      router.back();
+      const res = await alertService.updateAlert(
+        accessToken,
+        String(id),
+        payload
+      );
+      console.log("알림 수정 성공:", res);
+      alert("알림이 성공적으로 수정되었습니다!");
+
+      // 수정된 데이터로 상태 업데이트
+      setAlertData((prev) => ({
+        ...prev,
+        title: title || alertData.title,
+        conditions: mergedConditions,
+      }));
+
+      // 수정 완료 후 조건 검색 메인 페이지로 이동
+      setTimeout(() => {
+        router.replace("/(tabs)/(alert-condition)");
+      }, 100);
     } catch (error: any) {
-      console.error("알림 등록 실패:", error);
+      console.error("알림 수정 실패:", error);
       if (error.response?.status === 401) {
         alert("로그인 세션이 만료되었습니다. 다시 로그인 해주세요.");
       } else {
-        alert("알림 등록 중 오류가 발생했습니다.");
+        alert("알림 수정 중 오류가 발생했습니다.");
       }
     }
   };
+
+  if (loading) {
+    return (
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
+        <ActivityIndicator size="large" color="#4CC439" />
+        <Text style={{ marginTop: 10, fontSize: 16 }}>
+          알림 정보를 불러오는 중...
+        </Text>
+      </View>
+    );
+  }
+
+  if (!alertData) {
+    return (
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
+        <Text style={{ fontSize: 16, color: "#666" }}>
+          알림 정보를 찾을 수 없습니다.
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* 헤더 */}
-      <CustomHeader title="이거 제목 바꿔야함2" showBackButton={true} />
+      <CustomHeader title="조건 수정" showBackButton={true} />
 
       {/* 탭 */}
       <View style={styles.tabBarContainer}>
@@ -103,20 +194,35 @@ export default function ConditionAlertDetail() {
           style={styles.titleInput}
           placeholder="이 조건을 대표할 수 있는 한 줄 제목"
           placeholderTextColor="#A4A4A4"
+          value={title}
+          onChangeText={setTitle}
         />
 
         <View style={styles.divider} />
 
-        {/* 조건 카드 */}
+        {/* 조건 카드 - 파싱된 initialValue 전달 */}
+        <Week52ConditionCard
+          onTempSave={handleTempSave}
+          initialValue={parsedConditions?.week52}
+        />
 
-        <ChangeConditionCard onTempSave={handleTempSave} />
-        <Week52ConditionCard onTempSave={handleTempSave} />
+        <VolumeConditionCard
+          onTempSave={handleTempSave}
+          initialValue={parsedConditions?.volume}
+        />
+        <SMAConditionCard
+          onTempSave={handleTempSave}
+          initialValue={parsedConditions?.sma}
+        />
 
-        <VolumeConditionCard onTempSave={handleTempSave} />
-        <SMAConditionCard onTempSave={handleTempSave} />
-
-        <RSIConditionCard onTempSave={handleTempSave} />
-        <BollingerBandCondition onTempSave={handleTempSave} />
+        <RSIConditionCard
+          onTempSave={handleTempSave}
+          initialValue={parsedConditions?.rsi}
+        />
+        <BollingerBandCondition
+          onTempSave={handleTempSave}
+          initialValue={parsedConditions?.bollinger}
+        />
       </ScrollView>
 
       {/* 하단 버튼 - 플로팅 */}
@@ -129,7 +235,7 @@ export default function ConditionAlertDetail() {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveText}>저장</Text>
+          <Text style={styles.saveText}>수정하기</Text>
         </TouchableOpacity>
       </View>
 

@@ -27,12 +27,17 @@ export const authService = {
       }>
     >(`${BASE_URL}/api/auth/login`, payload);
 
+    // 로그인 할 때 유저정보가 없어서 나중에 주면 수정 필요
+    console.log("=== auth-service 로그인 응답 ===");
+    console.log("전체 응답:", JSON.stringify(res.data, null, 2));
+    console.log("res.data.data:", res.data.data);
+
     const user: User = {
       id: res.data.data.userId,
       email: res.data.data.email,
       name: res.data.data.name,
     };
-    console.log("gee");
+
     return {
       user,
       accessToken: res.data.data.accessToken,
@@ -52,9 +57,10 @@ export const authService = {
   },
 
   // 로그아웃
-  async logout(accessToken: string, refreshTokenId: string): Promise<void> {
-    await axios.delete(`${BASE_URL}/api/auth/logout/${refreshTokenId}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-  },
+  // 로그아웃 API 바뀌어서 다시 바꿔야할듯 (deviceID넣어야할듯)
+  // async logout(accessToken: string, refreshTokenId: string): Promise<void> {
+  //   await axios.delete(`${BASE_URL}/api/auth/logout/${refreshTokenId}`, {
+  //     headers: { Authorization: `Bearer ${accessToken}` },
+  //   });
+  // },
 };

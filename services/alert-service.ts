@@ -23,16 +23,21 @@ export const alertService = {
   // 사용자 보유 알림 조회
   async getUserAlerts(
     accessToken: string,
-    params?: { stockCode?: string; enabled?: boolean }
+    params?: { stockCode?: string | null; enabled?: boolean }
   ) {
     const url = new URL(`${BASE_URL}/api/alerts`);
 
-    if (params?.stockCode)
-      url.searchParams.append("stockCode", params.stockCode);
+    if (params?.stockCode !== undefined) {
+      if (params.stockCode === null) {
+        url.searchParams.append("stockCode", "null");
+      } else {
+        url.searchParams.append("stockCode", String(params.stockCode));
+      }
+    }
     if (typeof params?.enabled === "boolean")
       url.searchParams.append("enabled", String(params.enabled));
 
-    console.log("[GET] 사용자 보유 알림 요청 URL:", url.toString());
+    // console.log("[GET] 사용자 보유 알림 요청 URL:", url.toString());
 
     try {
       const res = await axios.get(url.toString(), {
@@ -42,16 +47,16 @@ export const alertService = {
         },
       });
 
-      console.log("[응답 데이터]:", res.data);
+      // console.log("[응답 데이터]:", res.data);
 
       if (Array.isArray(res.data?.data)) {
         console.log(`조회된 알림 개수: ${res.data.data.length}`);
         res.data.data.forEach((alert: any, i: number) => {
-          console.log(
-            `#${i + 1} [${alert.stockCode ?? "조건 검색"}] ${alert.title} (${
-              alert.isActive ? "활성" : "비활성"
-            })`
-          );
+          // console.log(
+          //   `#${i + 1} [${alert.stockCode ?? "조건 검색"}] ${alert.title} (${
+          //     alert.isActive ? "활성" : "비활성"
+          //   })`
+          // );
         });
       }
 
@@ -349,7 +354,7 @@ export const alertService = {
       });
 
       const rawData = res.data?.data || [];
-      console.log("rawData:", rawData);
+      // console.log("rawData:", rawData);
       const parsed = rawData.map((item: any) => ({
         id: item.id,
         alertId: item.alertId,
