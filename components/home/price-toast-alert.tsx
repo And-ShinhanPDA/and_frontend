@@ -1,43 +1,105 @@
 import { Typography } from "@/components/ui/Typography";
+import { COMPANIES } from "@/constants/companies";
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Image, StyleSheet } from "react-native";
 
-const alerts = [
-  {
-    id: 1,
-    name: "삼성전자",
-    message: "삼성전자 설정 가격 도달!",
-    logo: require("@/assets/images/companies/logo_1_삼성전자.png"),
-  },
-  {
-    id: 2,
-    name: "SK하이닉스",
-    message: "SK하이닉스 조건 충족!",
-    logo: require("@/assets/images/companies/logo_2_하이닉스.png"),
-  },
-  {
-    id: 3,
-    name: "NAVER",
-    message: "NAVER 조건 달성!",
-    logo: require("@/assets/images/companies/logo_7_네이버.png"),
-  },
-  {
-    id: 4,
-    name: "KAKAO",
-    message: "카카오 조건 달성!",
-    logo: require("@/assets/images/companies/logo_13_카카오.png"),
-  },
-];
+type TodayAlert = {
+  id: number;
+  alertId: number;
+  stockCode: string;
+  isSent: boolean;
+  indicatorSnapshot: string;
+  createdAt: string;
+};
+
+type ToastAlert = {
+  id: number;
+  name: string;
+  message: string;
+  logo: any;
+};
+
+const getCompanyInfo = (stockCode: string) => {
+  const company = COMPANIES.find((comp) => comp.code === stockCode);
+  return {
+    name: company?.name || "알 수 없는 기업",
+    logo:
+      company?.logo || require("@/assets/images/companies/logo_1_삼성전자.png"),
+  };
+};
 
 export default function PriceAlertToast() {
   const router = useRouter();
+  const { accessToken } = useAuth();
   const [index, setIndex] = useState(0);
+  const [alerts, setAlerts] = useState<ToastAlert[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const translateY = useRef(new Animated.Value(0)).current;
 
+  // 오늘의 알림 데이터 가져오기
+  const fetchTodayAlerts = async () => {
+    if (!accessToken) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const todayAlerts = await alertService.getTodayAlerts(accessToken);
+
+      if (Array.isArray(todayAlerts) && todayAlerts.length > 0) {
+        const toastAlerts: ToastAlert[] = todayAlerts.map(
+          (alert: TodayAlert) => {
+            const companyInfo = getCompanyInfo(alert.stockCode);
+            return {
+              id: alert.id,
+              name: companyInfo.name,
+              message: alert.indicatorSnapshot || "알림 조건 충족!",
+              logo: companyInfo.logo,
+            };
+          }
+        );
+
+        setAlerts(toastAlerts);
+        console.log(`[토스트] 오늘의 알림 ${toastAlerts.length}개 로드됨`);
+      } else {
+        // 기본 알림 데이터 (데이터가 없을 때)
+        setAlerts([
+          {
+            id: 1,
+            name: "삼성전자",
+            message: "오늘 알림이 없습니다",
+            logo: require("@/assets/images/companies/logo_1_삼성전자.png"),
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error("[토스트] 오늘의 알림 조회 실패:", error);
+      // 에러 시 기본 알림 표시
+      setAlerts([
+        {
+          id: 1,
+          name: "알림",
+          message: "알림을 불러올 수 없습니다",
+          logo: require("@/assets/images/companies/logo_1_삼성전자.png"),
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    fetchTodayAlerts();
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (alerts.length === 0) return;
+
     const interval = setInterval(() => {
       Animated.parallel([
         Animated.timing(fadeAnim, {
@@ -51,7 +113,14 @@ export default function PriceAlertToast() {
           useNativeDriver: true,
         }),
       ]).start(() => {
-        setIndex((prev) => (prev + 1) % alerts.length);
+        const nextIndex = (index + 1) % alerts.length;
+        setIndex(nextIndex);
+
+        // 토스트 전환 시 현재 표시되는 알림 정보 콘솔
+        const currentAlert = alerts[nextIndex];
+        console.log(
+          `[토스트 전환] ID: ${currentAlert.id}, 기업: ${currentAlert.name}, 메시지: ${currentAlert.message}`
+        );
 
         translateY.setValue(10);
         Animated.parallel([
@@ -70,10 +139,13 @@ export default function PriceAlertToast() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [alerts, index]);
+
+  if (loading || alerts.length === 0) {
+    return null;
+  }
 
   const current = alerts[index];
-  const Logo = current.logo;
 
   return (
     <Animated.View

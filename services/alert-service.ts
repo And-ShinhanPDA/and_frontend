@@ -476,35 +476,42 @@ export const alertService = {
   },
 
   // 오늘 발생한 알림 조회
-  // async getTodayAlerts(accessToken: string) {
-  //   const url = `${BASE_URL}/alert/api/alerts/today`;
-  //   console.log("[GET] 요청 URL:", url);
+  async getTodayAlerts(accessToken: string) {
+    const url = `${BASE_URL}/api/alerts/today`;
+    console.log("[GET] 요청 URL:", url);
 
-  //   try {
-  //     const res = await axios.get(url, {
-  //       headers: {
-  //         Authorization: `Bearer ${accessToken}`,
-  //         "Content-Type": "application/json",
-  //       },
-  //     });
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-  //     console.log("[응답 데이터]:", res.data);
+      const { code, message, data } = res.data ?? {};
+      if (!Array.isArray(data)) {
+        console.warn("[경고] data 필드가 배열이 아닙니다:", data);
+        return [];
+      }
 
-  //     if (Array.isArray(res.data)) {
-  //       console.log(`오늘 알림 ${res.data.length}건 수신됨`);
-  //       res.data.forEach((alert, i) => {
-  //         console.log(
-  //           `#${i + 1} [${alert.companyName ?? alert.stockName ?? "?"}] ${
-  //             alert.message ?? JSON.stringify(alert)
-  //           }`
-  //         );
-  //       });
-  //     }
+      //console.log(`[오늘의 알림 조회 성공] ${data.length}건`);
 
-  //     return res.data;
-  //   } catch (err: any) {
-  //     console.error("[에러]:", err.response?.data ?? err.message);
-  //     throw err;
-  //   }
-  // },
+      // // 오늘의 알림 잘 불러와지는지 콘솔찍어봄
+      // data.forEach((alert: any, i: number) => {
+      //   console.log(
+      //     `#${i + 1} [${alert.stockCode}] 알림ID: ${alert.alertId}, 생성일: ${
+      //       alert.createdAt
+      //     }`
+      //   );
+      // });
+
+      return data;
+    } catch (err: any) {
+      console.error(
+        "[오늘의 알림 조회 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
+    }
+  },
 };
