@@ -1,5 +1,12 @@
-import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import React, { useState } from "react";
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 export type Candle = {
   time: number;
@@ -29,6 +36,7 @@ type ChartHeaderProps = {
   ohlc: Candle | null;
   smaVals: SmaVals;
   headerAlert: string | null;
+  headerAlerts: any[];
   fmt: (n?: number) => string;
   ymd: (sec?: number) => string;
   weekday: (sec?: number) => string;
@@ -43,6 +51,7 @@ export default function ChartHeader({
   ohlc,
   smaVals,
   headerAlert,
+  headerAlerts = [],
   fmt,
   ymd,
   weekday,
@@ -51,6 +60,8 @@ export default function ChartHeader({
   isUp,
   currPrice,
 }: ChartHeaderProps) {
+  const [showAllAlerts, setShowAllAlerts] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   return (
     <>
       {/* 상단 기업 정보 */}
@@ -186,13 +197,72 @@ export default function ChartHeader({
             )}
           </View>
         )}
-        {headerAlert && (
+        {headerAlerts.length > 0 && (
           <View style={styles.alertBox}>
-            <Text style={styles.alertTitle}>🔔 알림</Text>
-            <Text style={styles.alertText}>{headerAlert}</Text>
+            <Text style={styles.alertTitle}>
+              🔔 알림 ({headerAlerts.length}개)
+            </Text>
+            <ScrollView
+              style={styles.alertScrollView}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled={true}
+            >
+              {(showAllAlerts ? headerAlerts : headerAlerts.slice(0, 5)).map(
+                (alert, index) => (
+                  <View key={alert.id || index} style={styles.alertItem}>
+                    <Text style={styles.alertItemText}>
+                      {alert.alertContent || "조건 충족"} {alert.timeStr || ""}
+                    </Text>
+                  </View>
+                )
+              )}
+            </ScrollView>
+            {headerAlerts.length > 5 && (
+              <Pressable
+                style={styles.showMoreButton}
+                onPress={() => setShowModal(true)}
+              >
+                <Text style={styles.showMoreText}>
+                  더보기 ({headerAlerts.length - 5}개 더)
+                </Text>
+              </Pressable>
+            )}
           </View>
         )}
       </View>
+
+      {/* 알림 모달 */}
+      <Modal
+        visible={showModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                🔔 알림 목록 ({headerAlerts.length}개)
+              </Text>
+              <Pressable
+                style={styles.closeButton}
+                onPress={() => setShowModal(false)}
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </Pressable>
+            </View>
+            <ScrollView style={styles.modalScrollView}>
+              {headerAlerts.map((alert, index) => (
+                <View key={alert.id || index} style={styles.modalAlertItem}>
+                  <Text style={styles.modalAlertText}>
+                    {alert.alertContent || "조건 충족"} {alert.timeStr || ""}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -222,12 +292,112 @@ const styles = StyleSheet.create({
   bold: { fontWeight: "800", color: "#111" },
   alertBox: {
     marginTop: 8,
-    padding: 8,
+    padding: 12,
     borderRadius: 10,
     backgroundColor: "#F8FFF3",
     borderWidth: 1,
     borderColor: "#CFEFCC",
+    maxHeight: 200,
   },
-  alertTitle: { color: "#2C8A2C", fontWeight: "800", marginBottom: 4 },
-  alertText: { color: "#2C2C2C", fontSize: 12 },
+  alertTitle: {
+    color: "#2C8A2C",
+    fontWeight: "800",
+    marginBottom: 8,
+    fontSize: 14,
+  },
+  alertScrollView: {
+    maxHeight: 120,
+  },
+  alertItem: {
+    marginBottom: 8,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E8F5E8",
+  },
+  alertItemTitle: {
+    color: "#1B5E20",
+    fontWeight: "700",
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  alertItemContent: {
+    color: "#2C2C2C",
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  alertItemTime: {
+    color: "#666",
+    fontSize: 11,
+    fontStyle: "italic",
+  },
+  showMoreButton: {
+    marginTop: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: "#E8F5E8",
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  showMoreText: {
+    color: "#2C8A2C",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  alertItemText: {
+    color: "#2C2C2C",
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    width: "90%",
+    maxHeight: "80%",
+    padding: 0,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#2C8A2C",
+  },
+  closeButton: {
+    padding: 4,
+  },
+  closeButtonText: {
+    fontSize: 18,
+    color: "#666",
+    fontWeight: "600",
+  },
+  modalScrollView: {
+    maxHeight: 400,
+    padding: 16,
+  },
+  modalAlertItem: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 4,
+    backgroundColor: "#F8FFF3",
+    borderRadius: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: "#2C8A2C",
+  },
+  modalAlertText: {
+    color: "#2C2C2C",
+    fontSize: 13,
+    lineHeight: 18,
+  },
 });
