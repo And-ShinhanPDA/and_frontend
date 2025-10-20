@@ -350,7 +350,7 @@ export default function ConditionAlertModify() {
           style={styles.presetButton}
           onPress={() => setIsPresetOpen(true)}
         >
-          <Text style={styles.presetText}>프리셋</Text>
+          <Text style={styles.presetText}>프리셋 가져오기</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
@@ -467,16 +467,16 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
     marginRight: 8,
-    backgroundColor: "#394CC4",
+    backgroundColor: "black",
   },
   presetText: {
-    fontSize: 15,
+    fontSize: 13,
     color: "#fff",
     fontWeight: "700",
     fontFamily: "Pretendard",
   },
   saveButton: {
-    flex: 1,
+    flex: 2,
     backgroundColor: "#4CC439",
     borderRadius: 10,
     paddingVertical: 14,

@@ -7,21 +7,22 @@ import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
 import {
-  FlatList,
-  Image,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    FlatList,
+    Image,
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -47,6 +48,7 @@ export default function AlertHistory() {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const [showOnlyCondition, setShowOnlyCondition] = useState(false);
   const { accessToken, signOut, user } = useAuth();
   const [alertsByDate, setAlertsByDate] = useState<any[]>([]);
   const router = useRouter();
@@ -239,7 +241,7 @@ export default function AlertHistory() {
     }, [selectedCompany, startDate, endDate, accessToken])
   );
 
-  // 날짜 & 기업 필터링
+  // 날짜 & 기업 & 조건 필터링
   const filteredAlerts = useMemo(() => {
     return alertsByDate
       .filter((group) => {
@@ -280,12 +282,17 @@ export default function AlertHistory() {
       .map((group) => ({
         ...group,
         items: group.items.filter((item: AlertItem) => {
+          // 기업 필터링
           if (selectedCompany && item.company !== selectedCompany) return false;
+          
+          // 조건 검색 필터링
+          if (showOnlyCondition && item.stockCode !== "조건검색") return false;
+          
           return true;
         }),
       }))
       .filter((group) => group.items.length > 0);
-  }, [alertsByDate, selectedCompany, startDate, endDate]);
+  }, [alertsByDate, selectedCompany, startDate, endDate, showOnlyCondition]);
 
   const formatDate = (date: Date | null) =>
     date ? date.toLocaleDateString("ko-KR") : "전체";
@@ -333,16 +340,36 @@ export default function AlertHistory() {
             ))}
           </ScrollView>
 
-          {/* 날짜 버튼 */}
-          <TouchableOpacity
-            style={styles.dateButtonSingle}
-            onPress={() => setShowPicker(true)}
-          >
-            <Ionicons name="calendar-outline" size={20} color="#4CC53A" />
-            <Text style={styles.dateButtonText}>
-              {formatDate(startDate)} ~ {formatDate(endDate)}
-            </Text>
-          </TouchableOpacity>
+          {/* 날짜 버튼 & 조건 검색 필터 */}
+          <View style={styles.filterRow}>
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={() => setShowPicker(true)}
+            >
+              <Ionicons name="calendar-outline" size={20} color="#4CC53A" />
+              <Text style={styles.dateButtonText}>
+                {formatDate(startDate)} ~ {formatDate(endDate)}
+              </Text>
+            </TouchableOpacity>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.conditionFilterButton,
+                !showOnlyCondition && styles.conditionFilterButtonActive,
+                pressed && styles.conditionFilterButtonPressed,
+              ]}
+              onPress={() => setShowOnlyCondition(!showOnlyCondition)}
+            >
+              <Text
+                style={[
+                  styles.conditionFilterText,
+                  !showOnlyCondition && styles.conditionFilterTextActive,
+                ]}
+              >
+                {showOnlyCondition ? "전체 보기" : "조건 검색"}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* 스크롤 가능한 히스토리 영역 */}
@@ -613,7 +640,14 @@ const styles = StyleSheet.create({
     borderRadius: 29,
   },
 
-  dateButtonSingle: {
+  filterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 25,
+    gap: 10,
+  },
+  dateButton: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
@@ -621,9 +655,32 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    marginBottom: 25,
   },
-  dateButtonText: { fontSize: 13, marginLeft: 6, color: "#333" },
+  dateButtonText: { fontSize: 13, marginLeft: 6, color: "#333", fontFamily: "Pretendard" },
+  conditionFilterButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 8,
+    backgroundColor: "#FAFAFA",
+  },
+  conditionFilterButtonActive: {
+    backgroundColor: "#4CC439",
+    borderColor: "#4CC439",
+  },
+  conditionFilterButtonPressed: {
+    opacity: 0.7,
+  },
+  conditionFilterText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#666",
+    fontFamily: "Pretendard",
+  },
+  conditionFilterTextActive: {
+    color: "#fff",
+  },
 
   dateSection: { marginBottom: 25 },
   dateHeaderRow: {
