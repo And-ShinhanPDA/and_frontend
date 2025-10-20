@@ -1,12 +1,12 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import BollingerBandConditionReadonly from "@/components/add-card/bollingerband/bollingerband-condition-readonly";
@@ -31,7 +31,18 @@ export default function CompanyAlertDetail() {
   const { id } = useLocalSearchParams();
 
   const [isPresetOpen, setIsPresetOpen] = useState(false);
-  const tabs = ["제목", "가격", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
+  const scrollViewRef = useRef<ScrollView>(null);
+  const sectionRefs = useRef<{ [key: string]: View | null }>({});
+  const tabs = [
+    "가격",
+    "변동률",
+    "후행",
+    "52주",
+    "거래량",
+    "SMA",
+    "RSI",
+    "볼린저밴드",
+  ];
   const { accessToken } = useAuth();
   const { showAlert, AlertComponent } = useCustomAlert();
 
@@ -84,6 +95,33 @@ export default function CompanyAlertDetail() {
   const parsedConditions = alertData?.conditions
     ? parseConditionsForCards(alertData.conditions)
     : null;
+
+  // 탭 터치 시 해당 섹션으로 스크롤
+  const scrollToSection = (tabName: string) => {
+    const sectionMap: { [key: string]: string } = {
+      가격: "price",
+      변동률: "change",
+      후행: "trailing",
+      "52주": "week52",
+      거래량: "volume",
+      SMA: "sma",
+      RSI: "rsi",
+      볼린저밴드: "bollingerband",
+    };
+
+    const sectionKey = sectionMap[tabName];
+    const section = sectionRefs.current[sectionKey];
+
+    if (section && scrollViewRef.current) {
+      section.measureLayout(
+        scrollViewRef.current as any,
+        (_x, y) => {
+          scrollViewRef.current?.scrollTo({ y: y - 20, animated: true });
+        },
+        () => {}
+      );
+    }
+  };
 
   const handlePresetAdd = () => {
     showAlert({
@@ -183,7 +221,11 @@ export default function CompanyAlertDetail() {
           contentContainerStyle={styles.tabBarContent}
         >
           {tabs.map((tab, idx) => (
-            <TouchableOpacity key={idx} style={styles.tabItem}>
+            <TouchableOpacity
+              key={idx}
+              style={styles.tabItem}
+              onPress={() => scrollToSection(tab)}
+            >
               <Text style={styles.tabText}>{tab}</Text>
             </TouchableOpacity>
           ))}
@@ -192,6 +234,7 @@ export default function CompanyAlertDetail() {
       </View>
 
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContentContainer}
@@ -204,30 +247,85 @@ export default function CompanyAlertDetail() {
           </View>
         )}
 
-        {/* 이건 별로면 지우기 */}
         {/* 제목 (읽기 전용) */}
-        <View style={styles.titleContainer}>
-          <Text style={styles.titleLabel}>알림 제목</Text>
-          <Text style={styles.titleValue}>{title}</Text>
+        <View
+          ref={(ref) => (sectionRefs.current["title"] = ref)}
+          collapsable={false}
+        >
+          <View style={styles.titleContainer}>
+            <Text style={styles.titleLabel}>알림 제목</Text>
+            <Text style={styles.titleValue}>{title}</Text>
+          </View>
         </View>
 
         <View style={styles.divider} />
 
         {/* 조건 카드 - 읽기 전용 */}
-        <PriceConditionReadonlyCard conditionData={parsedConditions?.price} />
-        <ChangeConditionReadonlyCard conditionData={parsedConditions?.change} />
-        <TrailingConditionReadonlyCard
-          conditionData={parsedConditions?.trailing}
-        />
-        <Week52ConditionReadonlyCard conditionData={parsedConditions?.week52} />
+        <View
+          ref={(ref) => (sectionRefs.current["price"] = ref)}
+          collapsable={false}
+        >
+          <PriceConditionReadonlyCard conditionData={parsedConditions?.price} />
+        </View>
 
-        <VolumeConditionReadonlyCard conditionData={parsedConditions?.volume} />
-        <SMAConditionReadonlyCard conditionData={parsedConditions?.sma} />
+        <View
+          ref={(ref) => (sectionRefs.current["change"] = ref)}
+          collapsable={false}
+        >
+          <ChangeConditionReadonlyCard
+            conditionData={parsedConditions?.change}
+          />
+        </View>
 
-        <RSIConditionReadonlyCard conditionData={parsedConditions?.rsi} />
-        <BollingerBandConditionReadonly
-          conditionData={parsedConditions?.bollinger}
-        />
+        <View
+          ref={(ref) => (sectionRefs.current["trailing"] = ref)}
+          collapsable={false}
+        >
+          <TrailingConditionReadonlyCard
+            conditionData={parsedConditions?.trailing}
+          />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["week52"] = ref)}
+          collapsable={false}
+        >
+          <Week52ConditionReadonlyCard
+            conditionData={parsedConditions?.week52}
+          />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["volume"] = ref)}
+          collapsable={false}
+        >
+          <VolumeConditionReadonlyCard
+            conditionData={parsedConditions?.volume}
+          />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["sma"] = ref)}
+          collapsable={false}
+        >
+          <SMAConditionReadonlyCard conditionData={parsedConditions?.sma} />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["rsi"] = ref)}
+          collapsable={false}
+        >
+          <RSIConditionReadonlyCard conditionData={parsedConditions?.rsi} />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["bollingerband"] = ref)}
+          collapsable={false}
+        >
+          <BollingerBandConditionReadonly
+            conditionData={parsedConditions?.bollinger}
+          />
+        </View>
       </ScrollView>
 
       {/* 프리셋 */}

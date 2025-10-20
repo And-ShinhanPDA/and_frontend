@@ -527,4 +527,6 @@ export const alertService = {
       throw err;
     }
   },
+
+  // 히트맵
 };

@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     ScrollView,
@@ -31,10 +31,13 @@ export default function ConditionAlertDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const [isPresetOpen, setIsPresetOpen] = useState(false);
-  const tabs = ["제목", "가격", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
+  const tabs = ["가격", "변동률", "후행", "52주", "거래량", "SMA", "RSI", "볼린저밴드"];
   const { accessToken } = useAuth();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const sectionRefs = useRef<{ [key: string]: View | null }>({});
   const { showAlert, AlertComponent } = useCustomAlert();
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [alertData, setAlertData] = useState<any>(null);
   const [title, setTitle] = useState("");
 
@@ -45,6 +48,33 @@ export default function ConditionAlertDetail() {
   const handleTempSave = useCallback((id: string, getter: () => any[]) => {
     setConditionGetters((prev) => ({ ...prev, [id]: getter }));
   }, []);
+
+  // 탭 터치 시 해당 섹션으로 스크롤
+  const scrollToSection = (tabName: string) => {
+    const sectionMap: { [key: string]: string } = {
+      "가격": "price",
+      "변동률": "change",
+      "후행": "trailing",
+      "52주": "week52",
+      "거래량": "volume",
+      "SMA": "sma",
+      "RSI": "rsi",
+      "볼린저밴드": "bollingerband",
+    };
+
+    const sectionKey = sectionMap[tabName];
+    const section = sectionRefs.current[sectionKey];
+
+    if (section && scrollViewRef.current) {
+      section.measureLayout(
+        scrollViewRef.current as any,
+        (_x, y) => {
+          scrollViewRef.current?.scrollTo({ y: y - 20, animated: true });
+        },
+        () => {}
+      );
+    }
+  };
 
   // 알림 상세 조회
   useEffect(() => {
@@ -102,6 +132,8 @@ export default function ConditionAlertDetail() {
         });
         return;
       }
+
+      setSaving(true);
 
       const mergedConditions = Object.values(conditionGetters)
         .map((fn) => fn())
@@ -163,6 +195,8 @@ export default function ConditionAlertDetail() {
           buttons: [{ text: "확인" }],
         });
       }
+    } finally {
+      setSaving(false);
     }
   };
   if (loading) {
@@ -209,7 +243,11 @@ export default function ConditionAlertDetail() {
           contentContainerStyle={styles.tabBarContent}
         >
           {tabs.map((tab, idx) => (
-            <TouchableOpacity key={idx} style={styles.tabItem}>
+            <TouchableOpacity
+              key={idx}
+              style={styles.tabItem}
+              onPress={() => scrollToSection(tab)}
+            >
               <Text style={styles.tabText}>{tab}</Text>
             </TouchableOpacity>
           ))}
@@ -218,6 +256,7 @@ export default function ConditionAlertDetail() {
       </View>
 
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContentContainer}
@@ -225,51 +264,101 @@ export default function ConditionAlertDetail() {
         keyboardShouldPersistTaps="handled"
       >
         {/* 제목*/}
-        <TextInput
-          style={styles.titleInput}
-          placeholder="이 조건을 대표할 수 있는 한 줄 제목"
-          placeholderTextColor="#A4A4A4"
-          value={title}
-          onChangeText={setTitle}
-        />
+        <View
+          ref={(ref) => (sectionRefs.current["title"] = ref)}
+          collapsable={false}
+        >
+          <TextInput
+            style={styles.titleInput}
+            placeholder="이 조건을 대표할 수 있는 한 줄 제목"
+            placeholderTextColor="#A4A4A4"
+            value={title}
+            onChangeText={setTitle}
+          />
+        </View>
 
         <View style={styles.divider} />
 
         {/* 조건 카드 - 파싱된 initialValue 전달 */}
-        <PriceConditionCard
-          onTempSave={handleTempSave}
-          initialValue={parsedConditions?.price}
-        />
-        <ChangeConditionCard
-          onTempSave={handleTempSave}
-          initialValue={parsedConditions?.change}
-        />
-        <TrailingConditionCard
-          onTempSave={handleTempSave}
-          initialValue={parsedConditions?.trailing}
-        />
-        <Week52ConditionCard
-          onTempSave={handleTempSave}
-          initialValue={parsedConditions?.week52}
-        />
+        <View
+          ref={(ref) => (sectionRefs.current["price"] = ref)}
+          collapsable={false}
+        >
+          <PriceConditionCard
+            onTempSave={handleTempSave}
+            initialValue={parsedConditions?.price}
+          />
+        </View>
 
-        <VolumeConditionCard
-          onTempSave={handleTempSave}
-          initialValue={parsedConditions?.volume}
-        />
-        <SMAConditionCard
-          onTempSave={handleTempSave}
-          initialValue={parsedConditions?.sma}
-        />
+        <View
+          ref={(ref) => (sectionRefs.current["change"] = ref)}
+          collapsable={false}
+        >
+          <ChangeConditionCard
+            onTempSave={handleTempSave}
+            initialValue={parsedConditions?.change}
+          />
+        </View>
 
-        <RSIConditionCard
-          onTempSave={handleTempSave}
-          initialValue={parsedConditions?.rsi}
-        />
-        <BollingerBandCondition
-          onTempSave={handleTempSave}
-          initialValue={parsedConditions?.bollinger}
-        />
+        <View
+          ref={(ref) => (sectionRefs.current["trailing"] = ref)}
+          collapsable={false}
+        >
+          <TrailingConditionCard
+            onTempSave={handleTempSave}
+            initialValue={parsedConditions?.trailing}
+          />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["week52"] = ref)}
+          collapsable={false}
+        >
+          <Week52ConditionCard
+            onTempSave={handleTempSave}
+            initialValue={parsedConditions?.week52}
+          />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["volume"] = ref)}
+          collapsable={false}
+        >
+          <VolumeConditionCard
+            onTempSave={handleTempSave}
+            initialValue={parsedConditions?.volume}
+          />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["sma"] = ref)}
+          collapsable={false}
+        >
+          <SMAConditionCard
+            onTempSave={handleTempSave}
+            initialValue={parsedConditions?.sma}
+          />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["rsi"] = ref)}
+          collapsable={false}
+        >
+          <RSIConditionCard
+            onTempSave={handleTempSave}
+            initialValue={parsedConditions?.rsi}
+          />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["bollingerband"] = ref)}
+          collapsable={false}
+        >
+          <BollingerBandCondition
+            onTempSave={handleTempSave}
+            initialValue={parsedConditions?.bollinger}
+          />
+        </View>
       </ScrollView>
 
       {/* 하단 버튼 - 플로팅 */}
@@ -297,6 +386,14 @@ export default function ConditionAlertDetail() {
 
       {/* 커스텀 Alert */}
       <AlertComponent />
+
+      {/* 로딩 오버레이 */}
+      {saving && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#4CC439" />
+          <Text style={styles.loadingText}>수정 중...</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -407,6 +504,24 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#fff",
     fontWeight: "700",
+    fontFamily: "Pretendard",
+  },
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#fff",
+    fontWeight: "600",
     fontFamily: "Pretendard",
   },
 });

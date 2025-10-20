@@ -7,12 +7,17 @@ export const getIndicatorCategoriesArray = (conditions: any[]): string[] => {
   conditions.forEach((cond) => {
     const indicator = cond.indicator;
 
-    if (
+    // PRICE_RATE_를 먼저 체크 (PRICE_로 시작하지만 변동률임)
+    if (indicator.startsWith("PRICE_RATE_")) {
+      categories.add("변동률");
+    } else if (
       indicator.startsWith("PRICE_ABOVE") ||
       indicator.startsWith("PRICE_BELOW") ||
       indicator.startsWith("PRICE_CHANGE")
     ) {
       categories.add("가격");
+    } else if (indicator.startsWith("TRAILING_")) {
+      categories.add("후행");
     } else if (
       indicator.includes("52W") ||
       indicator.startsWith("HIGH_52W") ||
@@ -32,10 +37,6 @@ export const getIndicatorCategoriesArray = (conditions: any[]): string[] => {
       categories.add("RSI");
     } else if (indicator.startsWith("BOLLINGER_")) {
       categories.add("볼린저 밴드");
-    } else if (indicator.startsWith("PRICE_RATE_")) {
-      categories.add("변동률");
-    } else if (indicator.startsWith("TRAILING_")) {
-      categories.add("후행");
     }
   });
 
@@ -113,8 +114,18 @@ export const parseConditionsForCards = (conditions: any[]) => {
   conditions.forEach((cond) => {
     const { indicator, threshold, threshold2 } = cond;
 
+    // 변동률 조건 (PRICE_RATE_를 먼저 체크)
+    if (indicator === "PRICE_RATE_DAILY_UP") {
+      dailyChanges.push({ direction: "+", amount: threshold });
+    } else if (indicator === "PRICE_RATE_DAILY_DOWN") {
+      dailyChanges.push({ direction: "-", amount: threshold });
+    } else if (indicator === "PRICE_RATE_BASE_UP") {
+      baseChanges.push({ direction: "+", amount: threshold });
+    } else if (indicator === "PRICE_RATE_BASE_DOWN") {
+      baseChanges.push({ direction: "-", amount: threshold });
+    }
     // 가격 조건
-    if (indicator === "PRICE_ABOVE") {
+    else if (indicator === "PRICE_ABOVE") {
       priceLimits.push({ comparison: "이상", amount: threshold });
     } else if (indicator === "PRICE_BELOW") {
       priceLimits.push({ comparison: "이하", amount: threshold });
@@ -126,16 +137,6 @@ export const parseConditionsForCards = (conditions: any[]) => {
       currentChanges.push({ direction: "+", amount: threshold });
     } else if (indicator === "PRICE_CHANGE_BASE_DOWN") {
       currentChanges.push({ direction: "-", amount: threshold });
-    }
-    // 변동률 조건
-    else if (indicator === "PRICE_RATE_DAILY_UP") {
-      dailyChanges.push({ direction: "+", amount: threshold });
-    } else if (indicator === "PRICE_RATE_DAILY_DOWN") {
-      dailyChanges.push({ direction: "-", amount: threshold });
-    } else if (indicator === "PRICE_RATE_BASE_UP") {
-      baseChanges.push({ direction: "+", amount: threshold });
-    } else if (indicator === "PRICE_RATE_BASE_DOWN") {
-      baseChanges.push({ direction: "-", amount: threshold });
     }
     // 후행 조건
     else if (indicator === "TRAILING_STOP_PRICE") {

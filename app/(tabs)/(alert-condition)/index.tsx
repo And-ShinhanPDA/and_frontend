@@ -5,6 +5,7 @@ import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 import { refreshWidgetManually } from "@/services/widgetShare";
+import { getIndicatorCategoriesArray } from "@/utils/parseConditions";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -121,22 +122,10 @@ export default function AlertCondition() {
 
         const formatted: AlertCondition[] = conditionAlerts.map(
           (alert: any) => {
-            // 조건에서 태그 추출
-            const tags: string[] = [];
-            if (alert.conditions) {
-              alert.conditions.forEach((condition: any) => {
-                if (condition.indicator) {
-                  if (condition.indicator.includes("SMA")) tags.push("SMA");
-                  if (condition.indicator.includes("RSI")) tags.push("RSI");
-                  if (condition.indicator.includes("VOLUME"))
-                    tags.push("거래량");
-                  if (condition.indicator.includes("52W")) tags.push("52주");
-                  if (condition.indicator.includes("BOLLINGER"))
-                    tags.push("볼린저밴드");
-                  if (condition.indicator.includes("PRICE")) tags.push("가격");
-                }
-              });
-            }
+            // 조건에서 태그 추출 - getIndicatorCategoriesArray 사용
+            const tags = alert.conditions
+              ? getIndicatorCategoriesArray(alert.conditions)
+              : [];
 
             const alertId = String(alert.id || alert.alertId);
 
@@ -144,7 +133,7 @@ export default function AlertCondition() {
               id: alertId,
               name: alert.title || "조건 알림",
               enabled: alert.isActive || false,
-              tags: [...new Set(tags)], // 중복 제거
+              tags: tags, // 중복 제거는 getIndicatorCategoriesArray에서 처리됨
               isTriggered: triggeredAlertIds.has(alertId), // 조건 만족 여부
             };
           }
@@ -158,13 +147,32 @@ export default function AlertCondition() {
     }
   };
 
+  // 활성화된 조건 알림 데이터 새로고침 및 위젯 업데이트
+  const fetchTriggeredConditions = useCallback(async () => {
+    if (!accessToken) return;
+
+    try {
+      console.log("🔄 [조건 검색] 활성화된 알림 데이터 새로고침 시작...");
+      
+      // 조건 알림 데이터 새로고침
+      await fetchConditionAlerts();
+      
+      // 위젯 강제 새로고침
+      refreshWidgetManually();
+      
+      console.log("✅ [조건 검색] 모든 데이터 + 위젯 새로고침 완료");
+    } catch (err) {
+      console.error("❌ [조건 검색] 데이터 새로고침 실패:", err);
+    }
+  }, [accessToken]);
+
   useFocusEffect(
     useCallback(() => {
       console.log(
         "🎯 [useFocusEffect] 조건 알림 목록 화면 포커스 - 데이터 새로고침"
       );
-      fetchConditionAlerts();
-    }, [accessToken])
+      fetchTriggeredConditions();
+    }, [fetchTriggeredConditions])
   );
 
   // 초기 애니메이션 설정
@@ -217,10 +225,10 @@ export default function AlertCondition() {
     try {
       await alertService.deleteAlert(accessToken, id);
       setAlerts((prev) => prev.filter((c) => c.id !== id));
-      
+
       // 위젯 즉시 새로고침
       refreshWidgetManually();
-      
+
       console.log(`${target.name} 조건 알림 삭제 완료`);
     } catch (err) {
       console.error("[조건 알림 삭제 실패]:", err);

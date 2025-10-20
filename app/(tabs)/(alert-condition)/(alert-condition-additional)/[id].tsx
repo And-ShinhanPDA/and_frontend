@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
     ActivityIndicator,
     ScrollView,
@@ -33,8 +33,10 @@ export default function ConditionAdditional() {
   const [isPresetOpen, setIsPresetOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const sectionRefs = useRef<{ [key: string]: View | null }>({});
 
-  const tabs = ["제목", "가격", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
+  const tabs = ["변동률", "52주", "거래량", "SMA", "RSI", "볼린저밴드"];
 
   const [conditionGetters, setConditionGetters] = useState<{
     [k: string]: () => any[];
@@ -53,6 +55,34 @@ export default function ConditionAdditional() {
   const handleTempSave = useCallback((id: string, getter: () => any[]) => {
     setConditionGetters((prev) => ({ ...prev, [id]: getter }));
   }, []);
+
+  // 탭 터치 시 해당 섹션으로 스크롤
+  const scrollToSection = (tabName: string) => {
+    const sectionMap: { [key: string]: string } = {
+      제목: "title",
+      변동률: "change",
+      가격: "price",
+      후행: "trailing",
+      "52주": "week52",
+      거래량: "volume",
+      SMA: "sma",
+      RSI: "rsi",
+      볼린저밴드: "bollingerband",
+    };
+
+    const sectionKey = sectionMap[tabName];
+    const section = sectionRefs.current[sectionKey];
+
+    if (section && scrollViewRef.current) {
+      section.measureLayout(
+        scrollViewRef.current as any,
+        (_x, y) => {
+          scrollViewRef.current?.scrollTo({ y: y - 20, animated: true });
+        },
+        () => {}
+      );
+    }
+  };
 
   // 프리셋 조건을 각 카드 형식으로 변환
   const parsePresetConditions = useCallback((conditions: any[]) => {
@@ -282,7 +312,11 @@ export default function ConditionAdditional() {
           contentContainerStyle={styles.tabBarContent}
         >
           {tabs.map((tab, idx) => (
-            <TouchableOpacity key={idx} style={styles.tabItem}>
+            <TouchableOpacity
+              key={idx}
+              style={styles.tabItem}
+              onPress={() => scrollToSection(tab)}
+            >
               <Text style={styles.tabText}>{tab}</Text>
             </TouchableOpacity>
           ))}
@@ -291,49 +325,88 @@ export default function ConditionAdditional() {
       </View>
 
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContentContainer}
         nestedScrollEnabled={true}
         keyboardShouldPersistTaps="handled"
       >
-        <TextInput
-          style={styles.titleInput}
-          placeholder="이 조건을 대표할 수 있는 한 줄 제목"
-          placeholderTextColor="#A4A4A4"
-          value={title}
-          onChangeText={setTitle}
-        />
+        <View
+          ref={(ref) => (sectionRefs.current["title"] = ref)}
+          collapsable={false}
+        >
+          <TextInput
+            style={styles.titleInput}
+            placeholder="이 조건을 대표할 수 있는 한 줄 제목"
+            placeholderTextColor="#A4A4A4"
+            value={title}
+            onChangeText={setTitle}
+          />
+        </View>
 
         <View style={styles.divider} />
 
         {/* 조건 카드 */}
-        <ChangeConditionCard
-          onTempSave={handleTempSave}
-          initialValue={presetConditions.change}
-        />
-        <Week52ConditionCard
-          onTempSave={handleTempSave}
-          initialValue={presetConditions.week52}
-        />
+        <View
+          ref={(ref) => (sectionRefs.current["change"] = ref)}
+          collapsable={false}
+        >
+          <ChangeConditionCard
+            onTempSave={handleTempSave}
+            initialValue={presetConditions.change}
+          />
+        </View>
 
-        <VolumeConditionCard
-          onTempSave={handleTempSave}
-          initialValue={presetConditions.volume}
-        />
-        <SMAConditionCard
-          onTempSave={handleTempSave}
-          initialValue={presetConditions.sma}
-        />
+        <View
+          ref={(ref) => (sectionRefs.current["week52"] = ref)}
+          collapsable={false}
+        >
+          <Week52ConditionCard
+            onTempSave={handleTempSave}
+            initialValue={presetConditions.week52}
+          />
+        </View>
 
-        <RSIConditionCard
-          onTempSave={handleTempSave}
-          initialValue={presetConditions.rsi}
-        />
-        <BollingerBandCondition
-          onTempSave={handleTempSave}
-          initialValue={presetConditions.bollingerband}
-        />
+        <View
+          ref={(ref) => (sectionRefs.current["volume"] = ref)}
+          collapsable={false}
+        >
+          <VolumeConditionCard
+            onTempSave={handleTempSave}
+            initialValue={presetConditions.volume}
+          />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["sma"] = ref)}
+          collapsable={false}
+        >
+          <SMAConditionCard
+            onTempSave={handleTempSave}
+            initialValue={presetConditions.sma}
+          />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["rsi"] = ref)}
+          collapsable={false}
+        >
+          <RSIConditionCard
+            onTempSave={handleTempSave}
+            initialValue={presetConditions.rsi}
+          />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["bollingerband"] = ref)}
+          collapsable={false}
+        >
+          <BollingerBandCondition
+            onTempSave={handleTempSave}
+            initialValue={presetConditions.bollingerband}
+          />
+        </View>
       </ScrollView>
 
       {/* 하단 버튼 */}

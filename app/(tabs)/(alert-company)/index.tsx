@@ -134,10 +134,29 @@ export default function AlertCompany() {
     }
   };
 
+  // 활성화된 기업 알림 데이터 새로고침 및 위젯 업데이트
+  const fetchTriggeredConditions = useCallback(async () => {
+    if (!accessToken) return;
+
+    try {
+      console.log("🔄 [기업 알림] 활성화된 알림 데이터 새로고침 시작...");
+      
+      // 기업 알림 데이터 새로고침
+      await fetchAlertedCompanies();
+      
+      // 위젯 강제 새로고침
+      refreshWidgetManually();
+      
+      console.log("✅ [기업 알림] 모든 데이터 + 위젯 새로고침 완료");
+    } catch (err) {
+      console.error("❌ [기업 알림] 데이터 새로고침 실패:", err);
+    }
+  }, [accessToken]);
+
   useFocusEffect(
     useCallback(() => {
-      fetchAlertedCompanies();
-    }, [accessToken])
+      fetchTriggeredConditions();
+    }, [fetchTriggeredConditions])
   );
 
   /* 초기 애니메이션 설정 */
@@ -204,10 +223,10 @@ export default function AlertCompany() {
     try {
       await alertService.deleteCompanyAlerts(accessToken, stockCode);
       setCompanies((prev) => prev.filter((c) => c.stockCode !== stockCode));
-      
+
       // 위젯 즉시 새로고침
       refreshWidgetManually();
-      
+
       console.log(`${target.name} 기업 알림 삭제 완료`);
     } catch (err) {
       console.error("[기업 알림 삭제 실패]:", err);

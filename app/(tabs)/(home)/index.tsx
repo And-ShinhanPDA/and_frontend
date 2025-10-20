@@ -8,14 +8,15 @@ import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import { refreshWidgetManually } from "@/services/widgetShare";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
-// API 응답 타입
-type TriggeredCondition = {
-  conditionName: string;
-  activeCompanyCount: number;
+type HeatmapData = {
+  stockCode: string;
+  alertCount: number;
+  priceRate: number;
 };
 
 export default function HomeScreen() {
@@ -23,52 +24,62 @@ export default function HomeScreen() {
   const { signOut, user, accessToken } = useAuth();
   const router = useRouter();
 
-  // 활성화된 조건 알림 상태 관리
-  const [triggeredConditions, setTriggeredConditions] = useState<
-    TriggeredCondition[]
-  >([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
+  const [heatmapLoading, setHeatmapLoading] = useState(true);
 
-  // 활성화된 조건 알림 조회 함수
-  const fetchTriggeredConditions = async () => {
+  // 자식 컴포넌트의 새로고침 함수 참조
+  const conditionRefreshRef = useRef<(() => void) | undefined>(undefined);
+  const companyRefreshRef = useRef<(() => void) | undefined>(undefined);
+
+  const fetchHeatmapData = async () => {
     if (!accessToken) {
-      console.log("accessToken 없음");
-      setLoading(false);
+      console.log("accessToken 없음 - 히트맵 로드 불가");
+      setHeatmapLoading(false);
       return;
     }
 
     try {
-      setLoading(true);
-      setError(null);
+      setHeatmapLoading(true);
 
-      const results = await alertService.getTriggeredConditionAlerts(
-        accessToken
-      );
-      setTriggeredConditions(results);
+      const results = await alertService.getAlertHeatmap(accessToken);
+      setHeatmapData(results);
 
-      console.log(`홈 화면 - 활성화된 조건 알림 ${results.length}개 로드 완료`);
+      console.log(`홈 화면 - 히트맵 데이터 ${results.length}개 로드 완료`);
     } catch (err: any) {
-      console.error("홈 화면 - 활성화된 조건 알림 조회 실패:", err);
-      setError(
-        err.response?.data?.message ||
-          "활성화된 조건 알림을 불러오는데 실패했습니다."
-      );
+      console.error("홈 화면 - 히트맵 데이터 조회 실패:", err);
     } finally {
-      setLoading(false);
+      setHeatmapLoading(false);
     }
   };
 
-  // 컴포넌트 마운트 시 데이터 로드
+  // 활성화된 조건/기업 알림 데이터 새로고침 및 위젯 업데이트
+  const fetchTriggeredConditions = useCallback(async () => {
+    if (!accessToken) return;
+
+    try {
+      console.log("🔄 [홈] 활성화된 알림 데이터 새로고침 시작...");
+
+      // 히트맵 데이터도 함께 새로고침
+      await fetchHeatmapData();
+
+      // 위젯 강제 새로고침 (자식 컴포넌트들이 useFocusEffect로 자동 새로고침됨)
+      refreshWidgetManually();
+
+      console.log("✅ [홈] 모든 데이터 + 위젯 새로고침 완료");
+    } catch (err) {
+      console.error("❌ [홈] 데이터 새로고침 실패:", err);
+    }
+  }, [accessToken]);
+
   useEffect(() => {
-    fetchTriggeredConditions();
+    fetchHeatmapData();
   }, [accessToken]);
 
   // 화면이 포커스될 때마다 데이터 새로고침 (위젯 즉시 업데이트)
   useFocusEffect(
     useCallback(() => {
       fetchTriggeredConditions();
-    }, [accessToken])
+    }, [fetchTriggeredConditions])
   );
 
   // 로그아웃 핸들러
@@ -80,7 +91,6 @@ export default function HomeScreen() {
     try {
       await signOut();
       console.log("로그아웃 성공");
-      // 로그인 화면으로 이동
       router.replace("/(auth)/login");
     } catch (error) {
       console.error("로그아웃 실패:", error);
@@ -105,7 +115,7 @@ export default function HomeScreen() {
       >
         <ActivatedConditionCard />
         <ActivatedCompanyCard />
-        <TreemapChart />
+        <TreemapChart data={heatmapData} loading={heatmapLoading} />
       </ScrollView>
 
       <ConditionBottomSheet

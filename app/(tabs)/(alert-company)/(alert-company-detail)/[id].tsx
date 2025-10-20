@@ -214,7 +214,7 @@ export default function CompanyAlertDetail() {
       );
 
       console.log(`${name} 알림 ${newState ? "활성화" : "비활성화"} 성공`, res);
-      
+
       // 위젯 즉시 새로고침
       refreshWidgetManually();
     } catch (err) {
@@ -230,7 +230,7 @@ export default function CompanyAlertDetail() {
       console.log("[알림 삭제 성공]:", res);
 
       setAlerts((prev) => prev.filter((c) => c.id !== alertId));
-      
+
       // 위젯 즉시 새로고침
       refreshWidgetManually();
     } catch (err) {

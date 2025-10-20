@@ -1,15 +1,15 @@
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  FlatList,
-  Image,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    FlatList,
+    Image,
+    NativeScrollEvent,
+    NativeSyntheticEvent,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import { CustomBottomTab } from "@/components/bottom/bottom";
@@ -333,6 +333,9 @@ export default function AlertConditionDetail() {
                     style={styles.logo}
                     resizeMode="contain"
                   />
+                  <Text style={styles.companyName} numberOfLines={1}>
+                    {item.name}
+                  </Text>
                 </View>
               )}
             />
@@ -482,11 +485,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderBottomWidth: 1,
     borderColor: "#F5F6F8",
+    paddingHorizontal: 4,
   },
   logo: {
-    width: 30,
-    height: 30,
+    width: 34,
+    height: 34,
     resizeMode: "contain",
+    borderRadius: 8,
+    marginBottom: 2,
+  },
+  companyName: {
+    fontSize: 9,
+    color: "#666",
+    textAlign: "center",
+    fontFamily: "Pretendard",
+    fontWeight: "500",
+    maxWidth: 90,
   },
 
   dataScrollView: {
