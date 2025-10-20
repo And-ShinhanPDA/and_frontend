@@ -298,9 +298,7 @@ export default function PriceConditionContent({
                 </Text>
                 <ConditionInput
                   value={r.amount}
-                  placeholder={`현재가 대비 ${
-                    r.direction === "+" ? "상승" : "하락"
-                  } 금액`}
+                  placeholder="금액 입력"
                   unit="원"
                   onChange={(v) =>
                     setCurrentChanges((prev) =>
@@ -308,7 +306,6 @@ export default function PriceConditionContent({
                     )
                   }
                 />
-
                 {String(r.amount).trim() !== "" && (
                   <TouchableOpacity
                     style={styles.removeButton}
