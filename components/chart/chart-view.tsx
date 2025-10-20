@@ -59,10 +59,15 @@ export default function ChartScreen({
   const [period, setPeriod] = useState<Period>("1D");
   const [smaOn, setSmaOn] = useState({
     sma5: true,
+    sma10: true,
     sma20: true,
+    sma30: true,
+    sma50: true,
     sma60: true,
-    sma120: true,
+    sma100: true,
+    sma200: true,
   });
+  const [bollingerOn, setBollingerOn] = useState(true);
   const [ohlc, setOhlc] = useState<Candle | null>(null);
   const [smaVals, setSmaVals] = useState<any>({});
   const [headerAlert, setHeaderAlert] = useState<string | null>(null);
@@ -74,7 +79,6 @@ export default function ChartScreen({
   const [lastCandle, setLastCandle] = useState<Candle | null>(null);
   const [currentPrice, setCurrentPrice] = useState<any>(null);
   const [forceUpdate, setForceUpdate] = useState(0);
-  const [priceToggleEnabled, setPriceToggleEnabled] = useState<boolean>(false);
 
   const data = useMemo(() => genCandles(period, 250, 79200), [period]);
 
@@ -94,6 +98,7 @@ export default function ChartScreen({
   const webViewLoadedRef = useRef(webViewLoaded);
   const periodRef = useRef(period);
   const smaOnRef = useRef(smaOn);
+  const bollingerOnRef = useRef(bollingerOn);
   const alertHistoryMarkersRef = useRef(alertHistoryMarkers);
 
   // ref 값들을 최신으로 유지
@@ -110,29 +115,64 @@ export default function ChartScreen({
   }, [smaOn]);
 
   useEffect(() => {
+    bollingerOnRef.current = bollingerOn;
+  }, [bollingerOn]);
+
+  useEffect(() => {
     alertHistoryMarkersRef.current = alertHistoryMarkers;
   }, [alertHistoryMarkers]);
   const SMA_META = {
-    sma5: { label: "5", line: "#FF8A80", chipBg: "#FFEBEE", chipOn: "#C62828" }, // 파스텔 레드
+    sma5: { label: "5", line: "#FF8A80", chipBg: "#FFEBEE", chipOn: "#FF8A80" }, // 차트 선과 동일
+    sma10: {
+      label: "10",
+      line: "#81C784",
+      chipBg: "#E8F5E8",
+      chipOn: "#81C784",
+    }, // 차트 선과 동일
     sma20: {
       label: "20",
       line: "#90CAF9",
       chipBg: "#E3F2FD",
-      chipOn: "#1565C0",
-    },
+      chipOn: "#90CAF9",
+    }, // 차트 선과 동일
+    sma30: {
+      label: "30",
+      line: "#FFB74D",
+      chipBg: "#FFF3E0",
+      chipOn: "#FFB74D",
+    }, // 차트 선과 동일
+    sma50: {
+      label: "50",
+      line: "#BA68C8",
+      chipBg: "#F3E5F5",
+      chipOn: "#BA68C8",
+    }, // 차트 선과 동일
     sma60: {
       label: "60",
       line: "#B39DDB",
       chipBg: "#F3E5F5",
-      chipOn: "#6A1B9A",
-    },
-    sma120: {
-      label: "120",
+      chipOn: "#B39DDB",
+    }, // 차트 선과 동일
+    sma100: {
+      label: "100",
       line: "#FFCC80",
       chipBg: "#FFF3E0",
-      chipOn: "#EF6C00",
-    },
+      chipOn: "#FFCC80",
+    }, // 차트 선과 동일
+    sma200: {
+      label: "200",
+      line: "#A5D6A7",
+      chipBg: "#E8F5E8",
+      chipOn: "#A5D6A7",
+    }, // 차트 선과 동일
   } as const;
+
+  const BOLLINGER_META = {
+    label: "BB",
+    line: "rgba(0,0,0,0.25)",
+    chipBg: "#F5F5F5",
+    chipOn: "rgba(0,0,0,0.25)",
+  };
 
   // 일봉 데이터 fetch
   const fetchDailyData = async () => {
@@ -188,9 +228,9 @@ export default function ChartScreen({
   const fetchCurrentPrice = useCallback(async () => {
     console.log("🔄 fetchCurrentPrice 함수 시작", { stockCode });
     try {
-      console.log("📡 API 호출 시작");
+      console.log("API 호출 시작");
       const result = await chartService.getCurrentPrice(stockCode);
-      console.log("📡 API 응답 받음:", result);
+      console.log("API 응답 받음:", result);
 
       setCurrentPrice(result);
 
@@ -201,11 +241,10 @@ export default function ChartScreen({
 
       // 강제 리렌더링 트리거
       setForceUpdate((prev) => {
-        console.log("🔄 forceUpdate 변경:", prev, "->", prev + 1);
         return prev + 1;
       });
 
-      console.log("🔄 현재가 업데이트 완료:", {
+      console.log("현재가 업데이트 완료:", {
         price: result.currentPrice,
         diff: result.diff,
         diffRate: result.diffRate,
@@ -216,51 +255,9 @@ export default function ChartScreen({
         displayDiffPct: result.diffRate,
       });
     } catch (err) {
-      console.error("❌ 현재가 조회 실패:", err);
+      console.error("현재가 조회 실패:", err);
     }
   }, [stockCode, onPriceUpdate]);
-
-  // 시가/종가 토글 상태 조회
-  const fetchPriceToggleStatus = useCallback(async () => {
-    if (!accessToken) return;
-
-    try {
-      console.log("📡 시가/종가 토글 상태 조회:", stockCode);
-      const result = await alertService.getPriceOnOffStatus(
-        accessToken,
-        stockCode
-      );
-      console.log("📡 시가/종가 토글 상태 응답:", result);
-      setPriceToggleEnabled(result);
-    } catch (err) {
-      console.error("❌ 시가/종가 토글 상태 조회 실패:", err);
-    }
-  }, [accessToken, stockCode]);
-
-  // 시가/종가 토글 상태 변경
-  const togglePriceOpenClose = useCallback(async () => {
-    if (!accessToken) return;
-
-    try {
-      const newState = !priceToggleEnabled;
-      console.log("📡 시가/종가 토글 상태 변경:", { stockCode, newState });
-
-      // UI 상태 먼저 업데이트
-      setPriceToggleEnabled(newState);
-
-      // API 호출
-      await alertService.updatePriceOnOffStatus(
-        accessToken,
-        stockCode,
-        newState
-      );
-      console.log("✅ 시가/종가 토글 상태 변경 완료:", newState);
-    } catch (err) {
-      console.error("❌ 시가/종가 토글 상태 변경 실패:", err);
-      // 실패 시 이전 상태로 복원
-      setPriceToggleEnabled(!priceToggleEnabled);
-    }
-  }, [accessToken, stockCode, priceToggleEnabled]);
 
   // 초기 데이터 로드 및 period 변경 시
   useEffect(() => {
@@ -273,46 +270,13 @@ export default function ChartScreen({
           await fetchMinuteData();
         }
         await fetchCurrentPrice();
-        await fetchPriceToggleStatus();
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [stockCode, period, fetchPriceToggleStatus]);
-
-  // 현재가 자동 업데이트 (1분마다)
-  useEffect(() => {
-    console.log("🚀 현재가 자동 업데이트 useEffect 시작", { stockCode });
-
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    let isActive = true;
-
-    const scheduleNext = () => {
-      if (!isActive) return;
-
-      timeoutId = setTimeout(() => {
-        console.log("⏰ 현재가 자동 업데이트 시작");
-        fetchCurrentPrice();
-        scheduleNext(); // 재귀적으로 다음 스케줄 설정
-      }, 10000); // 10초마다 실행 (테스트용)
-    };
-
-    scheduleNext();
-    console.log("✅ timeout 스케줄 설정 완료");
-
-    // 컴포넌트 언마운트 시 timeout 정리
-    return () => {
-      console.log("🛑 useEffect cleanup 실행");
-      isActive = false;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-        console.log("🧹 timeout 정리 완료");
-      }
-    };
-  }, [stockCode, fetchCurrentPrice]); // fetchCurrentPrice도 의존성에 추가
+  }, [stockCode, period]);
 
   // 알림 히스토리 가져오기 (일봉일 때만)
   useEffect(() => {
@@ -492,20 +456,25 @@ export default function ChartScreen({
               period,
               data: candles,
               smaOn,
+              bollingerOn,
               alertMarkers: alertHistoryMarkers,
             },
           })
         );
       }, 200);
     }
-  }, [webViewLoaded, candles, period, smaOn, alertHistoryMarkers]);
+  }, [webViewLoaded, candles, period, smaOn, bollingerOn, alertHistoryMarkers]);
 
   const onMessage = (e: WebViewMessageEvent) => {
     try {
       const msg = JSON.parse(e.nativeEvent.data);
       //console.log("[차트] WebView 메시지 수신:", msg.type, msg.payload);
 
-      if (msg.type === "crosshair") {
+      if (
+        msg.type === "crosshair" ||
+        msg.type === "touch" ||
+        msg.type === "click"
+      ) {
         setOhlc(msg.payload.candle ?? null);
         setSmaVals(msg.payload.sma ?? {});
 
@@ -544,6 +513,7 @@ export default function ChartScreen({
 
   const toggle = (k: keyof typeof smaOn) =>
     setSmaOn((prev) => ({ ...prev, [k]: !prev[k] }));
+  const toggleBollinger = () => setBollingerOn((prev) => !prev);
   const changePeriod = (p: Period) => setPeriod(p);
 
   const header = ohlc ?? lastCandle;
@@ -554,15 +524,15 @@ export default function ChartScreen({
   const displayDiffPct = currentPrice?.diffRate ?? diffPct;
   const displayIsUp = (currentPrice?.diff ?? diff) >= 0;
 
-  console.log("📊 차트 헤더 현재가 표시:", {
-    currentPriceFromAPI: currentPrice?.currentPrice,
-    currPriceFromData: currPrice,
-    displayPrice: displayPrice,
-    displayDiff: displayDiff,
-    displayDiffPct: displayDiffPct,
-    forceUpdate: forceUpdate,
-    timestamp: new Date().toLocaleTimeString(),
-  });
+  // console.log("차트 헤더 현재가 표시:", {
+  //   currentPriceFromAPI: currentPrice?.currentPrice,
+  //   currPriceFromData: currPrice,
+  //   displayPrice: displayPrice,
+  //   displayDiff: displayDiff,
+  //   displayDiffPct: displayDiffPct,
+  //   forceUpdate: forceUpdate,
+  //   timestamp: new Date().toLocaleTimeString(),
+  // });
 
   return (
     <View style={styles.container}>
@@ -584,26 +554,6 @@ export default function ChartScreen({
           currPrice={displayPrice}
         />
 
-        {/* 시가/종가 토글 버튼 */}
-        <View style={styles.priceToggleContainer}>
-          <Pressable
-            onPress={togglePriceOpenClose}
-            style={[
-              styles.priceToggleButton,
-              priceToggleEnabled && styles.priceToggleButtonActive,
-            ]}
-          >
-            <Text
-              style={[
-                styles.priceToggleText,
-                priceToggleEnabled && styles.priceToggleTextActive,
-              ]}
-            >
-              시가/종가 {priceToggleEnabled ? "ON" : "OFF"}
-            </Text>
-          </Pressable>
-        </View>
-
         {/* SMA 토글 버튼 (일봉일 때만 표시) */}
         {period === "1D" && (
           <ScrollView
@@ -614,9 +564,13 @@ export default function ChartScreen({
             {(
               [
                 { key: "sma5", meta: SMA_META.sma5 },
+                { key: "sma10", meta: SMA_META.sma10 },
                 { key: "sma20", meta: SMA_META.sma20 },
+                { key: "sma30", meta: SMA_META.sma30 },
+                { key: "sma50", meta: SMA_META.sma50 },
                 { key: "sma60", meta: SMA_META.sma60 },
-                { key: "sma120", meta: SMA_META.sma120 },
+                { key: "sma100", meta: SMA_META.sma100 },
+                { key: "sma200", meta: SMA_META.sma200 },
               ] as const
             ).map(({ key, meta }) => {
               const on = smaOn[key as keyof typeof smaOn];
@@ -634,6 +588,7 @@ export default function ChartScreen({
                     style={{
                       color: on ? meta.chipOn : "#666",
                       fontWeight: "700",
+                      fontSize: key === "sma200" ? 11 : 11,
                     }}
                   >
                     {meta.label}
@@ -641,6 +596,28 @@ export default function ChartScreen({
                 </Pressable>
               );
             })}
+
+            {/* 볼린저 밴드 토글 버튼 */}
+            <Pressable
+              onPress={toggleBollinger}
+              style={[
+                styles.chip,
+                { borderColor: bollingerOn ? BOLLINGER_META.line : "#D9D9D9" },
+                bollingerOn
+                  ? { backgroundColor: BOLLINGER_META.chipBg }
+                  : styles.chipOff,
+              ]}
+            >
+              <Text
+                style={{
+                  color: bollingerOn ? BOLLINGER_META.chipOn : "#666",
+                  fontWeight: "700",
+                  fontSize: 11,
+                }}
+              >
+                {BOLLINGER_META.label}
+              </Text>
+            </Pressable>
           </ScrollView>
         )}
       </View>
@@ -750,7 +727,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 16,
     minWidth: 50,
-    maxWidth: 60,
+    maxWidth: 70,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -781,35 +758,5 @@ const styles = StyleSheet.create({
     flex: 1,
     maxHeight: 400,
     minHeight: 300,
-  },
-
-  priceToggleContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  priceToggleButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#D9D9D9",
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  priceToggleButtonActive: {
-    backgroundColor: "#E8F9E5",
-    borderColor: "#2C8A2C",
-  },
-  priceToggleText: {
-    color: "#666",
-    fontWeight: "700",
-    fontSize: 14,
-  },
-  priceToggleTextActive: {
-    color: "#2C8A2C",
   },
 });

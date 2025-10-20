@@ -78,16 +78,20 @@ export const chartHtml = `
       };
 
       
-      let chart,volChart,rsiChart,candle,s5,s20,s60,s120,upper,lower,vol,rsi;
-      let markers=[],s5Arr=[],s20Arr=[],s60Arr=[],s120Arr=[];
+      let chart,volChart,rsiChart,candle,s5,s10,s20,s30,s50,s60,s100,s200,upper,lower,vol,rsi;
+      let markers=[],s5Arr=[],s10Arr=[],s20Arr=[],s30Arr=[],s50Arr=[],s60Arr=[],s100Arr=[],s200Arr=[];
       let alertMarkers=[];
       let crosshairHooked = false;
 
       const COLORS = {
         sma5:   '#FF8A80', 
+        sma10:  '#81C784', 
         sma20:  '#90CAF9', 
+        sma30:  '#FFB74D', 
+        sma50:  '#BA68C8', 
         sma60:  '#B39DDB', 
-        sma120: '#FFCC80', 
+        sma100: '#FFCC80', 
+        sma200: '#A5D6A7', 
         boll:   'rgba(0,0,0,0.25)',
         up:     '#4CC439',
         down:   '#EF5350',
@@ -133,15 +137,19 @@ export const chartHtml = `
           try { series.applyOptions({ visible: !!on, color, lineWidth: on ? 1.5 : 1 }); } catch(e){}
           series.setData(on ? arr : []); 
         };
-        if (s5 && s20 && s60 && s120) {
+        if (s5 && s10 && s20 && s30 && s50 && s60 && s100 && s200) {
           show(s5,   s5Arr,   smaOn.sma5,   COLORS.sma5);
+          show(s10,  s10Arr,  smaOn.sma10,  COLORS.sma10);
           show(s20,  s20Arr,  smaOn.sma20,  COLORS.sma20);
+          show(s30,  s30Arr,  smaOn.sma30,  COLORS.sma30);
+          show(s50,  s50Arr,  smaOn.sma50,  COLORS.sma50);
           show(s60,  s60Arr,  smaOn.sma60,  COLORS.sma60);
-          show(s120, s120Arr, smaOn.sma120, COLORS.sma120);
+          show(s100, s100Arr, smaOn.sma100, COLORS.sma100);
+          show(s200, s200Arr, smaOn.sma200, COLORS.sma200);
         }
       };
 
-      const applyAll=({period,data,smaOn,alertMarkers:receivedMarkers})=>{
+      const applyAll=({period,data,smaOn,bollingerOn,alertMarkers:receivedMarkers})=>{
         if(!window.LightweightCharts)return;
         
         // 알림 마커 저장
@@ -151,9 +159,15 @@ export const chartHtml = `
         const timeScaleOptions = period === '1m' ? {
           timeVisible: true,
           secondsVisible: false,
+          rightOffset: 12,
+          barSpacing: 3,
+          minBarSpacing: 0.5,
         } : {
           timeVisible: false,
           secondsVisible: false,
+          rightOffset: 12,
+          barSpacing: 6,
+          minBarSpacing: 0.5,
         };
 
         if(!chart){
@@ -162,20 +176,170 @@ export const chartHtml = `
             grid:{vertLines:{color:'#f3f3f3'},horzLines:{color:'#f3f3f3'}},
             crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
             timeScale: timeScaleOptions,
+            priceScale: {
+              borderColor: '#cccccc',
+              scaleMargins: {
+                top: 0.1,
+                bottom: 0.1,
+              },
+              mode: 1, // PriceScaleMode.Normal
+              autoScale: true,
+              alignLabels: true,
+              borderVisible: false,
+              entireTextOnly: false,
+              visible: true,
+              ticksVisible: true,
+              scaleMargins: {
+                top: 0.1,
+                bottom: 0.1,
+              },
+            },
           });
           candle=chart.addCandlestickSeries({
             upColor:COLORS.up, downColor:COLORS.down,
             borderUpColor:COLORS.up, borderDownColor:COLORS.down,
-            wickUpColor:COLORS.up, wickDownColor:COLORS.down
+            wickUpColor:COLORS.up, wickDownColor:COLORS.down,
+            priceFormat: {
+              type: 'price',
+              precision: 0,
+              minMove: 1
+            }
           });
 
-          s5   = chart.addLineSeries({ color: COLORS.sma5,   lineWidth: 3 });
-          s20  = chart.addLineSeries({ color: COLORS.sma20,  lineWidth: 3 });
-          s60  = chart.addLineSeries({ color: COLORS.sma60,  lineWidth: 3 });
-          s120 = chart.addLineSeries({ color: COLORS.sma120, lineWidth: 3 });
+          s5   = chart.addLineSeries({ 
+            color: COLORS.sma5, 
+            lineWidth: 3,
+            priceFormat: {
+              type: 'price',
+              precision: 0,
+              minMove: 1
+            },
+            priceFormatter: (price) => {
+              return Math.round(price).toLocaleString('ko-KR');
+            }
+          });
+          s20  = chart.addLineSeries({ 
+            color: COLORS.sma20, 
+            lineWidth: 3,
+            priceFormat: {
+              type: 'price',
+              precision: 0,
+              minMove: 1
+            },
+            priceFormatter: (price) => {
+              return Math.round(price).toLocaleString('ko-KR');
+            }
+          });
+          s60  = chart.addLineSeries({ 
+            color: COLORS.sma60, 
+            lineWidth: 3,
+            priceFormat: {
+              type: 'price',
+              precision: 0,
+              minMove: 1
+            },
+            priceFormatter: (price) => {
+              return Math.round(price).toLocaleString('ko-KR');
+            }
+          });
+          s120 = chart.addLineSeries({ 
+            color: COLORS.sma120, 
+            lineWidth: 3,
+            priceFormat: {
+              type: 'price',
+              precision: 0,
+              minMove: 1
+            },
+            priceFormatter: (price) => {
+              return Math.round(price).toLocaleString('ko-KR');
+            }
+          });
 
-          upper=chart.addLineSeries({color:COLORS.boll,lineWidth:1});
-          lower=chart.addLineSeries({color:COLORS.boll,lineWidth:1});
+          s10 = chart.addLineSeries({ 
+            color: COLORS.sma10, 
+            lineWidth: 3,
+            priceFormat: {
+              type: 'price',
+              precision: 0,
+              minMove: 1
+            },
+            priceFormatter: (price) => {
+              return Math.round(price).toLocaleString('ko-KR');
+            }
+          });
+          s30 = chart.addLineSeries({ 
+            color: COLORS.sma30, 
+            lineWidth: 3,
+            priceFormat: {
+              type: 'price',
+              precision: 0,
+              minMove: 1
+            },
+            priceFormatter: (price) => {
+              return Math.round(price).toLocaleString('ko-KR');
+            }
+          });
+          s50 = chart.addLineSeries({ 
+            color: COLORS.sma50, 
+            lineWidth: 3,
+            priceFormat: {
+              type: 'price',
+              precision: 0,
+              minMove: 1
+            },
+            priceFormatter: (price) => {
+              return Math.round(price).toLocaleString('ko-KR');
+            }
+          });
+          s100 = chart.addLineSeries({ 
+            color: COLORS.sma100, 
+            lineWidth: 3,
+            priceFormat: {
+              type: 'price',
+              precision: 0,
+              minMove: 1
+            },
+            priceFormatter: (price) => {
+              return Math.round(price).toLocaleString('ko-KR');
+            }
+          });
+          s200 = chart.addLineSeries({ 
+            color: COLORS.sma200, 
+            lineWidth: 3,
+            priceFormat: {
+              type: 'price',
+              precision: 0,
+              minMove: 1
+            },
+            priceFormatter: (price) => {
+              return Math.round(price).toLocaleString('ko-KR');
+            }
+          });
+
+          upper=chart.addLineSeries({
+            color:COLORS.boll,
+            lineWidth:1,
+            priceFormat: {
+              type: 'price',
+              precision: 0,
+              minMove: 1
+            },
+            priceFormatter: (price) => {
+              return Math.round(price).toLocaleString('ko-KR');
+            }
+          });
+          lower=chart.addLineSeries({
+            color:COLORS.boll,
+            lineWidth:1,
+            priceFormat: {
+              type: 'price',
+              precision: 0,
+              minMove: 1
+            },
+            priceFormatter: (price) => {
+              return Math.round(price).toLocaleString('ko-KR');
+            }
+          });
 
           volChart=LightweightCharts.createChart(document.getElementById('vol'),{
             layout:{background:{color:'#ffffff'},textColor:'#333'},
@@ -202,6 +366,23 @@ export const chartHtml = `
           const addHline=(v,c)=>rsiChart.addLineSeries({color:c,lineWidth:1,priceLineVisible:false}).setData([{time:t0,value:v},{time:tN,value:v}]);
           addHline(30,'#00B0F0'); addHline(70,'#E8395F');
 
+          // 가격 포맷 설정 (천 단위 구분자)
+          chart.applyOptions({
+            priceScale: {
+              mode: 1,
+              autoScale: true,
+              alignLabels: true,
+              borderVisible: false,
+              entireTextOnly: false,
+              visible: true,
+              ticksVisible: true,
+              scaleMargins: {
+                top: 0.1,
+                bottom: 0.1,
+              },
+            },
+          });
+
           syncCharts(chart, [volChart, rsiChart]);
           new ResizeObserver(resizeAll).observe(document.getElementById('wrap'));
         } else {
@@ -213,16 +394,44 @@ export const chartHtml = `
 
         candle.setData(data);
         
+        // 차트 초기 뷰 설정 (적절한 범위로 자동 조정)
+        setTimeout(() => {
+          if (data.length > 0) {
+            // 최근 30개 데이터 포인트를 보여주도록 설정
+            const visibleRange = Math.min(30, data.length);
+            const startTime = data[data.length - visibleRange].time;
+            const endTime = data[data.length - 1].time;
+            
+            chart.timeScale().setVisibleRange({
+              from: startTime,
+              to: endTime,
+            });
+            
+            // 가격 스케일 자동 조정
+            chart.timeScale().fitContent();
+          }
+        }, 100);
+        
         // 일봉일 때만 SMA, Bollinger Band 계산
         if (period === '1D') {
-          s5Arr=calcSMA(data,5); s20Arr=calcSMA(data,20); s60Arr=calcSMA(data,60); s120Arr=calcSMA(data,120);
-          s5.setData(s5Arr); s20.setData(s20Arr); s60.setData(s60Arr); s120.setData(s120Arr);
-          const {up,low}=calcBoll(data); upper.setData(up); lower.setData(low);
+          s5Arr=calcSMA(data,5); s10Arr=calcSMA(data,10); s20Arr=calcSMA(data,20); s30Arr=calcSMA(data,30);
+          s50Arr=calcSMA(data,50); s60Arr=calcSMA(data,60); s100Arr=calcSMA(data,100); s200Arr=calcSMA(data,200);
+          s5.setData(s5Arr); s10.setData(s10Arr); s20.setData(s20Arr); s30.setData(s30Arr);
+          s50.setData(s50Arr); s60.setData(s60Arr); s100.setData(s100Arr); s200.setData(s200Arr);
+          
+          // 볼린저 밴드 계산 및 표시/숨김
+          const {up,low}=calcBoll(data);
+          if (bollingerOn) {
+            upper.setData(up); lower.setData(low);
+          } else {
+            upper.setData([]); lower.setData([]);
+          }
         } else {
           // 분봉일 때는 SMA 라인 숨기기
-          s5.setData([]); s20.setData([]); s60.setData([]); s120.setData([]);
+          s5.setData([]); s10.setData([]); s20.setData([]); s30.setData([]);
+          s50.setData([]); s60.setData([]); s100.setData([]); s200.setData([]);
           upper.setData([]); lower.setData([]);
-          s5Arr=[]; s20Arr=[]; s60Arr=[]; s120Arr=[];
+          s5Arr=[]; s10Arr=[]; s20Arr=[]; s30Arr=[]; s50Arr=[]; s60Arr=[]; s100Arr=[]; s200Arr=[];
         }
         
         vol.setData(data.map(d=>({time:d.time,value:d.volume,color:d.close>=d.open?COLORS.up:COLORS.down})));
@@ -295,14 +504,13 @@ export const chartHtml = `
             // SMA 값은 일봉일 때만 전송
             const smaData = period === '1D' ? {
               sma5:smaAt(s5Arr,t),
-              sma10:candleData?.sma10,
+              sma10:smaAt(s10Arr,t),
               sma20:smaAt(s20Arr,t),
-              sma30:candleData?.sma30,
-              sma50:candleData?.sma50,
+              sma30:smaAt(s30Arr,t),
+              sma50:smaAt(s50Arr,t),
               sma60:smaAt(s60Arr,t),
-              sma100:candleData?.sma100,
-              sma120:smaAt(s120Arr,t),
-              sma200:candleData?.sma200
+              sma100:smaAt(s100Arr,t),
+              sma200:smaAt(s200Arr,t)
             } : {};
             
             const alertText = alertAt(t);
@@ -319,6 +527,62 @@ export const chartHtml = `
               alert: alertText
             }});
           });
+          
+          // 터치 이벤트 추가
+          chart.subscribeClick((param)=>{
+            if(!param.time)return;
+            const c=param.seriesData.get(candle); if(!c)return;
+            const t=param.time;
+            console.log('[Touch/Click] Time:', t, 'Markers:', markers.length);
+            
+            const alertAt = (t) => {
+              console.log('[Touch/Click] Looking for alert at time:', t);
+              console.log('[Touch/Click] Available markers times:', markers.map(m => m.time));
+              
+              const m = markers.find(x => x.time === t);
+              
+              if (!m) {
+                console.log('[Touch/Click] No marker found for time:', t);
+                return null;
+              }
+              
+              if (m.alertText) {
+                const result = m.alertCount > 1 ? 
+                  m.alertText + ' (총 ' + m.alertCount + '개 알림)' : 
+                  m.alertText;
+                console.log('[Touch/Click] Alert found:', result);
+                return result;
+              }
+              return null;
+            };
+            const candleData = data.find(d => d.time === t);
+            
+            const smaData = period === '1D' ? {
+              sma5:smaAt(s5Arr,t),
+              sma10:smaAt(s10Arr,t),
+              sma20:smaAt(s20Arr,t),
+              sma30:smaAt(s30Arr,t),
+              sma50:smaAt(s50Arr,t),
+              sma60:smaAt(s60Arr,t),
+              sma100:smaAt(s100Arr,t),
+              sma200:smaAt(s200Arr,t)
+            } : {};
+            
+            const alertText = alertAt(t);
+            console.log('[Touch/Click] Sending alert:', alertText);
+            
+            send({type:'touch',payload:{
+              candle:{
+                ...c,
+                volume: candleData?.volume,
+                rsi14: candleData?.rsi14,
+                diffFromPrev: candleData?.diffFromPrev
+              },
+              sma: smaData,
+              alert: alertText
+            }});
+          });
+          
           crosshairHooked = true;
         }
 
