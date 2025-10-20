@@ -288,7 +288,7 @@ export const alertService = {
       });
 
       const rawData = res.data?.data || [];
-      
+
       const parsed = rawData.map((item: any) => ({
         id: item.id,
         alertId: item.alertId,
@@ -316,21 +316,55 @@ export const alertService = {
         },
       });
 
-      const { data } = res.data ?? {};
+      const { code, message, data } = res.data ?? {};
 
       if (!Array.isArray(data)) {
+        console.warn("[경고] data 필드가 배열이 아닙니다:");
+        console.log("data 내용:", data);
         return [];
       }
 
-      const formatted = data.map((item: any) => ({
+      console.log(`조건 검색 결과: ${data.length}개 기업`);
+
+      // 각 아이템의 상세 정보 로깅
+      data.forEach((item: any, i: number) => {
+        console.log(`=== 기업 ${i + 1} 상세 정보 ===`);
+        console.log("전체 아이템 데이터:", JSON.stringify(item, null, 2));
+        console.log(`종목 코드: ${item.stockCode}`);
+        console.log(`트리거 날짜: ${item.triggerDate}`);
+        console.log("values 내용:", item.values);
+        console.log("=== 기업 정보 끝 ===");
+      });
+
+      // 응답 데이터를 포맷팅
+      const formatted = data.map((item: any, i: number) => ({
         stockCode: item.stockCode,
         triggerDate: item.triggerDate,
         values: item.values || {},
       }));
 
+      // console.log("=== 포맷팅된 최종 데이터 ===");
+      // console.log(JSON.stringify(formatted, null, 2));
+
+      formatted.forEach((item, i) => {
+        console.log(
+          `#${i + 1} [${item.stockCode}] 트리거 시간: ${item.triggerDate}`
+        );
+      });
+
       return formatted;
     } catch (err: any) {
-      throw new Error(getErrorMessage(err));
+      console.error("=== API 에러 상세 정보 ===");
+      console.error("에러 객체:", err);
+      console.error("에러 메시지:", err.message);
+      console.error("에러 응답:", err.response);
+      console.error("에러 응답 데이터:", err.response?.data);
+      console.error("에러 응답 상태:", err.response?.status);
+      console.error("=== API 에러 정보 끝 ===");
+
+      const errorMsg = err.response?.data ?? err.message;
+      console.error("[조건 검색된 기업 조회 실패]:", errorMsg);
+      throw err;
     }
   },
 
@@ -346,12 +380,17 @@ export const alertService = {
         },
       });
 
-      const { data } = res.data ?? {};
+      const { code, message, data } = res.data ?? {};
 
       if (!Array.isArray(data)) {
+        console.warn("[경고] data 필드가 배열이 아닙니다:");
+        console.log("data 내용:", data);
         return [];
       }
 
+      console.log(`현재 활성화된 조건 알림: ${data.length}개`);
+
+      // 응답 데이터를 포맷팅
       const formatted = data.map((item: any) => ({
         conditionName: item.conditionName,
         activeCompanyCount: item.activeCompanyCount,
@@ -359,13 +398,16 @@ export const alertService = {
 
       return formatted;
     } catch (err: any) {
-      throw new Error(getErrorMessage(err));
+      const errorMsg = err.response?.data ?? err.message;
+      console.error("[조건별 활성 알림 조회 실패]:", errorMsg);
+      throw err;
     }
   },
 
   // 오늘 발생한 알림 조회
   async getTodayAlerts(accessToken: string) {
     const url = `${BASE_URL}/api/alerts/today`;
+    console.log("[GET] 요청 URL:", url);
 
     try {
       const res = await axios.get(url, {
@@ -375,15 +417,19 @@ export const alertService = {
         },
       });
 
-      const { data } = res.data ?? {};
-      
+      const { code, message, data } = res.data ?? {};
       if (!Array.isArray(data)) {
+        console.warn("[경고] data 필드가 배열이 아닙니다:", data);
         return [];
       }
 
       return data;
     } catch (err: any) {
-      throw new Error(getErrorMessage(err));
+      console.error(
+        "[오늘의 알림 조회 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
     }
   },
 
@@ -399,15 +445,30 @@ export const alertService = {
         },
       });
 
-      const { data } = res.data ?? {};
+      const { code, message, data } = res.data ?? {};
 
       if (!data || !Array.isArray(data.alerts)) {
+        console.warn("[경고] data.alerts 필드가 배열이 아닙니다:", data);
         return [];
       }
 
+      console.log(`[알림 히트맵 조회 성공] ${data.alerts.length}개 기업`);
+
+      data.alerts.forEach((alert: any, i: number) => {
+        console.log(
+          `#${i + 1} [${alert.stockCode}] 알림 ${
+            alert.alertCount
+          }개, 가격변동률: ${alert.priceRate}%`
+        );
+      });
+
       return data.alerts;
     } catch (err: any) {
-      throw new Error(getErrorMessage(err));
+      console.error(
+        "[알림 히트맵 조회 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
     }
   },
 
@@ -423,11 +484,15 @@ export const alertService = {
         },
       });
 
-      const { data } = res.data ?? {};
+      const { message, data } = res.data ?? {};
 
       return data;
     } catch (err: any) {
-      throw new Error(getErrorMessage(err));
+      console.error(
+        "[시가종가 on/off 여부 조회 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
     }
   },
 
@@ -451,11 +516,15 @@ export const alertService = {
         }
       );
 
-      const { data } = res.data ?? {};
+      const { message, data } = res.data ?? {};
 
       return data;
     } catch (err: any) {
-      throw new Error(getErrorMessage(err));
+      console.error(
+        "[시가/종가 on/off 상태 변경 실패]:",
+        err.response?.data ?? err.message
+      );
+      throw err;
     }
   },
 };

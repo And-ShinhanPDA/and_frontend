@@ -2,16 +2,16 @@ import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 import { saveActivatedCompanies } from "@/services/widgetShare";
-import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Image,
-  ImageSourcePropType,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
+    Animated,
+    Image,
+    ImageSourcePropType,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 type CompanyAlert = {
   id: number;
@@ -130,6 +130,13 @@ export default function ActivatedCompanyCard() {
   useEffect(() => {
     fetchTriggeredAlerts();
   }, []);
+
+  // 홈 화면 포커스 시마다 위젯 데이터 즉시 업데이트
+  useFocusEffect(
+    useCallback(() => {
+      fetchTriggeredAlerts();
+    }, [accessToken])
+  );
   return (
     <View>
       <View style={styles.titleContainer}>
@@ -159,7 +166,7 @@ export default function ActivatedCompanyCard() {
                   router.push({
                     pathname:
                       "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
-                    params: { id: item.stockCode, name: item.name },
+                    params: { id: item.stockCode || "", name: item.name },
                   })
                 }
               >

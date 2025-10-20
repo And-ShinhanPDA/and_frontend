@@ -1,15 +1,15 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 import { saveActivatedConditions } from "@/services/widgetShare";
-import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
+    Animated,
+    Image,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 type Condition = {
@@ -134,6 +134,13 @@ export default function ActivatedConditionCard() {
   useEffect(() => {
     fetchTriggeredConditionAlerts();
   }, []);
+
+  // 홈 화면 포커스 시마다 위젯 데이터 즉시 업데이트
+  useFocusEffect(
+    useCallback(() => {
+      fetchTriggeredConditionAlerts();
+    }, [accessToken])
+  );
 
   return (
     <View>

@@ -4,18 +4,19 @@ import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import { refreshWidgetManually } from "@/services/widgetShare";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Animated,
-  Image,
-  Pressable,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Animated,
+    Image,
+    Pressable,
+    StyleSheet,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
 
@@ -192,6 +193,9 @@ export default function AlertCondition() {
       // API 호출 후 최신 데이터 다시 조회
       await fetchConditionAlerts();
 
+      // 위젯 즉시 새로고침
+      refreshWidgetManually();
+
       console.log(
         `${target.name} 조건 알림 ${newActive ? "활성화" : "비활성화"} 완료`
       );
@@ -213,6 +217,10 @@ export default function AlertCondition() {
     try {
       await alertService.deleteAlert(accessToken, id);
       setAlerts((prev) => prev.filter((c) => c.id !== id));
+      
+      // 위젯 즉시 새로고침
+      refreshWidgetManually();
+      
       console.log(`${target.name} 조건 알림 삭제 완료`);
     } catch (err) {
       console.error("[조건 알림 삭제 실패]:", err);

@@ -5,6 +5,7 @@ import PresetSelect from "@/components/preset/preset-select";
 import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import { refreshWidgetManually } from "@/services/widgetShare";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -172,6 +173,9 @@ export default function AlertCompany() {
       // API 호출 후 최신 데이터 다시 조회
       await fetchAlertedCompanies();
 
+      // 위젯 즉시 새로고침
+      refreshWidgetManually();
+
       console.log(
         `${target.name} 기업 알림 ${newActive ? "활성화" : "비활성화"} 완료`
       );
@@ -200,6 +204,10 @@ export default function AlertCompany() {
     try {
       await alertService.deleteCompanyAlerts(accessToken, stockCode);
       setCompanies((prev) => prev.filter((c) => c.stockCode !== stockCode));
+      
+      // 위젯 즉시 새로고침
+      refreshWidgetManually();
+      
       console.log(`${target.name} 기업 알림 삭제 완료`);
     } catch (err) {
       console.error("[기업 알림 삭제 실패]:", err);

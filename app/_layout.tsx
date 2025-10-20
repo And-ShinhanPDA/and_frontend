@@ -6,8 +6,7 @@ import "react-native-reanimated";
 
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-// import { setWidgetViewType } from "@/services/widgetShare"; // ✅ 위젯 관련 주석처리
-// import messaging from "@react-native-firebase/messaging"; // ✅ 임시 주석처리
+import messaging from "@react-native-firebase/messaging";
 import {
   DarkTheme,
   DefaultTheme,
@@ -16,15 +15,15 @@ import {
 import Constants from "expo-constants";
 import * as Device from "expo-device";
 import { useFonts } from "expo-font";
-// import * as Linking from "expo-linking"; // ✅ 위젯 관련 주석처리
+import { useRouter } from "expo-router";
 import { useEffect } from "react";
 
 SplashScreen.preventAutoHideAsync();
 
 // ✅ 앱이 background/quit(종료) 상태인 경우 메시지를 받기 위함
-// messaging().setBackgroundMessageHandler(async (remoteMessage: any) => {
-//   console.log("[Background Message] ", remoteMessage);
-// });
+messaging().setBackgroundMessageHandler(async (remoteMessage: any) => {
+  console.log("[Background Message] ", remoteMessage);
+});
 
 // ✅ FCM 권한 요청 및 토큰 생성
 const requestUserPermission = async () => {
@@ -67,6 +66,35 @@ const requestUserPermission = async () => {
 
 function RouterGate() {
   const { isReady, isLoggedIn } = useAuth();
+  const router = useRouter();
+
+  // 알림 터치 핸들러 설정
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    // 백그라운드 상태에서 알림 터치 시
+    const unsubscribeBackground = messaging().onNotificationOpenedApp((remoteMessage) => {
+      console.log("📱 [Notification] 알림 터치됨 (Background):", remoteMessage);
+      router.push("/(tabs)/(alert-history)");
+    });
+
+    // 앱이 종료된 상태에서 알림 터치로 열린 경우
+    messaging()
+      .getInitialNotification()
+      .then((remoteMessage) => {
+        if (remoteMessage) {
+          console.log("📱 [Notification] 알림 터치로 앱 실행됨 (Quit state):", remoteMessage);
+          // 약간의 딜레이 후 이동 (앱 초기화 대기)
+          setTimeout(() => {
+            router.push("/(tabs)/(alert-history)");
+          }, 1000);
+        }
+      });
+
+    return () => {
+      unsubscribeBackground();
+    };
+  }, [isLoggedIn]);
 
   // 로딩 중
   if (!isReady) {

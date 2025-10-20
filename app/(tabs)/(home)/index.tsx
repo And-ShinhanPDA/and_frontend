@@ -8,8 +8,8 @@ import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
 // API 응답 타입
@@ -64,6 +64,13 @@ export default function HomeScreen() {
     fetchTriggeredConditions();
   }, [accessToken]);
 
+  // 화면이 포커스될 때마다 데이터 새로고침 (위젯 즉시 업데이트)
+  useFocusEffect(
+    useCallback(() => {
+      fetchTriggeredConditions();
+    }, [accessToken])
+  );
+
   // 로그아웃 핸들러
   const handleLogout = async () => {
     console.log("=== 로그아웃 시작 ===");
@@ -96,10 +103,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        <ActivatedConditionCard
-          triggeredConditions={triggeredConditions}
-          loading={loading}
-        />
+        <ActivatedConditionCard />
         <ActivatedCompanyCard />
         <TreemapChart />
       </ScrollView>

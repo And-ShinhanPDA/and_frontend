@@ -1,13 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
@@ -21,6 +21,7 @@ import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { alertService } from "@/services/alert-service";
+import { refreshWidgetManually } from "@/services/widgetShare";
 import { parseConditionsForCards } from "@/utils/parseConditions";
 
 export default function ConditionAlertModify() {
@@ -131,6 +132,9 @@ export default function ConditionAlertModify() {
         "🤖 [조건 알림 수정] AI 피드백:",
         res?.data?.aiFeedback || "(백엔드 응답에 없음)"
       );
+
+      // 위젯 즉시 새로고침
+      refreshWidgetManually();
 
       showAlert({
         message: "알림이 성공적으로 수정되었습니다!",

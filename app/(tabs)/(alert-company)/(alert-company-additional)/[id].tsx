@@ -14,16 +14,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { alertService } from "@/services/alert-service";
 import { presetService } from "@/services/preset-service";
+import { refreshWidgetManually } from "@/services/widgetShare";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 export default function CompanyAlertDetail() {
@@ -263,6 +264,9 @@ export default function CompanyAlertDetail() {
       const res = await alertService.createAlert(payload, accessToken);
       console.log("알림 등록 성공:", res);
       setLoading(false);
+
+      // 위젯 즉시 새로고침
+      refreshWidgetManually();
 
       // 프리셋 등록 여부 확인
       showAlert({

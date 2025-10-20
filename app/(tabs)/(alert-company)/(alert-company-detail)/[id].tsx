@@ -4,6 +4,7 @@ import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import { refreshWidgetManually } from "@/services/widgetShare";
 import { getIndicatorCategoriesArray } from "@/utils/parseConditions";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -213,6 +214,9 @@ export default function CompanyAlertDetail() {
       );
 
       console.log(`${name} 알림 ${newState ? "활성화" : "비활성화"} 성공`, res);
+      
+      // 위젯 즉시 새로고침
+      refreshWidgetManually();
     } catch (err) {
       console.error("[알림 토글 실패]:", err);
     }
@@ -226,6 +230,9 @@ export default function CompanyAlertDetail() {
       console.log("[알림 삭제 성공]:", res);
 
       setAlerts((prev) => prev.filter((c) => c.id !== alertId));
+      
+      // 위젯 즉시 새로고침
+      refreshWidgetManually();
     } catch (err) {
       console.error("[알림 삭제 실패]:", err);
     }
