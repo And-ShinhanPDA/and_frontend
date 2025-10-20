@@ -1,7 +1,13 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 import { chartService } from "@/services/chart-service";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { WebView, WebViewMessageEvent } from "react-native-webview";
 import ChartHeader, { Candle } from "./chart-header";
@@ -63,6 +69,12 @@ export default function ChartScreen({
   const [headerAlerts, setHeaderAlerts] = useState<any[]>([]);
   const [webViewLoaded, setWebViewLoaded] = useState(false);
   const [alertHistoryMarkers, setAlertHistoryMarkers] = useState<any[]>([]);
+  const [candles, setCandles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [lastCandle, setLastCandle] = useState<Candle | null>(null);
+  const [currentPrice, setCurrentPrice] = useState<any>(null);
+  const [forceUpdate, setForceUpdate] = useState(0);
+  const [priceToggleEnabled, setPriceToggleEnabled] = useState<boolean>(false);
 
   const data = useMemo(() => genCandles(period, 250, 79200), [period]);
 
@@ -70,18 +82,36 @@ export default function ChartScreen({
 
   const last = data[data.length - 1];
   const prev = data[data.length - 2];
-  const currPrice = ohlc?.close ?? last?.close;
+  // currentPrice가 있으면 우선 사용, 없으면 ohlc?.close ?? last?.close 사용
+  const currPrice = currentPrice?.currentPrice ?? ohlc?.close ?? last?.close;
   const prevClose = prev?.close ?? last?.open;
-  const diff = (currPrice ?? 0) - (prevClose ?? 0);
-  const diffPct = prevClose
-    ? (((currPrice ?? 0) - prevClose) / prevClose) * 100
-    : 0;
+  const diff = currentPrice?.diff ?? (currPrice ?? 0) - (prevClose ?? 0);
+  const diffPct =
+    currentPrice?.diffRate ??
+    (prevClose ? (((currPrice ?? 0) - prevClose) / prevClose) * 100 : 0);
   const isUp = diff >= 0;
-  const [candles, setCandles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [lastCandle, setLastCandle] = useState<Candle | null>(null);
-  const [currentPrice, setCurrentPrice] = useState<any>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const webViewLoadedRef = useRef(webViewLoaded);
+  const periodRef = useRef(period);
+  const smaOnRef = useRef(smaOn);
+  const alertHistoryMarkersRef = useRef(alertHistoryMarkers);
+
+  // ref 값들을 최신으로 유지
+  useEffect(() => {
+    webViewLoadedRef.current = webViewLoaded;
+  }, [webViewLoaded]);
+
+  useEffect(() => {
+    periodRef.current = period;
+  }, [period]);
+
+  useEffect(() => {
+    smaOnRef.current = smaOn;
+  }, [smaOn]);
+
+  useEffect(() => {
+    alertHistoryMarkersRef.current = alertHistoryMarkers;
+  }, [alertHistoryMarkers]);
   const SMA_META = {
     sma5: { label: "5", line: "#FF8A80", chipBg: "#FFEBEE", chipOn: "#C62828" }, // 파스텔 레드
     sma20: {
@@ -130,7 +160,7 @@ export default function ChartScreen({
   };
 
   // 분봉 데이터 fetch
-  const fetchMinuteData = async () => {
+  const fetchMinuteData = useCallback(async () => {
     try {
       const result = await chartService.getMinuteCandles(stockCode);
       setCandles(result);
@@ -152,12 +182,16 @@ export default function ChartScreen({
     } catch (err) {
       console.error("분봉 데이터 불러오기 실패:", err);
     }
-  };
+  }, [stockCode]);
 
   // 현재가 fetch
-  const fetchCurrentPrice = async () => {
+  const fetchCurrentPrice = useCallback(async () => {
+    console.log("🔄 fetchCurrentPrice 함수 시작", { stockCode });
     try {
+      console.log("📡 API 호출 시작");
       const result = await chartService.getCurrentPrice(stockCode);
+      console.log("📡 API 응답 받음:", result);
+
       setCurrentPrice(result);
 
       // 부모 컴포넌트로 현재가 전달
@@ -165,15 +199,68 @@ export default function ChartScreen({
         onPriceUpdate(result);
       }
 
-      console.log("현재가 업데이트:", {
+      // 강제 리렌더링 트리거
+      setForceUpdate((prev) => {
+        console.log("🔄 forceUpdate 변경:", prev, "->", prev + 1);
+        return prev + 1;
+      });
+
+      console.log("🔄 현재가 업데이트 완료:", {
         price: result.currentPrice,
         diff: result.diff,
         diffRate: result.diffRate,
+        forceUpdate: forceUpdate + 1,
+        period: period,
+        displayPrice: result.currentPrice,
+        displayDiff: result.diff,
+        displayDiffPct: result.diffRate,
       });
     } catch (err) {
-      console.error("현재가 조회 실패:", err);
+      console.error("❌ 현재가 조회 실패:", err);
     }
-  };
+  }, [stockCode, onPriceUpdate]);
+
+  // 시가/종가 토글 상태 조회
+  const fetchPriceToggleStatus = useCallback(async () => {
+    if (!accessToken) return;
+
+    try {
+      console.log("📡 시가/종가 토글 상태 조회:", stockCode);
+      const result = await alertService.getPriceOnOffStatus(
+        accessToken,
+        stockCode
+      );
+      console.log("📡 시가/종가 토글 상태 응답:", result);
+      setPriceToggleEnabled(result);
+    } catch (err) {
+      console.error("❌ 시가/종가 토글 상태 조회 실패:", err);
+    }
+  }, [accessToken, stockCode]);
+
+  // 시가/종가 토글 상태 변경
+  const togglePriceOpenClose = useCallback(async () => {
+    if (!accessToken) return;
+
+    try {
+      const newState = !priceToggleEnabled;
+      console.log("📡 시가/종가 토글 상태 변경:", { stockCode, newState });
+
+      // UI 상태 먼저 업데이트
+      setPriceToggleEnabled(newState);
+
+      // API 호출
+      await alertService.updatePriceOnOffStatus(
+        accessToken,
+        stockCode,
+        newState
+      );
+      console.log("✅ 시가/종가 토글 상태 변경 완료:", newState);
+    } catch (err) {
+      console.error("❌ 시가/종가 토글 상태 변경 실패:", err);
+      // 실패 시 이전 상태로 복원
+      setPriceToggleEnabled(!priceToggleEnabled);
+    }
+  }, [accessToken, stockCode, priceToggleEnabled]);
 
   // 초기 데이터 로드 및 period 변경 시
   useEffect(() => {
@@ -186,13 +273,46 @@ export default function ChartScreen({
           await fetchMinuteData();
         }
         await fetchCurrentPrice();
+        await fetchPriceToggleStatus();
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [stockCode, period]);
+  }, [stockCode, period, fetchPriceToggleStatus]);
+
+  // 현재가 자동 업데이트 (1분마다)
+  useEffect(() => {
+    console.log("🚀 현재가 자동 업데이트 useEffect 시작", { stockCode });
+
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let isActive = true;
+
+    const scheduleNext = () => {
+      if (!isActive) return;
+
+      timeoutId = setTimeout(() => {
+        console.log("⏰ 현재가 자동 업데이트 시작");
+        fetchCurrentPrice();
+        scheduleNext(); // 재귀적으로 다음 스케줄 설정
+      }, 10000); // 10초마다 실행 (테스트용)
+    };
+
+    scheduleNext();
+    console.log("✅ timeout 스케줄 설정 완료");
+
+    // 컴포넌트 언마운트 시 timeout 정리
+    return () => {
+      console.log("🛑 useEffect cleanup 실행");
+      isActive = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+        console.log("🧹 timeout 정리 완료");
+      }
+    };
+  }, [stockCode, fetchCurrentPrice]); // fetchCurrentPrice도 의존성에 추가
 
   // 알림 히스토리 가져오기 (일봉일 때만)
   useEffect(() => {
@@ -428,17 +548,28 @@ export default function ChartScreen({
 
   const header = ohlc ?? lastCandle;
 
-  // 현재가 정보 반영
+  // 현재가 정보 반영 (currentPrice가 있으면 우선 사용)
   const displayPrice = currentPrice?.currentPrice ?? currPrice;
   const displayDiff = currentPrice?.diff ?? diff;
   const displayDiffPct = currentPrice?.diffRate ?? diffPct;
   const displayIsUp = (currentPrice?.diff ?? diff) >= 0;
+
+  console.log("📊 차트 헤더 현재가 표시:", {
+    currentPriceFromAPI: currentPrice?.currentPrice,
+    currPriceFromData: currPrice,
+    displayPrice: displayPrice,
+    displayDiff: displayDiff,
+    displayDiffPct: displayDiffPct,
+    forceUpdate: forceUpdate,
+    timestamp: new Date().toLocaleTimeString(),
+  });
 
   return (
     <View style={styles.container}>
       {/* 고정 헤더 */}
       <View style={styles.fixedHeader}>
         <ChartHeader
+          key={`header-${forceUpdate}-${displayPrice}`} // forceUpdate와 displayPrice로 강제 리렌더링
           companyName={companyName}
           ohlc={ohlc ?? lastCandle}
           smaVals={smaVals}
@@ -452,6 +583,26 @@ export default function ChartScreen({
           isUp={displayIsUp}
           currPrice={displayPrice}
         />
+
+        {/* 시가/종가 토글 버튼 */}
+        <View style={styles.priceToggleContainer}>
+          <Pressable
+            onPress={togglePriceOpenClose}
+            style={[
+              styles.priceToggleButton,
+              priceToggleEnabled && styles.priceToggleButtonActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.priceToggleText,
+                priceToggleEnabled && styles.priceToggleTextActive,
+              ]}
+            >
+              시가/종가 {priceToggleEnabled ? "ON" : "OFF"}
+            </Text>
+          </Pressable>
+        </View>
 
         {/* SMA 토글 버튼 (일봉일 때만 표시) */}
         {period === "1D" && (
@@ -498,6 +649,7 @@ export default function ChartScreen({
       <View style={styles.scrollableContent}>
         <View style={styles.chartContainer}>
           <WebView
+            key={`webview-${forceUpdate}`} // forceUpdate로 강제 리렌더링
             ref={webRef}
             originWhitelist={["*"]}
             source={{ html: chartHtml }}
@@ -629,5 +781,35 @@ const styles = StyleSheet.create({
     flex: 1,
     maxHeight: 400,
     minHeight: 300,
+  },
+
+  priceToggleContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  priceToggleButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  priceToggleButtonActive: {
+    backgroundColor: "#E8F9E5",
+    borderColor: "#2C8A2C",
+  },
+  priceToggleText: {
+    color: "#666",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  priceToggleTextActive: {
+    color: "#2C8A2C",
   },
 });

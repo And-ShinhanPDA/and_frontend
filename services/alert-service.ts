@@ -412,8 +412,8 @@ export const alertService = {
   },
 
   // 시가종가 on/off 여부 조회
-  async getPriceOnOffStatus(accessToken: string, alertId: number) {
-    const url = `${BASE_URL}/api/alerts/${alertId}/price`;
+  async getPriceOnOffStatus(accessToken: string, stockCode: string) {
+    const url = `${BASE_URL}/api/alerts/price/${stockCode}`;
 
     try {
       const res = await axios.get(url, {
@@ -424,8 +424,7 @@ export const alertService = {
       });
 
       const { data } = res.data ?? {};
-
-      return data;
+      return data?.isPrice ?? false;
     } catch (err: any) {
       throw new Error(getErrorMessage(err));
     }
@@ -434,15 +433,15 @@ export const alertService = {
   // 시가/종가 on/off 상태 변경
   async updatePriceOnOffStatus(
     accessToken: string,
-    alertId: number,
-    isEnabled: boolean
+    stockCode: string,
+    togglePrice: boolean
   ) {
-    const url = `${BASE_URL}/api/alerts/${alertId}/price`;
+    const url = `${BASE_URL}/api/alerts/price/${stockCode}`;
 
     try {
       const res = await axios.patch(
         url,
-        { isPrice: isEnabled },
+        { togglePrice },
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -458,6 +457,4 @@ export const alertService = {
       throw new Error(getErrorMessage(err));
     }
   },
-
-  // 히트맵
 };
