@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -238,6 +239,19 @@ export default function PresetDetail() {
           </View>
         )}
 
+        {/* 프리셋 적용 안내 */}
+        <View style={styles.applyNoticeContainer}>
+          <View style={styles.applyNoticeIcon}>
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={{ width: 50, height: 50 }}
+            />
+          </View>
+          <Text style={styles.applyNoticeText}>
+            알림을 추가/수정할 때 아래 지표를 적용할 수 있습니다!
+          </Text>
+        </View>
+
         <View style={styles.divider} />
 
         {/* 조건 카드들 */}
@@ -368,6 +382,39 @@ const styles = StyleSheet.create({
     color: "#334155",
     lineHeight: 22,
     fontFamily: "Pretendard",
+  },
+  applyNoticeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FAFAFA",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginVertical: 12,
+    gap: 12,
+  },
+  applyNoticeIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    // backgroundColor: "#4CC439",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  applyNoticeIconText: {
+    fontSize: 16,
+    color: "#fff",
+    fontWeight: "700",
+  },
+  applyNoticeText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#666",
+    fontFamily: "Pretendard",
+    fontWeight: "600",
+    lineHeight: 18,
   },
   footer: {
     paddingHorizontal: 16,
