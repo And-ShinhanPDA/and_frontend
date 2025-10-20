@@ -40,6 +40,10 @@ export default function TrailingConditionContent({
     buyPercent: "",
   });
 
+  // 각 섹션의 열림/닫힘 상태
+  const [stopSectionOpen, setStopSectionOpen] = useState(false);
+  const [buySectionOpen, setBuySectionOpen] = useState(false);
+
   const inited = useRef(false);
   useEffect(() => {
     if (inited.current) return;
@@ -87,9 +91,9 @@ export default function TrailingConditionContent({
         <ConditionSection
           title="추적 손절매 (하락)"
           description="최근 고가 대비 일정 하락 금액 또는 비율 시 알림"
-          value={true}
+          value={stopSectionOpen}
           onAdd={() => {}}
-          onToggle={() => {}}
+          onToggle={() => setStopSectionOpen(!stopSectionOpen)}
           rows={[{ id: 1 }]}
           hasFilled={
             String(values.stopPrice).trim() !== "" ||
@@ -140,9 +144,9 @@ export default function TrailingConditionContent({
         <ConditionSection
           title="추적 매수 (상승)"
           description="최근 고가 대비 일정 상승 금액 또는 비율 시 알림"
-          value={true}
+          value={buySectionOpen}
           onAdd={() => {}}
-          onToggle={() => {}}
+          onToggle={() => setBuySectionOpen(!buySectionOpen)}
           rows={[{ id: 1 }]}
           hasFilled={
             String(values.buyPrice).trim() !== "" ||
