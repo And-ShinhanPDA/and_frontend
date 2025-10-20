@@ -6,6 +6,7 @@ import "react-native-reanimated";
 
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import notifee from "@notifee/react-native";
 import messaging from "@react-native-firebase/messaging";
 import {
   DarkTheme,
@@ -154,6 +155,45 @@ function RouterGate() {
     };
   }, [isLoggedIn]);
 
+  // Foreground 알림 핸들러 설정
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    // 앱이 foreground 상태일 때 알림 수신
+    const unsubscribeForeground = messaging().onMessage(async (remoteMessage) => {
+      console.log("📱 [Notification] 포어그라운드 알림 수신:", remoteMessage);
+
+      try {
+        // notifee를 사용하여 시스템 알림 표시
+        await notifee.displayNotification({
+          title: remoteMessage.notification?.title || "알림",
+          body: remoteMessage.notification?.body || "",
+          android: {
+            channelId: "default",
+            smallIcon: "ic_launcher",
+            pressAction: {
+              id: "default",
+            },
+          },
+          ios: {
+            foregroundPresentationOptions: {
+              alert: true,
+              badge: true,
+              sound: true,
+            },
+          },
+        });
+        console.log("✅ [Notification] 포어그라운드 알림 표시 완료");
+      } catch (error) {
+        console.error("❌ [Notification] 포어그라운드 알림 표시 실패:", error);
+      }
+    });
+
+    return () => {
+      unsubscribeForeground();
+    };
+  }, [isLoggedIn]);
+
   // 알림 터치 핸들러 설정
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -220,6 +260,27 @@ export default function RootLayout() {
   // ✅ iOS 권한 요청 및 FCM 토큰 받기
   useEffect(() => {
     requestUserPermission();
+  }, []);
+
+  // ✅ Notifee 초기화 (foreground 알림용)
+  useEffect(() => {
+    const initNotifee = async () => {
+      try {
+        // Android 채널 생성
+        await notifee.createChannel({
+          id: "default",
+          name: "기본 알림",
+          importance: 4, // High importance
+          sound: "default",
+        });
+        
+        console.log("✅ [Notifee] 채널 초기화 완료");
+      } catch (error) {
+        console.error("❌ [Notifee] 초기화 실패:", error);
+      }
+    };
+
+    initNotifee();
   }, []);
 
   // ✅ 앱이 foreground(실행) 상태인 경우 메시지를 받기 위함
