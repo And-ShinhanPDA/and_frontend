@@ -101,6 +101,7 @@ export default function AlertConditionDetail() {
     name: string;
     tags: string;
   }>();
+  const [isPresetOpen, setIsPresetOpen] = useState(false);
   const { signOut, user, accessToken } = useAuth();
 
   const parsedTags = tags ? JSON.parse(tags) : [];
@@ -224,7 +225,7 @@ export default function AlertConditionDetail() {
         title="조건 검색"
         showBackButton={true}
         rightButtons="preset-and-mypage"
-        onPresetPress={() => console.log("프리셋으로 추가")}
+        onPresetPress={() => setIsPresetOpen(true)}
         userName={user?.name || "사용자"}
         onLogoutConfirm={handleLogout}
       />

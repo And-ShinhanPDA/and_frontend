@@ -11,12 +11,13 @@ import CustomHeader from "@/components/header/header";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { alertService } from "@/services/alert-service";
 import { presetService } from "@/services/preset-service";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-  Alert,
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -27,9 +28,11 @@ import {
 
 export default function CompanyAlertDetail() {
   const { accessToken } = useAuth();
+  const { showAlert, AlertComponent } = useCustomAlert();
   const { id, name } = useLocalSearchParams();
   const router = useRouter();
   const [isPresetOpen, setIsPresetOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const tabs = [
     "제목",
     "가격",
@@ -232,9 +235,14 @@ export default function CompanyAlertDetail() {
   const handleSave = async () => {
     try {
       if (!accessToken) {
-        alert("로그인이 필요합니다.");
+        showAlert({
+          message: "로그인이 필요합니다.",
+          buttons: [{ text: "확인" }],
+        });
         return;
       }
+
+      setLoading(true);
 
       const mergedConditions = Object.values(conditionGetters)
         .map((fn) => fn())
@@ -254,56 +262,82 @@ export default function CompanyAlertDetail() {
 
       const res = await alertService.createAlert(payload, accessToken);
       console.log("알림 등록 성공:", res);
+      setLoading(false);
 
       // 프리셋 등록 여부 확인
-      Alert.alert("프리셋 등록", "프리셋으로도 등록하시겠습니까?", [
-        {
-          text: "아니오",
-          style: "cancel",
-          onPress: () => {
-            alert("알림이 성공적으로 등록되었습니다!");
-            // 기업 상세 페이지로 이동
-            router.replace({
-              pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
-              params: { id: String(id), name: String(name) },
-            });
-          },
-        },
-        {
-          text: "네",
-          onPress: async () => {
-            try {
-              // 프리셋으로 저장
-              const presetPayload = {
-                title: title || `${name} 조건`,
-                conditions: mergedConditions,
-                category: "custom",
-              };
-
-              console.log("[프리셋 추가] payload:", presetPayload);
-              await presetService.createPreset(accessToken, presetPayload);
-              console.log("[프리셋 추가 성공]");
-
-              alert("알림과 프리셋이 모두 등록되었습니다!");
-            } catch (presetError) {
-              console.error("[프리셋 추가 실패]:", presetError);
-              alert("알림은 등록되었으나 프리셋 등록에 실패했습니다.");
-            } finally {
-              // 기업 상세 페이지로 이동
-              router.replace({
+      showAlert({
+        title: "프리셋 등록",
+        message: "프리셋으로도 등록하시겠습니까?",
+        buttons: [
+          {
+            text: "아니오",
+            style: "cancel",
+            onPress: () => {
+              // 알림 추가 페이지와 기업 선택 페이지를 닫고 기업 상세 페이지로 이동
+              // 스택: 기업 알림 목록 → 기업 상세
+              router.back(); // 알림 추가 페이지 닫기
+              router.back(); // 기업 선택 페이지 닫기
+              router.push({
                 pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
                 params: { id: String(id), name: String(name) },
               });
-            }
+            },
           },
-        },
-      ]);
+          {
+            text: "네",
+            onPress: async () => {
+              setLoading(true);
+              try {
+                // 프리셋으로 저장
+                const presetPayload = {
+                  title: title || `${name} 조건`,
+                  conditions: mergedConditions,
+                  category: "custom",
+                };
+
+                console.log("[프리셋 추가] payload:", presetPayload);
+                await presetService.createPreset(accessToken, presetPayload);
+                console.log("[프리셋 추가 성공]");
+                setLoading(false);
+
+                // 알림 추가 페이지와 기업 선택 페이지를 닫고 기업 상세 페이지로 이동
+                router.back(); // 알림 추가 페이지 닫기
+                router.back(); // 기업 선택 페이지 닫기
+                router.push({
+                  pathname:
+                    "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+                  params: { id: String(id), name: String(name) },
+                });
+              } catch (presetError) {
+                console.error("[프리셋 추가 실패]:", presetError);
+                setLoading(false);
+
+                // 에러가 있어도 스택 정리 후 기업 상세 페이지로 이동
+                router.back(); // 알림 추가 페이지 닫기
+                router.back(); // 기업 선택 페이지 닫기
+                router.push({
+                  pathname:
+                    "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+                  params: { id: String(id), name: String(name) },
+                });
+              }
+            },
+          },
+        ],
+      });
     } catch (error: any) {
       console.error("알림 등록 실패:", error);
+      setLoading(false);
       if (error.response?.status === 401) {
-        alert("로그인 세션이 만료되었습니다. 다시 로그인 해주세요.");
+        showAlert({
+          message: "로그인 세션이 만료되었습니다. 다시 로그인 해주세요.",
+          buttons: [{ text: "확인" }],
+        });
       } else {
-        alert("알림 등록 중 오류가 발생했습니다.");
+        showAlert({
+          message: "알림 등록 중 오류가 발생했습니다.",
+          buttons: [{ text: "확인" }],
+        });
       }
     }
   };
@@ -311,6 +345,14 @@ export default function CompanyAlertDetail() {
   const [expanded, setExpanded] = useState(false);
   return (
     <View style={styles.container}>
+      {/* 로딩 오버레이 */}
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#4CC439" />
+          <Text style={styles.loadingText}>처리 중...</Text>
+        </View>
+      )}
+
       <CustomHeader title={`${name}`} showBackButton={true} />
 
       {/* 탭 */}
@@ -333,6 +375,8 @@ export default function CompanyAlertDetail() {
         style={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContentContainer}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
       >
         <CurrentStatusCard
           time="11:38 기준"
@@ -424,6 +468,9 @@ export default function CompanyAlertDetail() {
           onPresetSelect={handlePresetSelect}
         />
       </ConditionBottomSheet>
+
+      {/* 커스텀 Alert */}
+      <AlertComponent />
     </View>
   );
 }
@@ -436,13 +483,14 @@ const styles = StyleSheet.create({
 
   tabBarContainer: {
     position: "relative",
-    marginBottom: 10,
-    marginTop: 10,
+    marginTop: 16,
+    marginBottom: 12,
+    backgroundColor: "#fff",
   },
   tabBarContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   tabBarBorder: {
     position: "absolute",
@@ -453,83 +501,105 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E5E5",
   },
   tabItem: {
-    marginRight: 20,
-    paddingVertical: 4,
+    marginRight: 24,
+    paddingVertical: 6,
   },
   tabText: {
     fontSize: 15,
-    fontWeight: "500",
+    fontWeight: "600",
     color: "#333",
     lineHeight: 20,
+    fontFamily: "Pretendard",
   },
 
   divider: {
-    height: 7,
+    height: 8,
     backgroundColor: "#F5F6F8",
-    marginVertical: 10,
-    marginHorizontal: -16,
-    width: "100%",
-    alignSelf: "stretch",
+    marginVertical: 14,
+    marginHorizontal: -20,
+    width: "120%",
+    alignSelf: "center",
   },
 
   titleInput: {
     borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    borderColor: "#E8E8E8",
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     fontSize: 15,
-    color: "#333",
+    color: "#111",
     backgroundColor: "#fff",
-    marginVertical: 10,
+    marginVertical: 12,
+    fontFamily: "Pretendard",
   },
 
   scrollContent: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
 
   scrollContentContainer: {
-    paddingBottom: 20,
+    paddingBottom: 100,
+    paddingTop: 4,
   },
 
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
     backgroundColor: "#fff",
     borderTopWidth: 1,
     borderTopColor: "#E5E5E5",
-    elevation: 5,
-    paddingBottom: 30,
+    paddingBottom: 32,
   },
   presetButton: {
     flex: 1,
     borderWidth: 1,
     borderColor: "#E5E5E5",
     borderRadius: 10,
-    paddingVertical: 13,
+    paddingVertical: 14,
     alignItems: "center",
     marginRight: 8,
-    backgroundColor: "#F7F7F7",
+    backgroundColor: "#F9F9F9",
   },
   presetText: {
     fontSize: 15,
     color: "#333",
-    fontWeight: "500",
+    fontWeight: "600",
+    fontFamily: "Pretendard",
   },
   saveButton: {
     flex: 1,
     backgroundColor: "#4CC439",
     borderRadius: 10,
-    paddingVertical: 13,
+    paddingVertical: 14,
     alignItems: "center",
     marginLeft: 8,
   },
   saveText: {
     fontSize: 15,
     color: "#fff",
+    fontWeight: "700",
+    fontFamily: "Pretendard",
+  },
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#fff",
     fontWeight: "600",
+    fontFamily: "Pretendard",
   },
 });

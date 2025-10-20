@@ -7,15 +7,15 @@ import TreemapChart from "@/components/home/treemap-chart";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { alertService } from "@/services/alert-service";
 
-// API 응답 타입
-type TriggeredCondition = {
-  conditionName: string;
-  activeCompanyCount: number;
+type HeatmapData = {
+  stockCode: string;
+  alertCount: number;
+  priceRate: number;
 };
 
 export default function HomeScreen() {
@@ -23,48 +23,34 @@ export default function HomeScreen() {
   const { signOut, user, accessToken } = useAuth();
   const router = useRouter();
 
-  // 활성화된 조건 알림 상태 관리
-  const [triggeredConditions, setTriggeredConditions] = useState<
-    TriggeredCondition[]
-  >([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
+  const [heatmapLoading, setHeatmapLoading] = useState(true);
 
-  // 활성화된 조건 알림 조회 함수
-  const fetchTriggeredConditions = async () => {
+  const fetchHeatmapData = async () => {
     if (!accessToken) {
-      console.log("accessToken 없음");
-      setLoading(false);
+      console.log("accessToken 없음 - 히트맵 로드 불가");
+      setHeatmapLoading(false);
       return;
     }
 
     try {
-      setLoading(true);
-      setError(null);
+      setHeatmapLoading(true);
 
-      const results = await alertService.getTriggeredConditionAlerts(
-        accessToken
-      );
-      setTriggeredConditions(results);
+      const results = await alertService.getAlertHeatmap(accessToken);
+      setHeatmapData(results);
 
-      console.log(`홈 화면 - 활성화된 조건 알림 ${results.length}개 로드 완료`);
+      console.log(`홈 화면 - 히트맵 데이터 ${results.length}개 로드 완료`);
     } catch (err: any) {
-      console.error("홈 화면 - 활성화된 조건 알림 조회 실패:", err);
-      setError(
-        err.response?.data?.message ||
-          "활성화된 조건 알림을 불러오는데 실패했습니다."
-      );
+      console.error("홈 화면 - 히트맵 데이터 조회 실패:", err);
     } finally {
-      setLoading(false);
+      setHeatmapLoading(false);
     }
   };
 
-  // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
-    fetchTriggeredConditions();
+    fetchHeatmapData();
   }, [accessToken]);
 
-  // 로그아웃 핸들러
   const handleLogout = async () => {
     console.log("=== 로그아웃 시작 ===");
     console.log("user 전체:", user);
@@ -73,7 +59,6 @@ export default function HomeScreen() {
     try {
       await signOut();
       console.log("로그아웃 성공");
-      // 로그인 화면으로 이동
       router.replace("/(auth)/login");
     } catch (error) {
       console.error("로그아웃 실패:", error);
@@ -96,12 +81,9 @@ export default function HomeScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        <ActivatedConditionCard
-          triggeredConditions={triggeredConditions}
-          loading={loading}
-        />
+        <ActivatedConditionCard />
         <ActivatedCompanyCard />
-        <TreemapChart />
+        <TreemapChart data={heatmapData} loading={heatmapLoading} />
       </ScrollView>
 
       <ConditionBottomSheet

@@ -1,15 +1,38 @@
 import { AuthResponse, SignInPayload, SignUpPayload, User } from "@/types/auth";
+import { getErrorMessage } from "@/utils/errorHandler";
 import axios from "axios";
 const BASE_URL = process.env.EXPO_PUBLIC_USER_URL;
 
 export const authService = {
   // 회원가입
   async signUp(payload: SignUpPayload): Promise<User> {
-    const res = await axios.post<AuthResponse<User>>(
-      `${BASE_URL}/api/auth/signup`,
-      payload
-    );
-    return res.data.data;
+    const url = `${BASE_URL}/api/auth/signup`;
+
+    const requestBody = {
+      name: payload.name,
+      email: payload.email,
+      password: payload.password,
+      fcmToken: payload.fcmToken,
+      deviceId: payload.deviceId,
+    };
+
+    try {
+      const res = await axios.post<AuthResponse<User>>(url, requestBody, {
+        timeout: 15000,
+        validateStatus: (status) => status >= 200 && status < 500,
+      });
+
+      if (res.status < 200 || res.status >= 300) {
+        throw new Error(
+          res.data?.message || `회원가입에 실패했습니다.`
+        );
+      }
+
+      return res.data.data;
+    } catch (err: any) {
+      const errorMsg = getErrorMessage(err);
+      throw new Error(errorMsg);
+    }
   },
   // 로그인
   async signIn(payload: SignInPayload): Promise<{
@@ -17,32 +40,43 @@ export const authService = {
     accessToken: string;
     refreshTokenId: string;
   }> {
-    const res = await axios.post<
-      AuthResponse<{
-        userId: number;
-        email: string;
-        name: string;
-        accessToken: string;
-        refreshTokenId: string;
-      }>
-    >(`${BASE_URL}/api/auth/login`, payload);
+    const url = `${BASE_URL}/api/auth/login`;
 
-    // 로그인 할 때 유저정보가 없어서 나중에 주면 수정 필요
-    console.log("=== auth-service 로그인 응답 ===");
-    console.log("전체 응답:", JSON.stringify(res.data, null, 2));
-    console.log("res.data.data:", res.data.data);
+    try {
+      const res = await axios.post<
+        AuthResponse<{
+          userId: number;
+          email: string;
+          name: string;
+          accessToken: string;
+          refreshTokenId: string;
+        }>
+      >(url, payload, {
+        timeout: 15000,
+        validateStatus: (status) => status >= 200 && status < 500,
+      });
 
-    const user: User = {
-      id: res.data.data.userId,
-      email: res.data.data.email,
-      name: res.data.data.name,
-    };
+      if (res.status < 200 || res.status >= 300) {
+        throw new Error(
+          res.data?.message || `로그인에 실패했습니다.`
+        );
+      }
 
-    return {
-      user,
-      accessToken: res.data.data.accessToken,
-      refreshTokenId: res.data.data.refreshTokenId,
-    };
+      const user: User = {
+        id: res.data.data.userId,
+        email: res.data.data.email,
+        name: res.data.data.name,
+      };
+
+      return {
+        user,
+        accessToken: res.data.data.accessToken,
+        refreshTokenId: res.data.data.refreshTokenId,
+      };
+    } catch (err: any) {
+      const errorMsg = getErrorMessage(err);
+      throw new Error(errorMsg);
+    }
   },
 
   // 토큰 만료 시 재발급

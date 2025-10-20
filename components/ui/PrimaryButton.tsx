@@ -5,16 +5,19 @@ type PrimaryButtonProps = {
   title: string;
   onPress: () => void;
   style?: ViewStyle;
+  disabled?: boolean;
 };
 
-export function PrimaryButton({ title, onPress, style }: PrimaryButtonProps) {
+export function PrimaryButton({ title, onPress, style, disabled = false }: PrimaryButtonProps) {
   return (
     <Pressable
-      onPress={onPress}
+      onPress={disabled ? undefined : onPress}
+      disabled={disabled}
       style={({ pressed }) => [
         styles.button,
         style,
-        pressed && { opacity: 0.8 },
+        pressed && !disabled && { opacity: 0.8 },
+        disabled && { opacity: 0.5 },
       ]}
     >
       <Text style={styles.text}>
