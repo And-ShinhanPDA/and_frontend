@@ -284,10 +284,10 @@ export default function AlertHistory() {
         items: group.items.filter((item: AlertItem) => {
           // 기업 필터링
           if (selectedCompany && item.company !== selectedCompany) return false;
-          
+
           // 조건 검색 필터링
           if (showOnlyCondition && item.stockCode !== "조건검색") return false;
-          
+
           return true;
         }),
       }))
@@ -316,26 +316,33 @@ export default function AlertHistory() {
             showsHorizontalScrollIndicator={false}
             style={styles.companyScroll}
           >
-            {COMPANIES.map(({ id, logo }) => (
+            {COMPANIES.map(({ id, logo, name }) => (
               <TouchableOpacity
                 key={id}
                 onPress={() =>
                   setSelectedCompany((prev) => (prev === id ? null : id))
                 }
-                style={[
-                  styles.companyCircle,
-                  selectedCompany === id && styles.activeCompany,
-                ]}
+                style={styles.companyItem}
               >
-                <Image
-                  source={logo}
-                  style={{
-                    width: selectedCompany === id ? 70 : 72,
-                    height: selectedCompany === id ? 70 : 72,
-                    borderRadius: selectedCompany === id ? 35 : 36,
-                  }}
-                  resizeMode="contain"
-                />
+                <View
+                  style={[
+                    styles.companyCircle,
+                    selectedCompany === id && styles.activeCompany,
+                  ]}
+                >
+                  <Image
+                    source={logo}
+                    style={{
+                      width: selectedCompany === id ? 70 : 72,
+                      height: selectedCompany === id ? 70 : 72,
+                      borderRadius: selectedCompany === id ? 35 : 36,
+                    }}
+                    resizeMode="contain"
+                  />
+                </View>
+                <Text style={styles.companyName} numberOfLines={1}>
+                  {name}
+                </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -366,7 +373,7 @@ export default function AlertHistory() {
                   !showOnlyCondition && styles.conditionFilterTextActive,
                 ]}
               >
-                {showOnlyCondition ? "전체 보기" : "조건 검색"}
+                {showOnlyCondition ? "전체 보기" : "조건 검색 보기"}
               </Text>
             </Pressable>
           </View>
@@ -617,6 +624,10 @@ const styles = StyleSheet.create({
   companyScroll: {
     marginBottom: 20,
   },
+  companyItem: {
+    alignItems: "center",
+    marginRight: 12,
+  },
   historyContainer: {
     flex: 1,
     paddingHorizontal: 20,
@@ -628,7 +639,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 10,
     borderWidth: 2,
     borderColor: "transparent",
     padding: 2,
@@ -638,6 +648,15 @@ const styles = StyleSheet.create({
     width: 62,
     height: 62,
     borderRadius: 29,
+  },
+  companyName: {
+    marginTop: 6,
+    fontSize: 11,
+    color: "#666",
+    fontFamily: "Pretendard",
+    fontWeight: "500",
+    textAlign: "center",
+    width: 80,
   },
 
   filterRow: {
@@ -656,7 +675,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
-  dateButtonText: { fontSize: 13, marginLeft: 6, color: "#333", fontFamily: "Pretendard" },
+  dateButtonText: {
+    fontSize: 13,
+    marginLeft: 6,
+    color: "#333",
+    fontFamily: "Pretendard",
+  },
   conditionFilterButton: {
     paddingVertical: 10,
     paddingHorizontal: 16,
