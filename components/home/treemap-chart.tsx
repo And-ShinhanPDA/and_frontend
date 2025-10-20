@@ -4,12 +4,14 @@ import {
     treemapSquarify as d3TreemapSquarify,
     hierarchy,
 } from "d3-hierarchy";
+import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Animated,
     Image,
     LayoutChangeEvent,
+    Pressable,
     StyleSheet,
     Text,
     View,
@@ -21,6 +23,7 @@ type CompanyNode = {
   value: number; // treemap 크기 계산용 (0이면 0.5로 보정)
   percent: number;
   actualCount?: number; // 실제 알림 개수 (표시용)
+  stockCode: string; // 라우팅용 stockCode
 };
 type RootNode = { children: CompanyNode[] };
 
@@ -68,6 +71,7 @@ const BlinkingDot = () => {
 export default function TreemapChart({ data, loading }: TreemapChartProps) {
   const [cardWidth, setCardWidth] = useState(0);
   const CARD_HEIGHT = 400;
+  const router = useRouter();
 
   // 카드 패딩 20*2 = 40 반영해서 SVG 가로 계산
   const handleLayout = (e: LayoutChangeEvent) => {
@@ -94,6 +98,7 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
           value: adjustedValue, // 최소값 보장된 값 사용
           percent: percentChange,
           actualCount: item.alertCount, // 실제 알림 개수 (표시용)
+          stockCode: item.stockCode, // 라우팅용
         };
       });
 
@@ -155,6 +160,25 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
     return [text.slice(0, mid), text.slice(mid)];
   };
 
+  // 상자 클릭 핸들러
+  const handleBoxPress = (stockCode: string, companyName: string) => {
+    console.log(`📊 [히트맵] ${companyName} (${stockCode}) 클릭`);
+    
+    // 기업 알림 목록 화면으로 먼저 이동
+    router.replace("/(tabs)/(alert-company)");
+    
+    // 약간의 딜레이 후 기업 상세 화면으로 push
+    setTimeout(() => {
+      router.push({
+        pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+        params: { 
+          id: stockCode,
+          name: companyName,
+        },
+      });
+    }, 100);
+  };
+
   let leaves: any[] = [];
   if (cardWidth > 0 && companies.length > 0) {
     try {
@@ -200,8 +224,9 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
             <Text style={styles.emptyText}>히트맵 데이터가 없습니다</Text>
           </View>
         ) : cardWidth > 0 ? (
-          <Svg width={cardWidth} height={CARD_HEIGHT} pointerEvents="none">
-            {leaves.map((leaf, i) => {
+          <>
+            <Svg width={cardWidth} height={CARD_HEIGHT} pointerEvents="none">
+              {leaves.map((leaf, i) => {
               const { x0, y0, x1, y1 } = leaf;
               const w = x1 - x0;
               const h = y1 - y0;
@@ -365,7 +390,32 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
                 </React.Fragment>
               );
             })}
-          </Svg>
+            </Svg>
+
+            {/* 클릭 가능한 투명 레이어 */}
+            {leaves.map((leaf, i) => {
+              const { x0, y0, x1, y1 } = leaf;
+              const w = x1 - x0;
+              const h = y1 - y0;
+              const company = leaf.data as CompanyNode;
+
+              return (
+                <Pressable
+                  key={`pressable-${i}`}
+                  style={{
+                    position: "absolute",
+                    left: x0,
+                    top: y0,
+                    width: w,
+                    height: h,
+                  }}
+                  onPress={() => handleBoxPress(company.stockCode, company.name)}
+                >
+                  {/* 투명한 터치 영역 */}
+                </Pressable>
+              );
+            })}
+          </>
         ) : null}
       </View>
     </View>
@@ -387,6 +437,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     marginBottom: 24,
     minHeight: 400,
+    position: "relative",
   },
   cardTitle: {
     fontSize: 16,
