@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ChevronDown from "../../assets/images/ChevronDown.svg";
 
 interface CurrentStatusCardProps {
@@ -13,6 +13,7 @@ interface CurrentStatusCardProps {
   bollingerLower: number;
   rsi: number;
   sma: { [key: string]: number };
+  onRefresh?: () => void;
 }
 
 export default function CurrentStatusCard({
@@ -26,6 +27,7 @@ export default function CurrentStatusCard({
   bollingerLower,
   rsi,
   sma,
+  onRefresh,
 }: CurrentStatusCardProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -35,6 +37,14 @@ export default function CurrentStatusCard({
         <View style={styles.titleRow}>
           <Text style={styles.cardTitle}>현재 시점</Text>
           <Text style={styles.subText}>{time}</Text>
+          {onRefresh && (
+            <TouchableOpacity onPress={onRefresh} style={styles.refreshButton}>
+              <Image
+                source={require("../../assets/images/resetIcon.png")}
+                style={styles.refreshIcon}
+              />
+            </TouchableOpacity>
+          )}
         </View>
 
         <TouchableOpacity onPress={() => setExpanded(!expanded)}>
@@ -201,5 +211,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 4,
+  },
+  refreshButton: {
+    marginLeft: 8,
+    padding: 4,
+  },
+  refreshIcon: {
+    width: 16,
+    height: 16,
   },
 });
