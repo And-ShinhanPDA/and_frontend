@@ -1,6 +1,6 @@
 import { CreateAlertPayload } from "@/types/alert";
 import { getErrorMessage } from "@/utils/errorHandler";
-import axios from "axios";
+import { apiClient } from "./api-client";
 
 const BASE_URL = process.env.EXPO_PUBLIC_ALERT_URL;
 
@@ -10,13 +10,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts`;
 
     try {
-      const res = await axios.post(url, payload, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-
+      const res = await apiClient.post(url, payload);
       return res.data;
     } catch (err: any) {
       throw new Error(getErrorMessage(err));
@@ -41,11 +35,7 @@ export const alertService = {
       url.searchParams.append("enabled", String(params.enabled));
 
     try {
-      const res = await axios.get(url.toString(), {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
+      const res = await apiClient.get(url.toString(), {
       });
 
       return res.data;
@@ -59,11 +49,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/companies?alerted=true`;
 
     try {
-      const res = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
+      const res = await apiClient.get(url, {
       });
 
       const { data } = res.data ?? {};
@@ -94,14 +80,10 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/${alertId}/toggle`;
 
     try {
-      const res = await axios.patch(
+      const res = await apiClient.patch(
         url,
         { isActive },
         {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
         }
       );
 
@@ -120,14 +102,10 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/companies/${stockCode}/toggle`;
 
     try {
-      const res = await axios.patch(
+      const res = await apiClient.patch(
         url,
         { isActive },
         {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
         }
       );
 
@@ -141,11 +119,7 @@ export const alertService = {
   async deleteCompanyAlerts(accessToken: string, stockCode: string) {
     const url = `${BASE_URL}/api/alerts/companies/${stockCode}`;
     try {
-      const res = await axios.delete(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
+      const res = await apiClient.delete(url, {
       });
       return res.data;
     } catch (err: any) {
@@ -158,11 +132,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/${alertId}`;
 
     try {
-      const res = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
+      const res = await apiClient.get(url, {
       });
 
       return res.data;
@@ -190,11 +160,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/${alertId}`;
 
     try {
-      const res = await axios.patch(url, payload, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
+      const res = await apiClient.patch(url, payload, {
       });
 
       return res.data;
@@ -208,11 +174,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/${alertId}`;
 
     try {
-      const res = await axios.delete(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
+      const res = await apiClient.delete(url, {
       });
 
       return res.data;
@@ -225,11 +187,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/triggered`;
 
     try {
-      const res = await axios.get(url, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
+      const res = await apiClient.get(url, {
       });
 
       const rawData = res.data?.data || [];
@@ -280,11 +238,7 @@ export const alertService = {
     }
 
     try {
-      const res = await axios.get(url.toString(), {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
+      const res = await apiClient.get(url.toString(), {
       });
 
       const rawData = res.data?.data || [];
@@ -309,11 +263,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/condition/${alertId}`;
 
     try {
-      const res = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
+      const res = await apiClient.get(url, {
       });
 
       const { code, message, data } = res.data ?? {};
@@ -373,11 +323,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/condition/triggered`;
 
     try {
-      const res = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
+      const res = await apiClient.get(url, {
       });
 
       const { code, message, data } = res.data ?? {};
@@ -410,11 +356,7 @@ export const alertService = {
     console.log("[GET] 요청 URL:", url);
 
     try {
-      const res = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
+      const res = await apiClient.get(url, {
       });
 
       const { code, message, data } = res.data ?? {};
@@ -438,11 +380,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/heatmap`;
 
     try {
-      const res = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
+      const res = await apiClient.get(url, {
       });
 
       const { code, message, data } = res.data ?? {};
@@ -477,11 +415,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/price/${stockCode}`;
 
     try {
-      const res = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
+      const res = await apiClient.get(url, {
       });
 
       const { data } = res.data ?? {};
@@ -504,14 +438,10 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/price/${stockCode}`;
 
     try {
-      const res = await axios.patch(
+      const res = await apiClient.patch(
         url,
         { togglePrice },
         {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
         }
       );
 

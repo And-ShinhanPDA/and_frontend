@@ -1,4 +1,4 @@
-import axios from "axios";
+import { apiClient } from "./api-client";
 const BASE_URL = process.env.EXPO_PUBLIC_CHART_URL;
 
 export const chartService = {
@@ -8,8 +8,7 @@ export const chartService = {
     console.log("[GET] 일봉 차트 데이터 요청:", url);
 
     try {
-      const res = await axios.get(url, {
-        headers: { "Content-Type": "application/json" },
+      const res = await apiClient.get(url, {
       });
 
       const rawData = res.data?.data || [];
@@ -53,8 +52,7 @@ export const chartService = {
     console.log("[GET] 분봉 차트 데이터 요청:", url);
 
     try {
-      const res = await axios.get(url, {
-        headers: { "Content-Type": "application/json" },
+      const res = await apiClient.get(url, {
       });
 
       const rawData = res.data?.data || [];
@@ -94,8 +92,7 @@ export const chartService = {
     console.log("[GET] 현재가 조회 요청:", url);
 
     try {
-      const res = await axios.get(url, {
-        headers: { "Content-Type": "application/json" },
+      const res = await apiClient.get(url, {
       });
 
       const data = res.data?.data;

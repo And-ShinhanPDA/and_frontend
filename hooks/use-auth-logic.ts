@@ -78,6 +78,30 @@ export function useAuthLogic() {
     []
   );
 
+  // 토큰 리프레시
+  const refreshAccessToken = useCallback(async () => {
+    try {
+      if (!accessToken || !refreshTokenId) {
+        throw new Error("토큰 정보가 없습니다.");
+      }
+
+      console.log("🔄 [Auth] 토큰 갱신 시작...");
+      const newAccessToken = await authService.refresh(accessToken, refreshTokenId);
+
+      // 새 토큰 저장
+      await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, newAccessToken);
+      setAccessToken(newAccessToken);
+
+      console.log("✅ [Auth] 토큰 갱신 완료");
+      return newAccessToken;
+    } catch (error) {
+      console.error("❌ [Auth] 토큰 갱신 실패:", error);
+      // 리프레시 실패 시 로그아웃
+      await signOut();
+      throw error;
+    }
+  }, [accessToken, refreshTokenId]);
+
   // 로그아웃
   const signOut = useCallback(async () => {
     try {
@@ -106,7 +130,8 @@ export function useAuthLogic() {
       signIn,
       signUp,
       signOut,
+      refreshAccessToken,
     }),
-    [isReady, user, accessToken, refreshTokenId, signIn, signUp, signOut]
+    [isReady, user, accessToken, refreshTokenId, signIn, signUp, signOut, refreshAccessToken]
   );
 }
