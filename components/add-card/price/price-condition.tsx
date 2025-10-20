@@ -128,7 +128,8 @@ export default function PriceConditionCard({
             </TouchableOpacity>
           </View>
 
-          {expanded && conditionData && (
+          {expanded && conditionData && 
+           (conditionData.limits?.length > 0 || conditionData.changes?.length > 0) && (
             <>
               <View style={styles.divider} />
 

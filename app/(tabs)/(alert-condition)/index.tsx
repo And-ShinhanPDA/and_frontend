@@ -556,8 +556,8 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   emptyIcon: {
-    width: 80,
-    height: 80,
+    width: 120,
+    height: 120,
     marginBottom: 16,
   },
   emptyText: {

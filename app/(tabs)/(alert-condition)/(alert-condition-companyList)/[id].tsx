@@ -1,15 +1,15 @@
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    FlatList,
-    Image,
-    NativeScrollEvent,
-    NativeSyntheticEvent,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { CustomBottomTab } from "@/components/bottom/bottom";
@@ -387,6 +387,10 @@ export default function AlertConditionDetail() {
       {/* 데이터가 없을 때 메시지 */}
       {!loading && !error && companies.length === 0 && (
         <View style={styles.emptyContainer}>
+          <Image
+            source={require("@/assets/images/icon.png")}
+            style={styles.emptyIcon}
+          />
           <Text style={styles.emptyText}>조건에 해당하는 기업이 없습니다.</Text>
         </View>
       )}
@@ -442,6 +446,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     marginRight: 6,
+    marginBottom: 4,
   },
   tagText: { fontSize: 12, fontFamily: "Pretendard" },
 
@@ -567,12 +572,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 40,
+    paddingBottom: 100,
+  },
+  emptyIcon: {
+    width: 120,
+    height: 120,
+    marginBottom: 16,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 15,
     color: "#999",
     textAlign: "center",
     fontFamily: "Pretendard",
+    fontWeight: "500",
   },
 });

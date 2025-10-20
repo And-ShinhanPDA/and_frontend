@@ -100,7 +100,8 @@ export default function RSIConditionCard({
             </TouchableOpacity>
           </View>
 
-          {expanded && conditionData && (
+          {expanded && conditionData && 
+           (conditionData.overbought || conditionData.oversold) && (
             <>
               <View style={styles.divider} />
 

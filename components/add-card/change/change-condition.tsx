@@ -114,7 +114,8 @@ export default function ChangeConditionCard({
             </TouchableOpacity>
           </View>
 
-          {expanded && conditionData && (
+          {expanded && conditionData && 
+           (conditionData.dailyChanges?.length > 0 || conditionData.baseChanges?.length > 0) && (
             <>
               <View style={styles.divider} />
 

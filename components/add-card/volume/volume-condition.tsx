@@ -116,7 +116,8 @@ export default function VolumeConditionCard({
             </TouchableOpacity>
           </View>
 
-          {expanded && conditionData && (
+          {expanded && conditionData && 
+           (conditionData.avgRise || conditionData.avgDrop || conditionData.spike) && (
             <>
               <View style={styles.divider} />
 

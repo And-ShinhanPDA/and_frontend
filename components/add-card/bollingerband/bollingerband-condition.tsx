@@ -104,7 +104,8 @@ export default function BollingerBandConditionCard({
             </TouchableOpacity>
           </View>
 
-          {expanded && conditionData && (
+          {expanded && conditionData && 
+           (conditionData.upper || conditionData.lower) && (
             <>
               <View style={styles.divider} />
               {conditionData.upper && (

@@ -110,7 +110,9 @@ export default function TrailingConditionCard({
             </TouchableOpacity>
           </View>
 
-          {expanded && conditionData && (
+          {expanded && conditionData && 
+           (conditionData.stopPrice || conditionData.stopPercent || 
+            conditionData.risePrice || conditionData.risePercent) && (
             <>
               <View style={styles.divider} />
 

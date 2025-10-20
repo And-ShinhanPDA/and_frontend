@@ -113,7 +113,8 @@ export default function SMAConditionCard({
             </TouchableOpacity>
           </View>
 
-          {expanded && conditionData && (
+          {expanded && conditionData && 
+           (conditionData.target || conditionData.goldenCross || conditionData.deadCross) && (
             <>
               <View style={styles.divider} />
 

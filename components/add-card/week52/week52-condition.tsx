@@ -122,7 +122,9 @@ export default function Week52ConditionCard({
             </TouchableOpacity>
           </View>
 
-          {expanded && conditionData && (
+          {expanded && conditionData && 
+           (conditionData.highAlert || conditionData.highProximity?.value || 
+            conditionData.lowAlert || conditionData.lowProximity?.value) && (
             <>
               <View style={styles.divider} />
 
