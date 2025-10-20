@@ -1,21 +1,19 @@
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    FlatList,
-    Image,
-    NativeScrollEvent,
-    NativeSyntheticEvent,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
-import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
-import PresetSelect from "@/components/preset/preset-select";
 import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
@@ -103,8 +101,8 @@ export default function AlertConditionDetail() {
     name: string;
     tags: string;
   }>();
-  const { signOut, user, accessToken } = useAuth();
   const [isPresetOpen, setIsPresetOpen] = useState(false);
+  const { signOut, user, accessToken } = useAuth();
 
   const parsedTags = tags ? JSON.parse(tags) : [];
   const headerScrollRef = useRef<ScrollView | null>(null);
@@ -345,11 +343,14 @@ export default function AlertConditionDetail() {
             horizontal
             ref={dataScrollRef}
             showsHorizontalScrollIndicator={false}
-            scrollEventThrottle={16}
             onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
               syncScroll(e.nativeEvent.contentOffset.x);
             }}
-            nestedScrollEnabled={true}
+            onScrollBeginDrag={() => setIsHorizontalScrolling(true)}
+            onScrollEndDrag={() => setIsHorizontalScrolling(false)}
+            onMomentumScrollEnd={() => setIsHorizontalScrolling(false)}
+            directionalLockEnabled={true}
+            bounces={false}
             style={styles.dataScrollView}
           >
             <FlatList
@@ -380,15 +381,12 @@ export default function AlertConditionDetail() {
         </View>
       )}
 
-      {/* 프리셋 모달 */}
-      <ConditionBottomSheet
-        visible={isPresetOpen}
-        onClose={() => setIsPresetOpen(false)}
-        ratio={0.8}
-      >
-        <PresetSelect onClose={() => setIsPresetOpen(false)} />
-      </ConditionBottomSheet>
-
+      {/* 데이터가 없을 때 메시지 */}
+      {!loading && !error && companies.length === 0 && (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>조건에 해당하는 기업이 없습니다.</Text>
+        </View>
+      )}
       <CustomBottomTab activeTab="조건 검색" />
     </View>
   );

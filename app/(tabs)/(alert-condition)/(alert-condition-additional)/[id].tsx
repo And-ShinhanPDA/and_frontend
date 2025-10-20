@@ -1,13 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
@@ -233,7 +233,7 @@ export default function ConditionAdditional() {
               } catch (presetError) {
                 console.error("[프리셋 추가 실패]:", presetError);
                 setLoading(false);
-                
+
                 // 에러가 있어도 조건 검색 화면으로 이동
                 router.replace("/(tabs)/(alert-condition)");
               }

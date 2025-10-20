@@ -1,12 +1,12 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import BollingerBandConditionReadonly from "@/components/add-card/bollingerband/bollingerband-condition-readonly";
@@ -73,7 +73,9 @@ export default function CompanyAlertDetail() {
   // 화면이 포커스될 때마다 데이터 새로고침
   useFocusEffect(
     useCallback(() => {
-      console.log("🎯 [useFocusEffect] 기업 알림 상세 화면 포커스 - 데이터 새로고침");
+      console.log(
+        "🎯 [useFocusEffect] 기업 알림 상세 화면 포커스 - 데이터 새로고침"
+      );
       fetchAlertDetail();
     }, [accessToken, id])
   );

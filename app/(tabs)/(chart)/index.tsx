@@ -55,10 +55,10 @@ export default function AlertAdditional() {
 
   return (
     <View style={styles.container}>
-      <CustomHeader 
-        title="차트" 
-        showBackButton={false} 
-        rightButtons="mypage" 
+      <CustomHeader
+        title="차트"
+        showBackButton={false}
+        rightButtons="mypage"
         userName={user?.name || "사용자"}
         onLogoutConfirm={handleLogout}
       />

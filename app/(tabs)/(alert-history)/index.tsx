@@ -5,17 +5,23 @@ import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
-    FlatList,
-    Image,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -33,6 +39,7 @@ type AlertItem = {
   time: string;
   title: string;
   desc: string;
+  stockCode?: string;
 };
 
 export default function AlertHistory() {
@@ -43,6 +50,110 @@ export default function AlertHistory() {
   const { accessToken, signOut, user } = useAuth();
   const [alertsByDate, setAlertsByDate] = useState<any[]>([]);
   const router = useRouter();
+  const scrollViewRef = useRef<FlatList>(null);
+  const [highlightedAlertId, setHighlightedAlertId] = useState<string | null>(
+    null
+  );
+
+  const { highlightAlertId, highlightCompany } = useLocalSearchParams<{
+    highlightAlertId?: string;
+    highlightCompany?: string;
+  }>();
+
+  useEffect(() => {
+    if (highlightCompany) {
+      const company = COMPANIES.find((c) => c.name === highlightCompany);
+      if (company) {
+        setSelectedCompany(company.id);
+      }
+    }
+  }, [highlightCompany]);
+
+  // 특정 알림 ID로 스크롤하는 함수
+  const scrollToAlert = useCallback(
+    (alertId: string) => {
+      if (!scrollViewRef.current || !alertsByDate.length) return;
+
+      const allAlerts = alertsByDate.flatMap((group) => group.items);
+
+      const targetAlert = allAlerts.find((alert) => {
+        // title에서 알림 ID 추출
+        const titleMatch = alert?.title?.match(/알림 (\d+)/);
+        const alertIdFromTitle = titleMatch ? titleMatch[1] : null;
+        return alertIdFromTitle === alertId;
+      });
+
+      if (targetAlert) {
+        console.log(`[히스토리] 알림 ID ${alertId}로 스크롤 시도`);
+        setHighlightedAlertId(alertId); // 하이라이트할 알림 ID 설정
+
+        // 해당 알림이 포함된 그룹 찾기
+        const targetGroup = alertsByDate.find((group) =>
+          group.items.some((item: any) => {
+            const titleMatch = item?.title?.match(/알림 (\d+)/);
+            const alertIdFromTitle = titleMatch ? titleMatch[1] : null;
+            return alertIdFromTitle === alertId;
+          })
+        );
+
+        if (targetGroup) {
+          const groupIndex = alertsByDate.indexOf(targetGroup);
+          const itemIndex = targetGroup.items.findIndex((item: any) => {
+            const titleMatch = item?.title?.match(/알림 (\d+)/);
+            const alertIdFromTitle = titleMatch ? titleMatch[1] : null;
+            return alertIdFromTitle === alertId;
+          });
+
+          setTimeout(() => {
+            try {
+              const dateHeaderHeight = 25;
+              const itemHeight = 70;
+              const sectionMargin = 25;
+
+              let offsetY = 0;
+              for (let i = 0; i < groupIndex; i++) {
+                offsetY += dateHeaderHeight;
+                offsetY += alertsByDate[i].items.length * itemHeight;
+                offsetY += sectionMargin;
+              }
+
+              offsetY += dateHeaderHeight;
+              offsetY += itemIndex * itemHeight;
+
+              offsetY -= itemHeight + 100;
+
+              scrollViewRef.current?.scrollToOffset({
+                offset: Math.max(0, offsetY),
+                animated: true,
+              });
+
+              console.log(
+                `[히스토리] 알림 ID ${alertId}로 정확히 스크롤 (그룹: ${groupIndex}, 아이템: ${itemIndex}, offset: ${offsetY})`
+              );
+            } catch (error) {
+              console.log(`[히스토리] 스크롤 실패:`, error);
+            }
+          }, 300);
+        }
+      }
+    },
+    [alertsByDate]
+  );
+
+  // highlightAlertId가 있을 때 스크롤 실행
+  useEffect(() => {
+    if (highlightAlertId && alertsByDate.length > 0) {
+      scrollToAlert(highlightAlertId);
+
+      // 5초 후 하이라이트 자동 해제
+      const timer = setTimeout(() => {
+        setHighlightedAlertId(null);
+        console.log(`[히스토리] 하이라이트 자동 해제`);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [highlightAlertId, alertsByDate, scrollToAlert]);
 
   // 로그아웃 핸들러
   const handleLogout = async () => {
@@ -104,6 +215,7 @@ export default function AlertHistory() {
               time: item.createdAt.split("T")[1].slice(0, 5),
               title: `알림 ${item.id}`,
               desc: item.indicatorSnapshot || "조건 충족",
+              stockCode: item.stockCode,
             });
           });
 
@@ -236,6 +348,7 @@ export default function AlertHistory() {
         {/* 스크롤 가능한 히스토리 영역 */}
         <View style={styles.historyContainer}>
           <FlatList
+            ref={scrollViewRef}
             data={filteredAlerts}
             keyExtractor={(item) => item.date}
             contentContainerStyle={{ paddingBottom: 120, flexGrow: 1 }}
@@ -254,29 +367,95 @@ export default function AlertHistory() {
                   const companyName =
                     COMPANIES.find((c) => c.id === alert.company)?.name ??
                     alert.company;
+
+                  // 하이라이트된 알림인지 확인
+                  const titleMatch = alert?.title?.match(/알림 (\d+)/);
+                  const alertIdFromTitle = titleMatch ? titleMatch[1] : null;
+                  const isHighlighted = highlightedAlertId === alertIdFromTitle;
+
+                  // 조건검색 알림인지 확인
+                  const isConditionSearch = alert.stockCode === "조건검색";
+
                   return (
-                    <View key={index} style={styles.timelineRow}>
+                    <View
+                      key={index}
+                      style={[
+                        styles.timelineRow,
+                        isHighlighted &&
+                          !isConditionSearch &&
+                          styles.highlightedRow,
+                      ]}
+                    >
                       <View style={styles.timeline}>
                         {index === 0 ? (
-                          <View style={styles.outerCircle}>
-                            <View style={styles.innerDot} />
+                          <View
+                            style={
+                              isConditionSearch
+                                ? styles.conditionSearchOuterCircle
+                                : styles.outerCircle
+                            }
+                          >
+                            <View
+                              style={
+                                isConditionSearch
+                                  ? styles.conditionSearchInnerDot
+                                  : styles.innerDot
+                              }
+                            />
                           </View>
                         ) : (
-                          <View style={styles.singleCircle} />
+                          <View
+                            style={
+                              isConditionSearch
+                                ? styles.conditionSearchSingleCircle
+                                : styles.singleCircle
+                            }
+                          />
                         )}
                         {index !== item.items.length - 1 && (
-                          <View style={styles.line} />
+                          <View
+                            style={
+                              isConditionSearch
+                                ? styles.conditionSearchLine
+                                : styles.line
+                            }
+                          />
                         )}
                       </View>
 
                       <View style={styles.alertContent}>
                         <View style={styles.alertHeader}>
-                          <Text style={styles.alertTitle}>
+                          <Text
+                            style={[
+                              styles.alertTitle,
+                              isHighlighted &&
+                                !isConditionSearch &&
+                                styles.highlightedTitle,
+                            ]}
+                          >
                             {companyName} | {alert.title}
                           </Text>
-                          <Text style={styles.alertTime}>{alert.time}</Text>
+                          <Text
+                            style={[
+                              styles.alertTime,
+                              isHighlighted &&
+                                !isConditionSearch &&
+                                styles.highlightedTime,
+                            ]}
+                          >
+                            {alert.time}
+                          </Text>
                         </View>
-                        <Text style={styles.alertDesc}>{alert.desc}</Text>
+                        <Text
+                          style={[
+                            styles.alertDesc,
+                            isHighlighted &&
+                              !isConditionSearch &&
+                              styles.highlightedDesc,
+                          ]}
+                        >
+                          {alert.desc}
+                        </Text>
                       </View>
                     </View>
                   );
@@ -503,6 +682,60 @@ const styles = StyleSheet.create({
   alertDesc: { fontSize: 13, color: "#555", marginTop: 3, lineHeight: 18 },
   noAlert: { textAlign: "center", color: "#aaa", marginTop: 30 },
 
+  // 하이라이트 스타일
+  highlightedRow: {
+    backgroundColor: "#E8F5E9", // 연한 초록색 배경
+    borderRadius: 8,
+    padding: 8,
+    marginVertical: 2,
+    borderLeftWidth: 4,
+    borderLeftColor: "#4CC53A", // 브랜드 초록색 왼쪽 테두리
+  },
+  highlightedTitle: {
+    color: "#2E7D32", // 진한 초록색 텍스트
+    fontWeight: "700",
+  },
+  highlightedTime: {
+    color: "#2E7D32",
+    fontWeight: "600",
+  },
+  highlightedDesc: {
+    color: "#2E7D32",
+    fontWeight: "500",
+  },
+
+  // 조건검색 알림 타임라인 스타일 (노란색)
+  conditionSearchOuterCircle: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: "#FFB300",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
+  },
+  conditionSearchInnerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#FFB300",
+  },
+  conditionSearchSingleCircle: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: "#FFB300",
+    backgroundColor: "#fff",
+  },
+  conditionSearchLine: {
+    width: 2,
+    flex: 1,
+    backgroundColor: "#FFB300",
+    marginTop: 2,
+  },
+
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",
@@ -568,19 +801,19 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: 20,
   },
-  pickerColumn: { 
-    flex: 1, 
+  pickerColumn: {
+    flex: 1,
     alignItems: "center",
   },
-  pickerLabel: { 
-    fontSize: 15, 
-    color: "#111", 
+  pickerLabel: {
+    fontSize: 15,
+    color: "#111",
     fontWeight: "600",
     marginBottom: 10,
     fontFamily: "Pretendard",
   },
-  datePicker: { 
-    transform: [{ scale: 0.75 }], 
+  datePicker: {
+    transform: [{ scale: 0.75 }],
     height: 120,
   },
   closeBtn: {
@@ -591,8 +824,8 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
   },
-  closeText: { 
-    color: "#fff", 
+  closeText: {
+    color: "#fff",
     fontWeight: "700",
     fontSize: 16,
     fontFamily: "Pretendard",

@@ -1,18 +1,18 @@
+import { COMPANIES } from "@/constants/companies";
+import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
 import { saveActivatedCompanies } from "@/services/widgetShare";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Image,
-    ImageSourcePropType,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Animated,
+  Image,
+  ImageSourcePropType,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
-import { COMPANIES } from "@/constants/companies";
-import { alertService } from "@/services/alert-service";
-import { useAuth } from "@/contexts/AuthContext";
 type CompanyAlert = {
   id: number;
   name: string;
@@ -79,7 +79,7 @@ export default function ActivatedCompanyCard() {
       const formatted: CompanyAlert[] = Object.entries(grouped).map(
         ([stockCode, data]) => {
           const matched = COMPANIES.find((c) => c.code === stockCode);
-          
+
           // conditions를 indicatorSnapshot으로 변환
           const indicators: Record<string, string> = {};
           if (data.alert.conditions && Array.isArray(data.alert.conditions)) {
@@ -89,10 +89,11 @@ export default function ActivatedCompanyCard() {
               indicators[indicatorName] = description;
             });
           }
-          
-          const indicatorSnapshot = Object.keys(indicators).length > 0 
-            ? JSON.stringify(indicators) 
-            : undefined;
+
+          const indicatorSnapshot =
+            Object.keys(indicators).length > 0
+              ? JSON.stringify(indicators)
+              : undefined;
 
           // iconName은 PNG 파일명 (예: "logo_1_삼성전자")
           let iconName: string | undefined = undefined;
@@ -156,7 +157,8 @@ export default function ActivatedCompanyCard() {
                 key={item.id}
                 onPress={() =>
                   router.push({
-                    pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+                    pathname:
+                      "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
                     params: { id: item.stockCode, name: item.name },
                   })
                 }

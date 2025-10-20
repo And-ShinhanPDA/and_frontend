@@ -111,10 +111,9 @@ export default function CompanyAlertDetail() {
       });
 
       // 2. Triggered 알림 조회 (조건 만족한 알림들)
-      const triggeredRes = await alertService.getTriggeredAlerts(
-        accessToken,
-        [id]
-      );
+      const triggeredRes = await alertService.getTriggeredAlerts(accessToken, [
+        id,
+      ]);
       const triggeredAlertIds = new Set(
         triggeredRes.map((a: any) => String(a.alertId))
       );

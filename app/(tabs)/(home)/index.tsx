@@ -7,10 +7,10 @@ import TreemapChart from "@/components/home/treemap-chart";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
+import { alertService } from "@/services/alert-service";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { alertService } from "@/services/alert-service";
 
 // API 응답 타입
 type TriggeredCondition = {

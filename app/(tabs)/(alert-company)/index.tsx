@@ -284,7 +284,9 @@ export default function AlertCompany() {
         <SwipeListView
           data={companies
             .filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
-            .filter((c) => (showOnlyActive ? c.isToggle && c.isTriggered : true))}
+            .filter((c) =>
+              showOnlyActive ? c.isToggle && c.isTriggered : true
+            )}
           showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.stockCode}
           onRowOpen={handleRowOpen}
@@ -293,81 +295,82 @@ export default function AlertCompany() {
           disableRightSwipe
           closeOnRowPress
           renderItem={({ item, index }) => {
-          const fadeAnim =
-            fadeAnimations[item.stockCode] || new Animated.Value(1);
-          const filtered = companies.filter((c) =>
-            c.name.toLowerCase().includes(search.toLowerCase())
-          );
-          const isLast = index === filtered.length - 1;
+            const fadeAnim =
+              fadeAnimations[item.stockCode] || new Animated.Value(1);
+            const filtered = companies.filter((c) =>
+              c.name.toLowerCase().includes(search.toLowerCase())
+            );
+            const isLast = index === filtered.length - 1;
 
-          return (
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname:
-                    "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
-                  params: { id: item.stockCode, name: item.name },
-                })
-              }
-            >
-              <View
-                style={[
-                  styles.itemRow,
-                  isLast && { borderBottomWidth: 1, borderColor: "#F5F6F8" },
-                ]}
+            return (
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname:
+                      "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+                    params: { id: item.stockCode, name: item.name },
+                  })
+                }
               >
-                <Image
-                  source={item.logo}
-                  style={{ width: 44, height: 44, borderRadius: 8 }}
-                  resizeMode="contain"
-                />
-
-                <View style={styles.itemText}>
-                  <View style={styles.nameContainer}>
-                    {item.isToggle && item.isTriggered && <BlinkingDot />}
-                    <Text style={styles.name}>{item.name}</Text>
-                  </View>
-                  <Text style={styles.subText}>
-                    현재 설정 알림: {item.isToggle ? item.alertCount ?? 0 : 0}개
-                  </Text>
-                </View>
-
-                <Animated.View
-                  style={{
-                    opacity: fadeAnim,
-                    transform: [
-                      {
-                        scale: fadeAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0.9, 1],
-                        }),
-                      },
-                    ],
-                  }}
+                <View
+                  style={[
+                    styles.itemRow,
+                    isLast && { borderBottomWidth: 1, borderColor: "#F5F6F8" },
+                  ]}
                 >
-                  <Switch
-                    trackColor={{ false: "#ccc", true: "#4CC439" }}
-                    thumbColor="#fff"
-                    ios_backgroundColor="#E9E9EA"
-                    onValueChange={() => toggleSwitch(item.stockCode)}
-                    value={item.isToggle}
+                  <Image
+                    source={item.logo}
+                    style={{ width: 44, height: 44, borderRadius: 8 }}
+                    resizeMode="contain"
                   />
-                </Animated.View>
-              </View>
-            </Pressable>
-          );
-        }}
-        renderHiddenItem={({ item }) => (
-          <View style={styles.hiddenContainer}>
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onLayout={(e) => setDeleteWidth(e.nativeEvent.layout.width)}
-              onPress={() => deleteCompany(item.stockCode)}
-            >
-              <Text style={styles.deleteText}>삭제</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+
+                  <View style={styles.itemText}>
+                    <View style={styles.nameContainer}>
+                      {item.isToggle && item.isTriggered && <BlinkingDot />}
+                      <Text style={styles.name}>{item.name}</Text>
+                    </View>
+                    <Text style={styles.subText}>
+                      현재 설정 알림: {item.isToggle ? item.alertCount ?? 0 : 0}
+                      개
+                    </Text>
+                  </View>
+
+                  <Animated.View
+                    style={{
+                      opacity: fadeAnim,
+                      transform: [
+                        {
+                          scale: fadeAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.9, 1],
+                          }),
+                        },
+                      ],
+                    }}
+                  >
+                    <Switch
+                      trackColor={{ false: "#ccc", true: "#4CC439" }}
+                      thumbColor="#fff"
+                      ios_backgroundColor="#E9E9EA"
+                      onValueChange={() => toggleSwitch(item.stockCode)}
+                      value={item.isToggle}
+                    />
+                  </Animated.View>
+                </View>
+              </Pressable>
+            );
+          }}
+          renderHiddenItem={({ item }) => (
+            <View style={styles.hiddenContainer}>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onLayout={(e) => setDeleteWidth(e.nativeEvent.layout.width)}
+                onPress={() => deleteCompany(item.stockCode)}
+              >
+                <Text style={styles.deleteText}>삭제</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         />
       )}
 

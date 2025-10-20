@@ -1,13 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
@@ -95,7 +95,8 @@ export default function ConditionAlertDetail() {
 
       if (!alertData) {
         showAlert({
-          message: "알림 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.",
+          message:
+            "알림 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.",
           buttons: [{ text: "확인" }],
         });
         return;
@@ -117,17 +118,23 @@ export default function ConditionAlertDetail() {
         conditions: mergedConditions,
       };
 
-      console.log("📤 [알림 수정] 전송할 payload:", JSON.stringify(payload, null, 2));
-      
+      console.log(
+        "📤 [알림 수정] 전송할 payload:",
+        JSON.stringify(payload, null, 2)
+      );
+
       const res = await alertService.updateAlert(
         accessToken,
         String(id),
         payload
       );
-      
+
       console.log("✅ [알림 수정] 성공 - 전체 응답:", res);
-      console.log("🤖 [알림 수정] AI 피드백:", res?.data?.aiFeedback || "(백엔드 응답에 없음)");
-      
+      console.log(
+        "🤖 [알림 수정] AI 피드백:",
+        res?.data?.aiFeedback || "(백엔드 응답에 없음)"
+      );
+
       showAlert({
         message: "알림이 성공적으로 수정되었습니다!",
         buttons: [

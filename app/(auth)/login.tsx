@@ -4,7 +4,7 @@ import { Typography } from "@/components/ui/Typography";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Keyboard,
   Pressable,
@@ -15,18 +15,11 @@ import {
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn, isLoggedIn } = useAuth();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { showAlert, AlertComponent } = useCustomAlert();
-
-  // 로그인 상태가 변경되면 자동으로 메인 화면으로 이동
-  useEffect(() => {
-    if (isLoggedIn && !loading) {
-      router.replace("/(tabs)");
-    }
-  }, [isLoggedIn, loading]);
 
   const onSubmit = async () => {
     if (!email || !password) {
@@ -41,6 +34,7 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       await signIn({ email, password });
+      router.replace("/(tabs)");
     } catch (error: any) {
       showAlert({
         title: "로그인 실패",
@@ -93,7 +87,6 @@ export default function LoginScreen() {
         </View>
       </TouchableWithoutFeedback>
 
-      {/* 커스텀 Alert */}
       <AlertComponent />
     </>
   );

@@ -5,28 +5,30 @@ import { extractIndicatorCategories } from "@/utils/parseConditions";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Dimensions,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Benjamin from "../../assets/images/preset/benjamin.svg";
 import Charlie from "../../assets/images/preset/charlie.svg";
-import GoldenCross from "../../assets/images/preset/goldencross.svg";
 import Jesse from "../../assets/images/preset/jesse.svg";
 import Mark from "../../assets/images/preset/mark.svg";
 import Peter from "../../assets/images/preset/peter.svg";
 import Warren from "../../assets/images/preset/warren.svg";
+
+const PresetDefault = require("../../assets/images/preset/preset-default-image.png");
 
 const imageMap: { [key: string]: any } = {
   "워렌 버핏": Warren,
   "벤저민 그레이엄": Benjamin,
   "찰리 멍거": Charlie,
   "피터 린치": Peter,
-  "추세 추종": GoldenCross,
+  "추세 추종": PresetDefault,
   "제시 리버모어": Jesse,
   "마크 미너비니": Mark,
 };
@@ -89,9 +91,8 @@ export default function PresetSelect({
       }
 
       try {
-        console.log("[프리셋] API 요청 시작");
         const response = await presetService.getPresetList(accessToken);
-        console.log("[프리셋] API 응답 결과:", response);
+        // console.log("[프리셋] API 응답 결과:", response);
 
         if (response.data) {
           const categoryCount = response.data.reduce(
@@ -134,7 +135,7 @@ export default function PresetSelect({
         id: preset.presetId,
         name: preset.title,
         desc: desc,
-        image: imageMap[preset.title] || GoldenCross,
+        image: imageMap[preset.title] || PresetDefault,
       };
     });
 
@@ -346,7 +347,14 @@ export default function PresetSelect({
                   activeOpacity={0.8}
                 >
                   <View style={styles.imageContainer}>
-                    <p.image width={70} height={70} />
+                    {typeof p.image === "number" ? (
+                      <Image
+                        source={p.image}
+                        style={{ width: 70, height: 70 }}
+                      />
+                    ) : (
+                      <p.image width={70} height={70} />
+                    )}
                   </View>
 
                   <View style={styles.textCenter}>

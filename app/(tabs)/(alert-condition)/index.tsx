@@ -7,15 +7,15 @@ import { alertService } from "@/services/alert-service";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-    Animated,
-    Image,
-    Pressable,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Animated,
+  Image,
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
 
@@ -96,7 +96,7 @@ export default function AlertCondition() {
     }
     try {
       console.log("🔄 [조건 알림 목록] 데이터 조회 시작");
-      
+
       // 1. 전체 조건 알림 조회
       const res = await alertService.getUserAlerts(accessToken);
 
@@ -159,7 +159,9 @@ export default function AlertCondition() {
 
   useFocusEffect(
     useCallback(() => {
-      console.log("🎯 [useFocusEffect] 조건 알림 목록 화면 포커스 - 데이터 새로고침");
+      console.log(
+        "🎯 [useFocusEffect] 조건 알림 목록 화면 포커스 - 데이터 새로고침"
+      );
       fetchConditionAlerts();
     }, [accessToken])
   );
@@ -295,7 +297,9 @@ export default function AlertCondition() {
         <SwipeListView
           data={alerts
             .filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
-            .filter((c) => (showOnlyActive ? c.enabled && c.isTriggered : true))}
+            .filter((c) =>
+              showOnlyActive ? c.enabled && c.isTriggered : true
+            )}
           showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.id}
           onRowOpen={handleRowOpen}
@@ -304,83 +308,83 @@ export default function AlertCondition() {
           disableRightSwipe
           closeOnRowPress
           renderItem={({ item, index }) => {
-          const fadeAnim = fadeAnimations[item.id] || new Animated.Value(1);
-          const filtered = alerts.filter((c) =>
-            c.name.toLowerCase().includes(search.toLowerCase())
-          );
-          const isLast = index === filtered.length - 1;
+            const fadeAnim = fadeAnimations[item.id] || new Animated.Value(1);
+            const filtered = alerts.filter((c) =>
+              c.name.toLowerCase().includes(search.toLowerCase())
+            );
+            const isLast = index === filtered.length - 1;
 
-          return (
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname:
-                    "/(tabs)/(alert-condition)/(alert-condition-companyList)/[id]",
-                  params: {
-                    id: item.id,
-                    name: item.name,
-                    tags: JSON.stringify(item.tags),
-                  },
-                })
-              }
-            >
-              <View
-                style={[
-                  styles.itemRow,
-                  isLast && { borderBottomWidth: 1, borderColor: "#F5F6F8" },
-                ]}
+            return (
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname:
+                      "/(tabs)/(alert-condition)/(alert-condition-companyList)/[id]",
+                    params: {
+                      id: item.id,
+                      name: item.name,
+                      tags: JSON.stringify(item.tags),
+                    },
+                  })
+                }
               >
-                <View style={styles.itemText}>
-                  <View style={styles.nameContainer}>
-                    {item.enabled && item.isTriggered && <BlinkingDot />}
-                    <Text style={styles.name}>{item.name}</Text>
-                  </View>
-
-                  <View style={styles.tagContainer}>
-                    {item.tags.map((tag, index) => (
-                      <View key={index} style={styles.tag}>
-                        <Text style={styles.tagText}>{tag}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-
-                <Animated.View
-                  style={{
-                    opacity: fadeAnim,
-                    transform: [
-                      {
-                        scale: fadeAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0.9, 1],
-                        }),
-                      },
-                    ],
-                  }}
+                <View
+                  style={[
+                    styles.itemRow,
+                    isLast && { borderBottomWidth: 1, borderColor: "#F5F6F8" },
+                  ]}
                 >
-                  <Switch
-                    trackColor={{ false: "#ccc", true: "#4CC439" }}
-                    thumbColor="#fff"
-                    ios_backgroundColor="#E9E9EA"
-                    onValueChange={() => toggleSwitch(item.id)}
-                    value={item.enabled}
-                  />
-                </Animated.View>
-              </View>
-            </Pressable>
-          );
-        }}
-        renderHiddenItem={({ item }) => (
-          <View style={styles.hiddenContainer}>
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onLayout={(e) => setDeleteWidth(e.nativeEvent.layout.width)}
-              onPress={() => deleteAlert(item.id)}
-            >
-              <Text style={styles.deleteText}>삭제</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+                  <View style={styles.itemText}>
+                    <View style={styles.nameContainer}>
+                      {item.enabled && item.isTriggered && <BlinkingDot />}
+                      <Text style={styles.name}>{item.name}</Text>
+                    </View>
+
+                    <View style={styles.tagContainer}>
+                      {item.tags.map((tag, index) => (
+                        <View key={index} style={styles.tag}>
+                          <Text style={styles.tagText}>{tag}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+
+                  <Animated.View
+                    style={{
+                      opacity: fadeAnim,
+                      transform: [
+                        {
+                          scale: fadeAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.9, 1],
+                          }),
+                        },
+                      ],
+                    }}
+                  >
+                    <Switch
+                      trackColor={{ false: "#ccc", true: "#4CC439" }}
+                      thumbColor="#fff"
+                      ios_backgroundColor="#E9E9EA"
+                      onValueChange={() => toggleSwitch(item.id)}
+                      value={item.enabled}
+                    />
+                  </Animated.View>
+                </View>
+              </Pressable>
+            );
+          }}
+          renderHiddenItem={({ item }) => (
+            <View style={styles.hiddenContainer}>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onLayout={(e) => setDeleteWidth(e.nativeEvent.layout.width)}
+                onPress={() => deleteAlert(item.id)}
+              >
+                <Text style={styles.deleteText}>삭제</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         />
       )}
 

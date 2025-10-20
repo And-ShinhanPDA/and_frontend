@@ -17,13 +17,13 @@ import { presetService } from "@/services/preset-service";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function CompanyAlertDetail() {
@@ -304,18 +304,20 @@ export default function CompanyAlertDetail() {
                 router.back(); // 알림 추가 페이지 닫기
                 router.back(); // 기업 선택 페이지 닫기
                 router.push({
-                  pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+                  pathname:
+                    "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
                   params: { id: String(id), name: String(name) },
                 });
               } catch (presetError) {
                 console.error("[프리셋 추가 실패]:", presetError);
                 setLoading(false);
-                
+
                 // 에러가 있어도 스택 정리 후 기업 상세 페이지로 이동
                 router.back(); // 알림 추가 페이지 닫기
                 router.back(); // 기업 선택 페이지 닫기
                 router.push({
-                  pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+                  pathname:
+                    "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
                   params: { id: String(id), name: String(name) },
                 });
               }

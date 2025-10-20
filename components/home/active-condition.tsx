@@ -3,7 +3,14 @@ import { alertService } from "@/services/alert-service";
 import { saveActivatedConditions } from "@/services/widgetShare";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Animated,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 type Condition = {
   id: number;
@@ -12,6 +19,18 @@ type Condition = {
   indicatorSnapshot?: string; // 위젯용 지표 데이터
   iconName?: string; // 위젯용 아이콘 이름
 };
+
+// API 응답 타입
+type TriggeredCondition = {
+  conditionName: string;
+  activeCompanyCount: number;
+};
+
+const sampleConditions: Condition[] = [
+  { id: 1, name: "알림1", count: 3 },
+  { id: 2, name: "알림2", count: 4 },
+  { id: 3, name: "알림3", count: 1 },
+];
 
 // 깜빡이는 점 컴포넌트
 const BlinkingDot = () => {
@@ -87,10 +106,11 @@ export default function ActivatedConditionCard() {
               indicators[indicatorName] = description;
             });
           }
-          
-          const indicatorSnapshot = Object.keys(indicators).length > 0 
-            ? JSON.stringify(indicators) 
-            : undefined;
+
+          const indicatorSnapshot =
+            Object.keys(indicators).length > 0
+              ? JSON.stringify(indicators)
+              : undefined;
 
           return {
             id: Number(alertId) || index + 1,
@@ -142,8 +162,13 @@ export default function ActivatedConditionCard() {
                 key={item.id}
                 onPress={() =>
                   router.push({
-                    pathname: "/(tabs)/(alert-condition)/(alert-condition-companyList)/[id]",
-                    params: { id: String(item.id), name: item.name, tags: "[]" },
+                    pathname:
+                      "/(tabs)/(alert-condition)/(alert-condition-companyList)/[id]",
+                    params: {
+                      id: String(item.id),
+                      name: item.name,
+                      tags: "[]",
+                    },
                   })
                 }
               >
@@ -195,6 +220,7 @@ const styles = StyleSheet.create({
     color: "#999",
     fontFamily: "Pretendard",
     textAlign: "center",
+    paddingVertical: 20,
   },
   cardTitle: {
     fontSize: 16,
@@ -238,5 +264,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
     fontFamily: "Pretendard",
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    fontFamily: "Pretendard",
+    paddingVertical: 20,
   },
 });
