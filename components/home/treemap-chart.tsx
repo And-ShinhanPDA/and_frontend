@@ -1,17 +1,18 @@
 import { COMPANIES } from "@/constants/companies";
 import {
-  treemap as d3Treemap,
-  treemapSquarify as d3TreemapSquarify,
-  hierarchy,
+    treemap as d3Treemap,
+    treemapSquarify as d3TreemapSquarify,
+    hierarchy,
 } from "d3-hierarchy";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Animated,
-  LayoutChangeEvent,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    Animated,
+    Image,
+    LayoutChangeEvent,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 import Svg, { Rect, Text as SvgText } from "react-native-svg";
 
@@ -189,6 +190,10 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
           </View>
         ) : companies.length === 0 ? (
           <View style={styles.emptyContainer}>
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={styles.emptyIcon}
+            />
             <Text style={styles.emptyText}>히트맵 데이터가 없습니다</Text>
           </View>
         ) : cardWidth > 0 ? (
@@ -408,10 +413,17 @@ const styles = StyleSheet.create({
     height: 360,
     justifyContent: "center",
     alignItems: "center",
+    paddingVertical: 10,
+  },
+  emptyIcon: {
+    width: 80,
+    height: 80,
   },
   emptyText: {
     fontSize: 14,
-    color: "#9CA3AF",
+    color: "#999",
     fontFamily: "Pretendard",
+    textAlign: "center",
+    paddingVertical: 20,
   },
 });

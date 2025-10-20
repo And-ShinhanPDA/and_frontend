@@ -215,12 +215,11 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 20,
+    paddingVertical: 10,
   },
   emptyIcon: {
     width: 80,
     height: 80,
-    marginBottom: 16,
   },
   emptyText: {
     fontSize: 14,
