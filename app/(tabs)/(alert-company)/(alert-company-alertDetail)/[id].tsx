@@ -28,7 +28,11 @@ import { parseConditionsForCards } from "@/utils/parseConditions";
 
 export default function CompanyAlertDetail() {
   const router = useRouter();
-  const { id } = useLocalSearchParams();
+  const { id, companyName, stockCode } = useLocalSearchParams<{
+    id: string;
+    companyName?: string;
+    stockCode?: string;
+  }>();
 
   const [isPresetOpen, setIsPresetOpen] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -51,6 +55,9 @@ export default function CompanyAlertDetail() {
   const [saving, setSaving] = useState(false);
   const [alertData, setAlertData] = useState<any>(null);
   const [title, setTitle] = useState("");
+  
+  // 기업명 (params에서 전달된 값 또는 alertData에서 가져옴)
+  const displayCompanyName = companyName || alertData?.stockName || "기업 알림";
 
   // 알림 상세 조회 함수
   const fetchAlertDetail = async () => {
@@ -202,7 +209,7 @@ export default function CompanyAlertDetail() {
 
       {/* 헤더 */}
       <CustomHeader
-        title={alertData.title || "알림 상세"}
+        title={displayCompanyName}
         showBackButton={true}
         rightButtons="preset-and-modify"
         onPresetPress={handlePresetAdd}

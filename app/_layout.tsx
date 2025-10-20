@@ -1,7 +1,7 @@
 // app/_layout.tsx
 import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Linking, View } from "react-native";
 import "react-native-reanimated";
 
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
@@ -67,6 +67,92 @@ const requestUserPermission = async () => {
 function RouterGate() {
   const { isReady, isLoggedIn } = useAuth();
   const router = useRouter();
+
+  // 위젯 딥링크 핸들러 설정
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const handleDeepLink = (event: { url: string }) => {
+      const { url } = event;
+      console.log("📲 [Deep Link] URL 수신:", url);
+
+      // myapp://alert-company-alertDetail?id=123&stockCode=005930&name=삼성전자
+      // myapp://alert-condition-companyList?id=123&name=조건명
+      
+      try {
+        const urlObj = new URL(url);
+        const hostname = urlObj.hostname;
+        const searchParams = new URLSearchParams(urlObj.search);
+        
+        console.log("📲 [Deep Link] Parsed:", { hostname, params: Object.fromEntries(searchParams) });
+
+        if (hostname === "alert-company-alertDetail") {
+          const alertId = searchParams.get("id");
+          const stockCode = searchParams.get("stockCode");
+          const name = searchParams.get("name");
+          
+          if (alertId && stockCode) {
+            console.log(`📲 [Deep Link] 기업 알림 상세로 이동: ${name} (${stockCode})`);
+            
+            // 네비게이션 스택 구성: 기업 알림 목록 → 기업 상세 → 알림 상세
+            // 1. 먼저 기업 알림 목록 화면으로 이동
+            router.replace("/(tabs)/(alert-company)");
+            
+            // 2. 약간의 딜레이 후 기업 상세 화면을 push
+            setTimeout(() => {
+              router.push({
+                pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+                params: { 
+                  id: stockCode,
+                  name: name || "", // 기업명 전달
+                },
+              });
+              
+              // 3. 그 다음 알림 상세 화면을 push
+              setTimeout(() => {
+                router.push({
+                  pathname: "/(tabs)/(alert-company)/(alert-company-alertDetail)/[id]",
+                  params: { 
+                    id: alertId,
+                    stockCode: stockCode,
+                    companyName: name || "",
+                  },
+                });
+              }, 100);
+            }, 100);
+          }
+        } else if (hostname === "alert-condition-companyList") {
+          const id = searchParams.get("id");
+          const name = searchParams.get("name");
+          
+          if (id) {
+            console.log(`📲 [Deep Link] 조건 검색 상세로 이동: ${name} (${id})`);
+            router.push({
+              pathname: "/(tabs)/(alert-condition)/(alert-condition-companyList)/[id]",
+              params: { id, name: name || "", tags: "[]" },
+            });
+          }
+        }
+      } catch (error) {
+        console.error("📲 [Deep Link] URL 파싱 에러:", error);
+      }
+    };
+
+    // 앱 실행 중 딥링크 수신
+    const subscription = Linking.addEventListener("url", handleDeepLink);
+
+    // 앱이 종료된 상태에서 딥링크로 열린 경우
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        console.log("📲 [Deep Link] 앱 실행 시 초기 URL:", url);
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isLoggedIn]);
 
   // 알림 터치 핸들러 설정
   useEffect(() => {

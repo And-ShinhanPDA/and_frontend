@@ -6,13 +6,13 @@ import { saveActivatedCompanies } from "@/services/widgetShare";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Image,
-  ImageSourcePropType,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
+    Animated,
+    Image,
+    ImageSourcePropType,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 type CompanyAlert = {
   id: number;
@@ -127,7 +127,7 @@ export default function ActivatedCompanyCard() {
           }
 
           return {
-            id: Number(stockCode),
+            id: data.alert.alertId || Number(stockCode), // alertId를 id로 사용
             name: matched?.name || stockCode,
             price: currentPrice
               ? `${Math.round(currentPrice).toLocaleString()}원`
@@ -140,6 +140,7 @@ export default function ActivatedCompanyCard() {
             iconName, // 예: "logo_1_삼성전자"
             stockCode, // 위젯에서 이미지 찾는데 사용
             title: data.alert.title, // 위젯용 알림 제목
+            alertId: data.alert.alertId, // 위젯 딥링크용 alertId 추가
           };
         }
       );

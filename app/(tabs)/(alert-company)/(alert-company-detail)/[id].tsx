@@ -2,6 +2,7 @@ import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
+import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 import { refreshWidgetManually } from "@/services/widgetShare";
@@ -69,6 +70,10 @@ const BlinkingDot = () => {
 export default function CompanyAlertDetail() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const { accessToken, signOut, user } = useAuth();
+
+  // stockCode(id)로 기업명 찾기
+  const company = COMPANIES.find((c) => c.code === id);
+  const displayCompanyName = name || company?.name || "기업 이름";
 
   // 로그아웃 핸들러
   const handleLogout = async () => {
@@ -282,7 +287,7 @@ export default function CompanyAlertDetail() {
     <View style={styles.container}>
       {/* 헤더 */}
       <CustomHeader
-        title={name ?? "기업 이름"}
+        title={displayCompanyName}
         showBackButton={true}
         rightButtons="preset-and-mypage"
         onPresetPress={() => setIsPresetOpen(true)}
