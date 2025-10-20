@@ -119,8 +119,6 @@ export default function CompanyAlertDetail() {
         triggeredRes.map((a: any) => String(a.alertId))
       );
 
-      console.log("[알림 응답]:", res);
-
       if (res?.data && Array.isArray(res.data)) {
         // TODO: 실제 구조에 맞게 변환 필요
         const formatted = res.data.map((a: any) => {
@@ -139,17 +137,15 @@ export default function CompanyAlertDetail() {
         console.log(`변환된 알림 수: ${formatted.length}`);
         console.log(`Triggered 알림 수: ${triggeredAlertIds.size}`);
 
-        // 시가/종가 상태 조회 (첫 번째 알림이 있을 때)
-        if (formatted.length > 0) {
-          try {
-            const priceStatus = await alertService.getPriceOnOffStatus(
-              accessToken,
-              parseInt(formatted[0].id)
-            );
-            setPriceOpenCloseEnabled(priceStatus);
-          } catch (err) {
-            console.error("[시가/종가 상태 조회 실패]:", err);
-          }
+        // 시가/종가 상태 조회 (stockCode 기반)
+        try {
+          const priceStatus = await alertService.getPriceOnOffStatus(
+            accessToken,
+            id
+          );
+          setPriceOpenCloseEnabled(priceStatus);
+        } catch (err) {
+          console.error("[시가/종가 상태 조회 실패]:", err);
         }
       }
     } catch (err) {
@@ -175,20 +171,15 @@ export default function CompanyAlertDetail() {
 
   // 시가/종가 토글 핸들러
   const togglePriceOpenClose = async () => {
-    if (!accessToken || alerts.length === 0) return;
+    if (!accessToken) return;
     try {
       const newState = !priceOpenCloseEnabled;
-      const firstAlert = alerts[0];
 
       // UI 상태 먼저 업데이트
       setPriceOpenCloseEnabled(newState);
 
-      // 시가/종가 전용 PATCH API 호출
-      await alertService.updatePriceOnOffStatus(
-        accessToken,
-        parseInt(firstAlert.id),
-        newState
-      );
+      // 시가/종가 전용 PATCH API 호출 (stockCode 기반)
+      await alertService.updatePriceOnOffStatus(accessToken, id, newState);
 
       console.log(`[시가/종가 토글] ${newState ? "켜짐" : "꺼짐"}`);
     } catch (err) {

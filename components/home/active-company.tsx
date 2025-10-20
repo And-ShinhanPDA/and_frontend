@@ -1,6 +1,7 @@
 import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import { currentDataService } from "@/services/current-data-service";
 import { saveActivatedCompanies } from "@/services/widgetShare";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -21,7 +22,7 @@ type CompanyAlert = {
   logo: ImageSourcePropType;
   indicatorSnapshot?: string; // 위젯용 지표 데이터
   iconName?: string; // 위젯용 아이콘 이름
-  stockCode?: string; // 위젯용 stockCode
+  stockCode: string; // 위젯용 stockCode
   title?: string; // 위젯용 알림 제목
 };
 
@@ -76,9 +77,32 @@ export default function ActivatedCompanyCard() {
         }
       });
 
+      const stockCodes = Object.keys(grouped);
+      const currentPrices = await Promise.allSettled(
+        stockCodes.map(async (stockCode) => {
+          try {
+            const currentData = await currentDataService.getCurrentPrice(
+              stockCode
+            );
+            return { stockCode, price: currentData };
+          } catch (err) {
+            console.error(`현재가 조회 실패 (${stockCode}):`, err);
+            return { stockCode, price: null };
+          }
+        })
+      );
+
+      const priceMap = new Map<string, number | null>();
+      currentPrices.forEach((result) => {
+        if (result.status === "fulfilled") {
+          priceMap.set(result.value.stockCode, result.value.price);
+        }
+      });
+
       const formatted: CompanyAlert[] = Object.entries(grouped).map(
         ([stockCode, data]) => {
           const matched = COMPANIES.find((c) => c.code === stockCode);
+          const currentPrice = priceMap.get(stockCode);
 
           // conditions를 indicatorSnapshot으로 변환
           const indicators: Record<string, string> = {};
@@ -105,7 +129,9 @@ export default function ActivatedCompanyCard() {
           return {
             id: Number(stockCode),
             name: matched?.name || stockCode,
-            price: "-",
+            price: currentPrice
+              ? `${Math.round(currentPrice).toLocaleString()}원`
+              : "-",
             count: data.count,
             logo:
               matched?.logo ||
