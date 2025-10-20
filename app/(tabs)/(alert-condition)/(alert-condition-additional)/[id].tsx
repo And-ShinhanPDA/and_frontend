@@ -1,13 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
@@ -529,12 +529,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
     marginRight: 8,
-    backgroundColor: "#F9F9F9",
+    backgroundColor: "#394CC4",
   },
   presetText: {
     fontSize: 15,
-    color: "#333",
-    fontWeight: "600",
+    color: "#fff",
+    fontWeight: "700",
     fontFamily: "Pretendard",
   },
   saveButton: {

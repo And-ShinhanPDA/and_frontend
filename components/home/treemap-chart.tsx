@@ -179,7 +179,7 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
   return (
     <View>
       <View style={styles.titleContainer}>
-        <Text style={styles.cardTitle}>한 눈에 보기</Text>
+        <Text style={styles.cardTitle}>내 알림들 한 눈에 보기</Text>
       </View>
       <View style={styles.card} onLayout={handleLayout}>
         {loading ? (

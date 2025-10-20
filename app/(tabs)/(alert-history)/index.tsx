@@ -565,7 +565,7 @@ export default function AlertHistory() {
           </View>
         </View>
       </Modal>
-      <CustomBottomTab activeTab="기록" />
+      <CustomBottomTab activeTab="히스토리" />
     </View>
   );
 }

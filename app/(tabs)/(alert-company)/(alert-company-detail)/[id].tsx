@@ -314,7 +314,7 @@ export default function CompanyAlertDetail() {
               showOnlyActive && styles.filterButtonTextActive,
             ]}
           >
-            {showOnlyActive ? "전체 보기" : "활성화된 알림만 보기"}
+            {showOnlyActive ? "전체 보기" : "현재 활성화 된 알림만 보기"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#4CC439B3",
+    backgroundColor: "#394CC4",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",

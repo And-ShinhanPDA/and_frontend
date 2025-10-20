@@ -1,13 +1,19 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
@@ -50,12 +56,12 @@ export default function ConditionAlertModify() {
   // 탭 터치 시 해당 섹션으로 스크롤
   const scrollToSection = (tabName: string) => {
     const sectionMap: { [key: string]: string } = {
-      "변동률": "change",
+      변동률: "change",
       "52주": "week52",
-      "거래량": "volume",
-      "SMA": "sma",
-      "RSI": "rsi",
-      "볼린저밴드": "bollingerband",
+      거래량: "volume",
+      SMA: "sma",
+      RSI: "rsi",
+      볼린저밴드: "bollingerband",
     };
 
     const sectionKey = sectionMap[tabName];
@@ -461,12 +467,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
     marginRight: 8,
-    backgroundColor: "#F9F9F9",
+    backgroundColor: "#394CC4",
   },
   presetText: {
     fontSize: 15,
-    color: "#333",
-    fontWeight: "600",
+    color: "#fff",
+    fontWeight: "700",
     fontFamily: "Pretendard",
   },
   saveButton: {

@@ -145,7 +145,7 @@ export default function ActivatedConditionCard() {
   return (
     <View>
       <View style={styles.titleContainer}>
-        <Text style={styles.cardTitle}>활성화 된 조건 알림</Text>
+        <Text style={styles.cardTitle}>현재 충족 중인 조건 검색</Text>
         <BlinkingDot />
       </View>
       <View style={styles.card}>
@@ -157,7 +157,7 @@ export default function ActivatedConditionCard() {
               resizeMode="contain"
             />
             <Text style={styles.emptyText}>
-              현재 활성화된 조건 알림이 없습니다
+              현재 충족 중인 조건 검색이 없습니다
             </Text>
           </View>
         ) : (

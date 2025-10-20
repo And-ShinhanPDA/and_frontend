@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import {
-  LayoutAnimation,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  UIManager,
-  View,
+    LayoutAnimation,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    UIManager,
+    View,
 } from "react-native";
 import AddIcon from "../../../assets/images/add.svg";
 import EditIcon from "../../../assets/images/edit.svg";
@@ -145,27 +145,46 @@ export default function BollingerBandConditionCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginVertical: 10,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginVertical: 8,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  title: { fontSize: 16, fontWeight: "600" },
+  title: { 
+    fontSize: 17, 
+    fontWeight: "700",
+    color: "#111",
+    fontFamily: "Pretendard",
+  },
   divider: {
     height: 1,
-    backgroundColor: "#EAEAEA",
-    marginTop: 8,
-    marginBottom: 6,
-    marginHorizontal: -12,
+    backgroundColor: "#F0F0F0",
+    marginTop: 12,
+    marginBottom: 10,
+    marginHorizontal: -16,
   },
-  section: { marginBottom: 8 },
-  sectionTitle: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
-  desc: { fontSize: 13, color: "#666", marginLeft: 4 },
+  section: { 
+    marginBottom: 12,
+    paddingVertical: 6,
+  },
+  sectionTitle: { 
+    fontSize: 14, 
+    fontWeight: "600", 
+    marginBottom: 8,
+    color: "#666",
+    fontFamily: "Pretendard",
+  },
+  desc: { 
+    fontSize: 13, 
+    color: "#555",
+    marginLeft: 4,
+    fontFamily: "Pretendard",
+  },
 });

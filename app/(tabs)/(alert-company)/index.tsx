@@ -140,13 +140,13 @@ export default function AlertCompany() {
 
     try {
       console.log("🔄 [기업 알림] 활성화된 알림 데이터 새로고침 시작...");
-      
+
       // 기업 알림 데이터 새로고침
       await fetchAlertedCompanies();
-      
+
       // 위젯 강제 새로고침
       refreshWidgetManually();
-      
+
       console.log("✅ [기업 알림] 모든 데이터 + 위젯 새로고침 완료");
     } catch (err) {
       console.error("❌ [기업 알림] 데이터 새로고침 실패:", err);
@@ -294,7 +294,7 @@ export default function AlertCompany() {
               showOnlyActive && styles.filterButtonTextActive,
             ]}
           >
-            {showOnlyActive ? "전체 보기" : "활성화된 기업만 보기"}
+            {showOnlyActive ? "전체 보기" : "현재 조건을 충족한 기업만 보기"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#4CC439B3",
+    backgroundColor: "#394CC4",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",

@@ -9,15 +9,15 @@ import { getIndicatorCategoriesArray } from "@/utils/parseConditions";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-    Animated,
-    Image,
-    Pressable,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Animated,
+  Image,
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
 
@@ -153,13 +153,13 @@ export default function AlertCondition() {
 
     try {
       console.log("🔄 [조건 검색] 활성화된 알림 데이터 새로고침 시작...");
-      
+
       // 조건 알림 데이터 새로고침
       await fetchConditionAlerts();
-      
+
       // 위젯 강제 새로고침
       refreshWidgetManually();
-      
+
       console.log("✅ [조건 검색] 모든 데이터 + 위젯 새로고침 완료");
     } catch (err) {
       console.error("❌ [조건 검색] 데이터 새로고침 실패:", err);
@@ -296,7 +296,7 @@ export default function AlertCondition() {
               showOnlyActive && styles.filterButtonTextActive,
             ]}
           >
-            {showOnlyActive ? "전체 보기" : "활성화된 조건만 보기"}
+            {showOnlyActive ? "전체 보기" : "현재 충족 중인 조건만 보기"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#4CC439B3",
+    backgroundColor: "#394CC4",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",

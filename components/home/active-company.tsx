@@ -140,7 +140,7 @@ export default function ActivatedCompanyCard() {
   return (
     <View>
       <View style={styles.titleContainer}>
-        <Text style={styles.cardTitle}>활성화 된 기업 알림</Text>
+        <Text style={styles.cardTitle}>현재 조건을 충족한 기업 알림</Text>
         <BlinkingDot />
       </View>
 
@@ -153,7 +153,7 @@ export default function ActivatedCompanyCard() {
               resizeMode="contain"
             />
             <Text style={styles.emptyText}>
-              현재 활성화된 기업 알림이 없습니다
+              현재 조건을 충족한 기업 알림이 없습니다
             </Text>
           </View>
         ) : (
