@@ -1,6 +1,12 @@
-import { treemap as d3Treemap, hierarchy } from "d3-hierarchy";
+import { COMPANIES } from "@/constants/companies";
+import {
+  treemap as d3Treemap,
+  treemapSquarify as d3TreemapSquarify,
+  hierarchy,
+} from "d3-hierarchy";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Animated,
   LayoutChangeEvent,
   StyleSheet,
@@ -11,10 +17,28 @@ import Svg, { Rect, Text as SvgText } from "react-native-svg";
 
 type CompanyNode = {
   name: string;
-  value: number;
+  value: number; // treemap 크기 계산용 (0이면 0.5로 보정)
   percent: number;
+  actualCount?: number; // 실제 알림 개수 (표시용)
 };
 type RootNode = { children: CompanyNode[] };
+
+type HeatmapData = {
+  stockCode: string;
+  alertCount: number;
+  priceRate: number; // 실제 API 응답 필드명
+};
+
+type TreemapChartProps = {
+  data: HeatmapData[];
+  loading: boolean;
+};
+
+// stockCode로 회사명을 찾는 함수
+const getCompanyName = (stockCode: string): string => {
+  const company = COMPANIES.find((c) => c.code === stockCode);
+  return company?.name || stockCode; // 못 찾으면 stockCode 그대로 표시
+};
 
 // ✅ 위 카드와 동일한 깜빡이 점
 const BlinkingDot = () => {
@@ -40,7 +64,7 @@ const BlinkingDot = () => {
   return <Animated.View style={[styles.blinkingDot, { opacity }]} />;
 };
 
-export default function TreemapChart() {
+export default function TreemapChart({ data, loading }: TreemapChartProps) {
   const [cardWidth, setCardWidth] = useState(0);
   const CARD_HEIGHT = 400;
 
@@ -50,28 +74,44 @@ export default function TreemapChart() {
     setCardWidth(Math.max(0, width - 40));
   };
 
-  const companies: CompanyNode[] = [
-    { name: "삼성전자", value: 25, percent: 3.4 },
-    { name: "SK하이닉스", value: 20, percent: 5.59 },
-    { name: "NAVER", value: 12, percent: -4.5 },
-    { name: "카카오", value: 10, percent: -3.5 },
-    { name: "현대차", value: 8, percent: 0.23 },
-    { name: "기아", value: 7, percent: -0.44 },
-    { name: "LG에너지솔루션", value: 6, percent: -1.97 },
-    { name: "POSCO홀딩스", value: 5, percent: 0.8 },
-    { name: "삼성바이오로직스", value: 5, percent: -0.5 },
-    { name: "KB금융", value: 4, percent: -0.67 },
-    { name: "신한지주", value: 4, percent: -0.42 },
-    { name: "하나금융지주", value: 3, percent: -0.3 },
-    { name: "카카오뱅크", value: 3, percent: 1.2 },
-    { name: "HD현대", value: 3, percent: 0.9 },
-    { name: "HMM", value: 2, percent: 1.1 },
-    { name: "한화솔루션", value: 2, percent: 5.38 },
-    { name: "LG화학", value: 2, percent: -2.1 },
-    { name: "대한항공", value: 1, percent: 0.0 },
-    { name: "아모레퍼시픽", value: 1, percent: -1.8 },
-    { name: "CJ제일제당", value: 1, percent: 0.3 },
-  ];
+  // API 데이터를 CompanyNode 형식으로 변환 (안전하게 처리)
+  const companies: CompanyNode[] = React.useMemo(() => {
+    if (!data || data.length === 0) return [];
+
+    const mapped = data
+      .filter((item) => item && item.stockCode) // stockCode만 있으면 OK
+      .map((item) => {
+        // priceRate는 이미 퍼센트 값 (1.07 = 7%, 0.51 = 0.51%)
+        // 그대로 사용하면 됨
+        const percentChange = item.priceRate;
+
+        return {
+          name: getCompanyName(item.stockCode),
+          value: item.alertCount, // 실제 알림 개수 사용
+          percent: percentChange,
+          actualCount: item.alertCount, // 실제 알림 개수 (표시용)
+        };
+      });
+
+    // 실제 알림 개수로 정렬 (내림차순)
+    const sorted = mapped.sort((a, b) => b.actualCount - a.actualCount);
+
+    // Top1을 분리하고, 나머지에서 너무 작은 것들 필터링
+    const top1 = sorted[0];
+    const others = sorted.slice(1);
+
+    // 최소 알림 개수 기준으로 필터링 (1개 이상만 표시)
+    const filteredOthers = others.filter((item) => item.actualCount >= 1);
+
+    // Top1 + 필터링된 나머지
+    const result = [top1, ...filteredOthers];
+
+    console.log(
+      `📊 히트맵: Top1(${top1?.name}: ${top1?.actualCount}개) + 나머지 ${filteredOthers.length}개 표시`
+    );
+
+    return result;
+  }, [data]);
 
   const colorBins = [
     { limit: 3, color: "#F63C3C" },
@@ -101,6 +141,9 @@ export default function TreemapChart() {
   };
 
   const wrapText = (text: string, maxWidth: number, fontSize: number) => {
+    // 안전하게 처리: text가 없으면 빈 배열 반환
+    if (!text || typeof text !== "string") return [""];
+
     const charWidth = fontSize * 0.65;
     const maxCharsPerLine = Math.floor(maxWidth / charWidth);
     if (text.length <= maxCharsPerLine) return [text];
@@ -109,21 +152,29 @@ export default function TreemapChart() {
   };
 
   let leaves: any[] = [];
-  if (cardWidth > 0) {
-    const root = hierarchy<CompanyNode | RootNode>({ children: companies }).sum(
-      (d) => (d as CompanyNode).value
-    );
-    const treemapLayout = d3Treemap<CompanyNode | RootNode>()
-      .size([cardWidth, CARD_HEIGHT])
-      .paddingInner(2)
-      .round(true);
-    leaves = treemapLayout(root).leaves();
+  if (cardWidth > 0 && companies.length > 0) {
+    try {
+      const root = hierarchy<CompanyNode | RootNode>({
+        children: companies,
+      }).sum((d) => (d as CompanyNode).value || 0);
+      const treemapLayout = d3Treemap<CompanyNode | RootNode>()
+        .size([cardWidth, CARD_HEIGHT])
+        .paddingInner(3)
+        .paddingOuter(2)
+        .round(true)
+        .tile(d3TreemapSquarify.ratio(1.5)); // 정사각형에 가까운 비율로 조정
+      leaves = treemapLayout(root).leaves();
+    } catch (error) {
+      console.error("히트맵 레이아웃 계산 오류:", error);
+    }
   }
 
-  const top3Values = [...companies]
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 3)
-    .map((c) => c.name);
+  const top3Values =
+    companies.length > 0
+      ? companies
+          .slice(0, 3) // 이미 정렬되어 있으므로 처음 3개만 선택
+          .map((c) => c.name)
+      : [];
 
   return (
     <View>
@@ -131,7 +182,16 @@ export default function TreemapChart() {
         <Text style={styles.cardTitle}>한 눈에 보기</Text>
       </View>
       <View style={styles.card} onLayout={handleLayout}>
-        {cardWidth > 0 && (
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#2563EB" />
+            <Text style={styles.loadingText}>데이터를 불러오는 중...</Text>
+          </View>
+        ) : companies.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>히트맵 데이터가 없습니다</Text>
+          </View>
+        ) : cardWidth > 0 ? (
           <Svg width={cardWidth} height={CARD_HEIGHT} pointerEvents="none">
             {leaves.map((leaf, i) => {
               const { x0, y0, x1, y1 } = leaf;
@@ -258,7 +318,12 @@ export default function TreemapChart() {
                   {/* 알림 개수 */}
                   {isTop3 &&
                     (() => {
-                      const countText = `알림 ${company.value}개`;
+                      // 실제 알림 개수 표시 (actualCount가 있으면 사용, 없으면 value)
+                      const displayCount =
+                        company.actualCount !== undefined
+                          ? company.actualCount
+                          : Math.floor(company.value);
+                      const countText = `알림 ${displayCount}개`;
                       const result = (
                         <SvgText
                           x={x0 + w / 2}
@@ -293,7 +358,7 @@ export default function TreemapChart() {
               );
             })}
           </Svg>
-        )}
+        ) : null}
       </View>
     </View>
   );
@@ -313,6 +378,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     elevation: 3,
     marginBottom: 24,
+    minHeight: 400,
   },
   cardTitle: {
     fontSize: 16,
@@ -326,5 +392,26 @@ const styles = StyleSheet.create({
     height: 7,
     borderRadius: 4,
     backgroundColor: "#EF4444",
+  },
+  loadingContainer: {
+    height: 360,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#6B7280",
+    fontFamily: "Pretendard",
+  },
+  emptyContainer: {
+    height: 360,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#9CA3AF",
+    fontFamily: "Pretendard",
   },
 });

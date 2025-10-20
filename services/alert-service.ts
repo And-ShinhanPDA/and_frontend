@@ -288,7 +288,7 @@ export const alertService = {
       });
 
       const rawData = res.data?.data || [];
-      
+
       const parsed = rawData.map((item: any) => ({
         id: item.id,
         alertId: item.alertId,
@@ -376,7 +376,7 @@ export const alertService = {
       });
 
       const { data } = res.data ?? {};
-      
+
       if (!Array.isArray(data)) {
         return [];
       }
@@ -458,4 +458,6 @@ export const alertService = {
       throw new Error(getErrorMessage(err));
     }
   },
+
+  // 히트맵
 };
