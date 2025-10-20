@@ -86,9 +86,12 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
         // 그대로 사용하면 됨
         const percentChange = item.priceRate;
 
+        // 최소 크기 보장: 모든 상자가 텍스트를 표시할 수 있도록 최소 5로 설정
+        const adjustedValue = Math.max(item.alertCount, 5);
+
         return {
           name: getCompanyName(item.stockCode),
-          value: item.alertCount, // 실제 알림 개수 사용
+          value: adjustedValue, // 최소값 보장된 값 사용
           percent: percentChange,
           actualCount: item.alertCount, // 실제 알림 개수 (표시용)
         };
