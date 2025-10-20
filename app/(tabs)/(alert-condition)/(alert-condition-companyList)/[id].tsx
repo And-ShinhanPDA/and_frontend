@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
   conditionRight: {
     justifyContent: "center",
     alignItems: "center",
-    marginLeft: 12,
+    marginLeft: 0,
   },
 
   conditionTitle: {
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   fixedColumn: {
-    width: 100,
+    width: 60,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -477,10 +477,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
   },
   fixedColumnContainer: {
-    width: 100,
+    width: 60,
   },
   fixedCell: {
     height: 60,
+    width: 60,
     justifyContent: "center",
     alignItems: "center",
     borderBottomWidth: 1,
