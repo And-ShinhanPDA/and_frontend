@@ -188,16 +188,6 @@ export default function PriceConditionContent({
           renderRow={(r) =>
             toggles.limit && (
               <View key={r.id} style={styles.rowContainer}>
-                <ConditionInput
-                  value={r.amount}
-                  placeholder={`${r.comparison} 금액`}
-                  unit="원"
-                  onChange={(v) =>
-                    setLimits((prev) =>
-                      prev.map((p) => (p.id === r.id ? { ...p, amount: v } : p))
-                    )
-                  }
-                />
                 <Text
                   style={[
                     styles.compareBadge,
@@ -208,6 +198,16 @@ export default function PriceConditionContent({
                 >
                   {r.comparison}
                 </Text>
+                <ConditionInput
+                  value={r.amount}
+                  placeholder="금액 입력"
+                  unit="원"
+                  onChange={(v) =>
+                    setLimits((prev) =>
+                      prev.map((p) => (p.id === r.id ? { ...p, amount: v } : p))
+                    )
+                  }
+                />
                 {String(r.amount).trim() !== "" && (
                   <TouchableOpacity
                     style={styles.removeButton}
@@ -249,9 +249,7 @@ export default function PriceConditionContent({
                 </Text>
                 <ConditionInput
                   value={r.amount}
-                  placeholder={`시가 대비 ${
-                    r.direction === "+" ? "상승" : "하락"
-                  } 금액`}
+                  placeholder="금액 입력"
                   unit="원"
                   onChange={(v) =>
                     setOpenChanges((prev) =>
@@ -384,31 +382,31 @@ const styles = StyleSheet.create({
   rowContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 14,
+    gap: 10,
   },
 
   compareBadge: {
-    marginLeft: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: 1.5,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
-    overflow: "hidden",
     fontFamily: "Pretendard",
+    minWidth: 50,
+    textAlign: "center",
   },
   compareBadgePM: {
-    marginLeft: 0,
-    paddingVertical: 6,
-    marginRight: 12,
-    paddingHorizontal: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: 1.5,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
-    overflow: "hidden",
     fontFamily: "Pretendard",
+    minWidth: 36,
+    textAlign: "center",
   },
   plusBadge: {
     color: "#4CC439",

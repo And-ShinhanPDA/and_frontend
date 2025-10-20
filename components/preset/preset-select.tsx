@@ -150,30 +150,32 @@ export default function PresetSelect({
       scaleAnimations.current[id] = new Animated.Value(1);
     }
 
+    // 더 역동적인 흔들림 애니메이션 (무한 반복)
     const singleShake = Animated.sequence([
       Animated.timing(shakeAnimations.current[id], {
-        toValue: 0.5,
-        duration: 80,
+        toValue: 1,
+        duration: 60,
         useNativeDriver: true,
       }),
       Animated.timing(shakeAnimations.current[id], {
-        toValue: -0.5,
-        duration: 160,
+        toValue: -1,
+        duration: 120,
         useNativeDriver: true,
       }),
       Animated.timing(shakeAnimations.current[id], {
-        toValue: 0.5,
-        duration: 160,
+        toValue: 1,
+        duration: 120,
         useNativeDriver: true,
       }),
       Animated.timing(shakeAnimations.current[id], {
         toValue: 0,
-        duration: 80,
+        duration: 60,
         useNativeDriver: true,
       }),
     ]);
 
-    Animated.loop(singleShake, { iterations: 4 }).start();
+    // 무한 반복
+    Animated.loop(singleShake).start();
 
     Animated.parallel([
       Animated.timing(fadeAnimations.current[id], {
@@ -248,6 +250,15 @@ export default function PresetSelect({
     }
   };
 
+  // 편집 모드 전체 해제
+  const cancelAllEditMode = () => {
+    Object.keys(editMode).forEach((key) => {
+      if (editMode[Number(key)]) {
+        handleCancelEdit(Number(key));
+      }
+    });
+  };
+
   // 일반 클릭 핸들러
   const handlePress = (id: number) => {
     // 편집 모드일 때는 동작 안함
@@ -288,6 +299,15 @@ export default function PresetSelect({
 
   return (
     <View style={styles.container}>
+      {/* 헤더 */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>프리셋 관리</Text>
+        <Text style={styles.headerSubtitle}>
+          {mode === "select" ? "프리셋을 선택하여 조건을 불러오세요" : "저장된 프리셋을 확인하세요"}
+        </Text>
+      </View>
+
+      {/* 탭 */}
       <View style={styles.tabContainer}>
         {(["내", "유명인", "추천"] as const).map((tab) => (
           <TouchableOpacity
@@ -304,12 +324,29 @@ export default function PresetSelect({
         ))}
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+      <TouchableOpacity 
+        activeOpacity={1} 
+        onPress={cancelAllEditMode}
+        style={{ flex: 1 }}
       >
-        <View style={styles.grid}>
-          {currentList.map((p) => {
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={true}
+        >
+          {currentList.length === 0 ? (
+            <View style={styles.emptyContainer}>
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={styles.emptyIcon}
+            />
+            <Text style={styles.emptyText}>
+              {category === "내" ? "저장된 프리셋이 없습니다" : "프리셋을 불러오는 중..."}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.grid}>
+            {currentList.map((p) => {
             // 애니메이션 값 초기화
             if (!shakeAnimations.current[p.id]) {
               shakeAnimations.current[p.id] = new Animated.Value(0);
@@ -323,7 +360,7 @@ export default function PresetSelect({
 
             const rotation = shakeAnimations.current[p.id].interpolate({
               inputRange: [-1, 1],
-              outputRange: ["-1.5deg", "1.5deg"],
+              outputRange: ["-3deg", "3deg"],
             });
 
             return (
@@ -350,10 +387,10 @@ export default function PresetSelect({
                     {typeof p.image === "number" ? (
                       <Image
                         source={p.image}
-                        style={{ width: 70, height: 70 }}
+                        style={{ width: 90, height: 90 }}
                       />
                     ) : (
-                      <p.image width={70} height={70} />
+                      <p.image width={90} height={90} />
                     )}
                   </View>
 
@@ -384,8 +421,10 @@ export default function PresetSelect({
               </Animated.View>
             );
           })}
-        </View>
-      </ScrollView>
+          </View>
+        )}
+        </ScrollView>
+      </TouchableOpacity>
 
       <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
         <Text style={styles.closeText}>
@@ -401,114 +440,174 @@ export default function PresetSelect({
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    height: "80%",
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+    backgroundColor: "#FAFAFA",
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#111",
+    marginBottom: 6,
+    fontFamily: "Pretendard",
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    color: "#666",
+    fontWeight: "400",
+    fontFamily: "Pretendard",
   },
   tabContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 16,
+    marginTop: 20,
+    marginBottom: 20,
+    paddingHorizontal: 20,
+    gap: 8,
   },
   tab: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    marginHorizontal: 4,
-  },
-  activeTab: { backgroundColor: "#000" },
-  tabText: { fontSize: 13, color: "#555" },
-  activeTabText: { color: "#fff" },
-  scrollContent: {
-    paddingBottom: 20,
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    backgroundColor: "#FAFAFA",
     alignItems: "center",
+  },
+  activeTab: { 
+    backgroundColor: "#4CC439",
+    borderColor: "#4CC439",
+  },
+  tabText: { 
+    fontSize: 14, 
+    color: "#666",
+    fontWeight: "600",
+    fontFamily: "Pretendard",
+  },
+  activeTabText: { 
+    color: "#fff",
+    fontWeight: "700",
+  },
+  scrollContent: {
+    paddingTop: 16,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
   },
   grid: {
     width: "100%",
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    gap: 12,
   },
   card: {
     width: CARD_WIDTH,
     backgroundColor: "#fff",
-    borderRadius: 20,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 6,
-    elevation: 3,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    marginBottom: 12,
     position: "relative",
+    overflow: "visible",
   },
   cardTouchable: {
-    paddingVertical: 18,
-    paddingHorizontal: 10,
+    paddingVertical: 20,
+    paddingHorizontal: 14,
     alignItems: "center",
     width: "100%",
+    minHeight: 160,
   },
   imageContainer: {
     position: "absolute",
-    right: 10,
+    right: 0,
     top: 8,
-    opacity: 0.9,
+    opacity: 0.8,
   },
   textCenter: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
-    marginBottom: 30,
+    marginTop: 12,
+    marginBottom: 16,
+    zIndex: 1,
   },
   name: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "700",
     color: "#111",
     textAlign: "center",
+    fontFamily: "Pretendard",
+    marginBottom: 8,
   },
   desc: {
-    fontSize: 12,
-    color: "#777",
+    fontSize: 11,
+    color: "#666",
     textAlign: "center",
-    lineHeight: 18,
-    marginTop: 6,
+    lineHeight: 16,
+    fontFamily: "Pretendard",
+    fontWeight: "400",
   },
   closeBtn: {
     backgroundColor: "#4CC439",
-    borderRadius: 10,
-    paddingVertical: 14,
+    borderRadius: 12,
+    paddingVertical: 16,
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 16,
+    marginHorizontal: 20,
+    marginBottom: 24,
   },
-  closeText: { color: "#fff", fontWeight: "600", fontSize: 15 },
+  closeText: { 
+    color: "#fff", 
+    fontWeight: "700", 
+    fontSize: 16,
+    fontFamily: "Pretendard",
+  },
   deleteButton: {
     position: "absolute",
-    top: 8,
-    right: 8,
+    top: -8,
+    right: -8,
     zIndex: 10,
   },
   deleteButtonInner: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#4CC439",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FF3B30",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 5,
+    borderWidth: 3,
+    borderColor: "#fff",
   },
   deleteButtonText: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "700",
-    lineHeight: 18,
+    lineHeight: 17,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 60,
+    minHeight: 300,
+  },
+  emptyIcon: {
+    width: 100,
+    height: 100,
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 15,
+    color: "#999",
+    textAlign: "center",
+    fontFamily: "Pretendard",
+    fontWeight: "500",
   },
 });

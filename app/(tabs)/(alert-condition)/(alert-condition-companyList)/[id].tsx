@@ -14,6 +14,8 @@ import {
 
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
+import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
+import PresetSelect from "@/components/preset/preset-select";
 import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
@@ -283,6 +285,14 @@ export default function AlertConditionDetail() {
         </View>
       )}
 
+      {/* 기업 리스트 제목 - 데이터가 있을 때만 표시 */}
+      {!loading && !error && companies.length > 0 && (
+        <View style={styles.listTitleContainer}>
+          <Text style={styles.listTitle}>해당 조건에 만족한 기업 리스트</Text>
+          <View style={styles.listTitleDivider} />
+        </View>
+      )}
+
       {/* 테이블 헤더 - 데이터가 있을 때만 표시 */}
       {!loading && !error && companies.length > 0 && (
         <View style={styles.tableHeaderRow}>
@@ -394,6 +404,19 @@ export default function AlertConditionDetail() {
           <Text style={styles.emptyText}>조건에 해당하는 기업이 없습니다.</Text>
         </View>
       )}
+
+      {/* 프리셋 모달 */}
+      <ConditionBottomSheet
+        visible={isPresetOpen}
+        onClose={() => setIsPresetOpen(false)}
+        ratio={0.85}
+      >
+        <PresetSelect 
+          onClose={() => setIsPresetOpen(false)} 
+          mode="view"
+        />
+      </ConditionBottomSheet>
+
       <CustomBottomTab activeTab="조건 검색" />
     </View>
   );
@@ -449,6 +472,22 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   tagText: { fontSize: 12, fontFamily: "Pretendard" },
+
+  listTitleContainer: {
+    paddingHorizontal: 28,
+    paddingBottom: 12,
+  },
+  listTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#111",
+    fontFamily: "Pretendard",
+    marginBottom: 8,
+  },
+  listTitleDivider: {
+    height: 1,
+    backgroundColor: "#E0E0E0",
+  },
 
   tableHeaderRow: {
     flexDirection: "row",

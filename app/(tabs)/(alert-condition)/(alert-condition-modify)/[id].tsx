@@ -1,19 +1,19 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
@@ -52,6 +52,67 @@ export default function ConditionAlertModify() {
   const handleTempSave = useCallback((id: string, getter: () => any[]) => {
     setConditionGetters((prev) => ({ ...prev, [id]: getter }));
   }, []);
+
+  // 프리셋 조건을 각 카드 형식으로 변환
+  const parsePresetConditions = useCallback((conditions: any[]) => {
+    const parsed: any = {
+      change: { dailyChanges: [], baseChanges: [] },
+      week52: { highAlert: false, lowAlert: false, highProximity: null, lowProximity: null },
+      volume: { avgRise: null, avgDrop: null, spike: false },
+      sma: { target: null, goldenCross: false, deadCross: false },
+      rsi: { overbought: false, oversold: false },
+      bollingerband: { upper: false, lower: false },
+    };
+
+    conditions.forEach((cond) => {
+      const { indicator, threshold } = cond;
+      const thresholdStr = threshold !== null ? String(threshold) : "";
+      const absThresholdStr = threshold !== null ? String(Math.abs(threshold)) : "";
+
+      // 변동률
+      if (indicator === "PRICE_RATE_DAILY_UP") {
+        parsed.change.dailyChanges.push({ direction: "+", amount: absThresholdStr });
+      } else if (indicator === "PRICE_RATE_DAILY_DOWN") {
+        parsed.change.dailyChanges.push({ direction: "-", amount: absThresholdStr });
+      } else if (indicator === "PRICE_RATE_BASE_UP") {
+        parsed.change.baseChanges.push({ direction: "+", amount: absThresholdStr });
+      } else if (indicator === "PRICE_RATE_BASE_DOWN") {
+        parsed.change.baseChanges.push({ direction: "-", amount: absThresholdStr });
+      }
+      // 52주
+      else if (indicator === "HIGH_52W") parsed.week52.highAlert = true;
+      else if (indicator === "LOW_52W") parsed.week52.lowAlert = true;
+      else if (indicator === "NEAR_HIGH_52W") parsed.week52.highProximity = { value: thresholdStr };
+      else if (indicator === "NEAR_LOW_52W") parsed.week52.lowProximity = { value: thresholdStr };
+      // 거래량
+      else if (indicator === "VOLUME_AVG_DEV_UP") parsed.volume.avgRise = thresholdStr;
+      else if (indicator === "VOLUME_AVG_DEV_DOWN") parsed.volume.avgDrop = thresholdStr;
+      else if (indicator === "VOLUME_CHANGE_PERCENT_UP") parsed.volume.spike = true;
+      // SMA
+      else if (indicator.startsWith("SMA_")) parsed.sma.target = { indicator, threshold };
+      else if (indicator === "GOLDEN_CROSS") parsed.sma.goldenCross = true;
+      else if (indicator === "DEAD_CROSS") parsed.sma.deadCross = true;
+      // RSI
+      else if (indicator === "RSI_OVER") parsed.rsi.overbought = true;
+      else if (indicator === "RSI_UNDER") parsed.rsi.oversold = true;
+      // 볼린저밴드
+      else if (indicator === "BOLLINGER_UPPER") parsed.bollingerband.upper = true;
+      else if (indicator === "BOLLINGER_LOWER") parsed.bollingerband.lower = true;
+    });
+
+    return parsed;
+  }, []);
+
+  // 프리셋 선택 핸들러
+  const handlePresetSelect = useCallback((presetId: number, conditions: any[]) => {
+    console.log("프리셋 적용:", presetId, conditions);
+    const parsed = parsePresetConditions(conditions);
+    setPresetConditions(parsed);
+    setIsPresetOpen(false);
+  }, [parsePresetConditions]);
+
+  // 프리셋 적용을 위한 상태
+  const [presetConditions, setPresetConditions] = useState<any>({});
 
   // 탭 터치 시 해당 섹션으로 스크롤
   const scrollToSection = (tabName: string) => {
@@ -109,12 +170,22 @@ export default function ConditionAlertModify() {
     fetchAlertDetail();
   }, [id, accessToken]);
 
-  // 파싱된 조건 데이터
+  // 파싱된 조건 데이터 (프리셋과 병합)
   const parsedConditions = useMemo(() => {
-    return alertData?.conditions
+    const original = alertData?.conditions
       ? parseConditionsForCards(alertData.conditions)
       : null;
-  }, [alertData?.conditions]);
+    
+    // 프리셋이 적용되었으면 프리셋 조건을 우선 사용
+    if (Object.keys(presetConditions).length > 0) {
+      return {
+        ...original,
+        ...presetConditions,
+      };
+    }
+    
+    return original;
+  }, [alertData?.conditions, presetConditions]);
 
   const handleSave = async () => {
     try {
@@ -364,7 +435,11 @@ export default function ConditionAlertModify() {
         onClose={() => setIsPresetOpen(false)}
         ratio={0.8}
       >
-        <PresetSelect onClose={() => setIsPresetOpen(false)} />
+        <PresetSelect 
+          mode="select"
+          onClose={() => setIsPresetOpen(false)}
+          onPresetSelect={handlePresetSelect}
+        />
       </ConditionBottomSheet>
 
       {/* 커스텀 Alert */}
