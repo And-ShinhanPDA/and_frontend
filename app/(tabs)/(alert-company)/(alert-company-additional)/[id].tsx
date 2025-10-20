@@ -13,9 +13,13 @@ import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { alertService } from "@/services/alert-service";
+import {
+  CurrentData,
+  currentDataService,
+} from "@/services/current-data-service";
 import { presetService } from "@/services/preset-service";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -46,6 +50,8 @@ export default function CompanyAlertDetail() {
 
   const [title, setTitle] = useState("");
   const [conditions, setConditions] = useState<any[]>([]);
+  const [currentData, setCurrentData] = useState<CurrentData | null>(null);
+  const [dataLoading, setDataLoading] = useState(false);
 
   const [conditionGetters, setConditionGetters] = useState<{
     [k: string]: () => any[];
@@ -66,6 +72,26 @@ export default function CompanyAlertDetail() {
   const handleTempSave = useCallback((id: string, getter: () => any[]) => {
     setConditionGetters((prev) => ({ ...prev, [id]: getter }));
   }, []);
+
+  // 현재 데이터 조회
+  const fetchCurrentData = useCallback(async () => {
+    if (!id) return;
+
+    setDataLoading(true);
+    try {
+      const data = await currentDataService.getCurrentData(String(id));
+      setCurrentData(data);
+    } catch (err) {
+      console.error("현재 데이터 조회 실패:", err);
+    } finally {
+      setDataLoading(false);
+    }
+  }, [id]);
+
+  // 컴포넌트 마운트 시 현재 데이터 조회
+  useEffect(() => {
+    fetchCurrentData();
+  }, [fetchCurrentData]);
 
   // 프리셋 조건을 각 카드 형식으로 변환
   const parsePresetConditions = (conditions: any[]) => {
@@ -379,24 +405,33 @@ export default function CompanyAlertDetail() {
         keyboardShouldPersistTaps="handled"
       >
         <CurrentStatusCard
-          time="11:38 기준"
-          currentPrice={50000}
-          openPrice={50000}
-          high52w={55000}
-          low52w={45000}
-          volume={50}
-          bollingerUpper={50000}
-          bollingerLower={50000}
-          rsi={50}
+          time={
+            currentData
+              ? new Date().toLocaleTimeString("ko-KR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                }) + " 기준"
+              : "데이터 로딩 중..."
+          }
+          currentPrice={Math.round(currentData?.currentPrice ?? 0)}
+          openPrice={Math.round(currentData?.daily.openPrice ?? 0)}
+          high52w={Math.round(currentData?.daily.highPrice ?? 0)}
+          low52w={Math.round(currentData?.daily.lowPrice ?? 0)}
+          volume={Math.round(currentData?.currentVolume ?? 0)}
+          bollingerUpper={Math.round(currentData?.bbUpper ?? 0)}
+          bollingerLower={Math.round(currentData?.bbLower ?? 0)}
+          rsi={Math.round(currentData?.rsi14 ?? 0)}
           sma={{
-            "5일": 50000,
-            "10일": 50100,
-            "20일": 50200,
-            "30일": 50300,
-            "50일": 50400,
-            "100일": 50500,
-            "200일": 50600,
+            "5일": Math.round(currentData?.smaValues.sma5 ?? 0),
+            "10일": Math.round(currentData?.smaValues.sma10 ?? 0),
+            "20일": Math.round(currentData?.smaValues.sma20 ?? 0),
+            "30일": Math.round(currentData?.smaValues.sma30 ?? 0),
+            "50일": Math.round(currentData?.smaValues.sma50 ?? 0),
+            "100일": Math.round(currentData?.smaValues.sma100 ?? 0),
+            "200일": Math.round(currentData?.smaValues.sma200 ?? 0),
           }}
+          onRefresh={fetchCurrentData}
         />
         <View style={styles.divider} />
         <TextInput

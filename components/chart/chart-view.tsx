@@ -1,7 +1,13 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 import { chartService } from "@/services/chart-service";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { WebView, WebViewMessageEvent } from "react-native-webview";
 import ChartHeader, { Candle } from "./chart-header";
@@ -53,16 +59,26 @@ export default function ChartScreen({
   const [period, setPeriod] = useState<Period>("1D");
   const [smaOn, setSmaOn] = useState({
     sma5: true,
+    sma10: true,
     sma20: true,
+    sma30: true,
+    sma50: true,
     sma60: true,
-    sma120: true,
+    sma100: true,
+    sma200: true,
   });
+  const [bollingerOn, setBollingerOn] = useState(true);
   const [ohlc, setOhlc] = useState<Candle | null>(null);
   const [smaVals, setSmaVals] = useState<any>({});
   const [headerAlert, setHeaderAlert] = useState<string | null>(null);
   const [headerAlerts, setHeaderAlerts] = useState<any[]>([]);
   const [webViewLoaded, setWebViewLoaded] = useState(false);
   const [alertHistoryMarkers, setAlertHistoryMarkers] = useState<any[]>([]);
+  const [candles, setCandles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [lastCandle, setLastCandle] = useState<Candle | null>(null);
+  const [currentPrice, setCurrentPrice] = useState<any>(null);
+  const [forceUpdate, setForceUpdate] = useState(0);
 
   const data = useMemo(() => genCandles(period, 250, 79200), [period]);
 
@@ -70,39 +86,93 @@ export default function ChartScreen({
 
   const last = data[data.length - 1];
   const prev = data[data.length - 2];
-  const currPrice = ohlc?.close ?? last?.close;
+  // currentPrice가 있으면 우선 사용, 없으면 ohlc?.close ?? last?.close 사용
+  const currPrice = currentPrice?.currentPrice ?? ohlc?.close ?? last?.close;
   const prevClose = prev?.close ?? last?.open;
-  const diff = (currPrice ?? 0) - (prevClose ?? 0);
-  const diffPct = prevClose
-    ? (((currPrice ?? 0) - prevClose) / prevClose) * 100
-    : 0;
+  const diff = currentPrice?.diff ?? (currPrice ?? 0) - (prevClose ?? 0);
+  const diffPct =
+    currentPrice?.diffRate ??
+    (prevClose ? (((currPrice ?? 0) - prevClose) / prevClose) * 100 : 0);
   const isUp = diff >= 0;
-  const [candles, setCandles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [lastCandle, setLastCandle] = useState<Candle | null>(null);
-  const [currentPrice, setCurrentPrice] = useState<any>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const webViewLoadedRef = useRef(webViewLoaded);
+  const periodRef = useRef(period);
+  const smaOnRef = useRef(smaOn);
+  const bollingerOnRef = useRef(bollingerOn);
+  const alertHistoryMarkersRef = useRef(alertHistoryMarkers);
+
+  // ref 값들을 최신으로 유지
+  useEffect(() => {
+    webViewLoadedRef.current = webViewLoaded;
+  }, [webViewLoaded]);
+
+  useEffect(() => {
+    periodRef.current = period;
+  }, [period]);
+
+  useEffect(() => {
+    smaOnRef.current = smaOn;
+  }, [smaOn]);
+
+  useEffect(() => {
+    bollingerOnRef.current = bollingerOn;
+  }, [bollingerOn]);
+
+  useEffect(() => {
+    alertHistoryMarkersRef.current = alertHistoryMarkers;
+  }, [alertHistoryMarkers]);
   const SMA_META = {
-    sma5: { label: "5", line: "#FF8A80", chipBg: "#FFEBEE", chipOn: "#C62828" }, // 파스텔 레드
+    sma5: { label: "5", line: "#FF8A80", chipBg: "#FFEBEE", chipOn: "#FF8A80" }, // 차트 선과 동일
+    sma10: {
+      label: "10",
+      line: "#81C784",
+      chipBg: "#E8F5E8",
+      chipOn: "#81C784",
+    }, // 차트 선과 동일
     sma20: {
       label: "20",
       line: "#90CAF9",
       chipBg: "#E3F2FD",
-      chipOn: "#1565C0",
-    },
+      chipOn: "#90CAF9",
+    }, // 차트 선과 동일
+    sma30: {
+      label: "30",
+      line: "#FFB74D",
+      chipBg: "#FFF3E0",
+      chipOn: "#FFB74D",
+    }, // 차트 선과 동일
+    sma50: {
+      label: "50",
+      line: "#BA68C8",
+      chipBg: "#F3E5F5",
+      chipOn: "#BA68C8",
+    }, // 차트 선과 동일
     sma60: {
       label: "60",
       line: "#B39DDB",
       chipBg: "#F3E5F5",
-      chipOn: "#6A1B9A",
-    },
-    sma120: {
-      label: "120",
+      chipOn: "#B39DDB",
+    }, // 차트 선과 동일
+    sma100: {
+      label: "100",
       line: "#FFCC80",
       chipBg: "#FFF3E0",
-      chipOn: "#EF6C00",
-    },
+      chipOn: "#FFCC80",
+    }, // 차트 선과 동일
+    sma200: {
+      label: "200",
+      line: "#A5D6A7",
+      chipBg: "#E8F5E8",
+      chipOn: "#A5D6A7",
+    }, // 차트 선과 동일
   } as const;
+
+  const BOLLINGER_META = {
+    label: "BB",
+    line: "rgba(0,0,0,0.25)",
+    chipBg: "#F5F5F5",
+    chipOn: "rgba(0,0,0,0.25)",
+  };
 
   // 일봉 데이터 fetch
   const fetchDailyData = async () => {
@@ -130,7 +200,7 @@ export default function ChartScreen({
   };
 
   // 분봉 데이터 fetch
-  const fetchMinuteData = async () => {
+  const fetchMinuteData = useCallback(async () => {
     try {
       const result = await chartService.getMinuteCandles(stockCode);
       setCandles(result);
@@ -152,12 +222,16 @@ export default function ChartScreen({
     } catch (err) {
       console.error("분봉 데이터 불러오기 실패:", err);
     }
-  };
+  }, [stockCode]);
 
   // 현재가 fetch
-  const fetchCurrentPrice = async () => {
+  const fetchCurrentPrice = useCallback(async () => {
+    console.log("🔄 fetchCurrentPrice 함수 시작", { stockCode });
     try {
+      console.log("API 호출 시작");
       const result = await chartService.getCurrentPrice(stockCode);
+      console.log("API 응답 받음:", result);
+
       setCurrentPrice(result);
 
       // 부모 컴포넌트로 현재가 전달
@@ -165,15 +239,25 @@ export default function ChartScreen({
         onPriceUpdate(result);
       }
 
-      console.log("현재가 업데이트:", {
+      // 강제 리렌더링 트리거
+      setForceUpdate((prev) => {
+        return prev + 1;
+      });
+
+      console.log("현재가 업데이트 완료:", {
         price: result.currentPrice,
         diff: result.diff,
         diffRate: result.diffRate,
+        forceUpdate: forceUpdate + 1,
+        period: period,
+        displayPrice: result.currentPrice,
+        displayDiff: result.diff,
+        displayDiffPct: result.diffRate,
       });
     } catch (err) {
       console.error("현재가 조회 실패:", err);
     }
-  };
+  }, [stockCode, onPriceUpdate]);
 
   // 초기 데이터 로드 및 period 변경 시
   useEffect(() => {
@@ -372,20 +456,25 @@ export default function ChartScreen({
               period,
               data: candles,
               smaOn,
+              bollingerOn,
               alertMarkers: alertHistoryMarkers,
             },
           })
         );
       }, 200);
     }
-  }, [webViewLoaded, candles, period, smaOn, alertHistoryMarkers]);
+  }, [webViewLoaded, candles, period, smaOn, bollingerOn, alertHistoryMarkers]);
 
   const onMessage = (e: WebViewMessageEvent) => {
     try {
       const msg = JSON.parse(e.nativeEvent.data);
       //console.log("[차트] WebView 메시지 수신:", msg.type, msg.payload);
 
-      if (msg.type === "crosshair") {
+      if (
+        msg.type === "crosshair" ||
+        msg.type === "touch" ||
+        msg.type === "click"
+      ) {
         setOhlc(msg.payload.candle ?? null);
         setSmaVals(msg.payload.sma ?? {});
 
@@ -424,21 +513,33 @@ export default function ChartScreen({
 
   const toggle = (k: keyof typeof smaOn) =>
     setSmaOn((prev) => ({ ...prev, [k]: !prev[k] }));
+  const toggleBollinger = () => setBollingerOn((prev) => !prev);
   const changePeriod = (p: Period) => setPeriod(p);
 
   const header = ohlc ?? lastCandle;
 
-  // 현재가 정보 반영
+  // 현재가 정보 반영 (currentPrice가 있으면 우선 사용)
   const displayPrice = currentPrice?.currentPrice ?? currPrice;
   const displayDiff = currentPrice?.diff ?? diff;
   const displayDiffPct = currentPrice?.diffRate ?? diffPct;
   const displayIsUp = (currentPrice?.diff ?? diff) >= 0;
+
+  // console.log("차트 헤더 현재가 표시:", {
+  //   currentPriceFromAPI: currentPrice?.currentPrice,
+  //   currPriceFromData: currPrice,
+  //   displayPrice: displayPrice,
+  //   displayDiff: displayDiff,
+  //   displayDiffPct: displayDiffPct,
+  //   forceUpdate: forceUpdate,
+  //   timestamp: new Date().toLocaleTimeString(),
+  // });
 
   return (
     <View style={styles.container}>
       {/* 고정 헤더 */}
       <View style={styles.fixedHeader}>
         <ChartHeader
+          key={`header-${forceUpdate}-${displayPrice}`} // forceUpdate와 displayPrice로 강제 리렌더링
           companyName={companyName}
           ohlc={ohlc ?? lastCandle}
           smaVals={smaVals}
@@ -463,9 +564,13 @@ export default function ChartScreen({
             {(
               [
                 { key: "sma5", meta: SMA_META.sma5 },
+                { key: "sma10", meta: SMA_META.sma10 },
                 { key: "sma20", meta: SMA_META.sma20 },
+                { key: "sma30", meta: SMA_META.sma30 },
+                { key: "sma50", meta: SMA_META.sma50 },
                 { key: "sma60", meta: SMA_META.sma60 },
-                { key: "sma120", meta: SMA_META.sma120 },
+                { key: "sma100", meta: SMA_META.sma100 },
+                { key: "sma200", meta: SMA_META.sma200 },
               ] as const
             ).map(({ key, meta }) => {
               const on = smaOn[key as keyof typeof smaOn];
@@ -483,6 +588,7 @@ export default function ChartScreen({
                     style={{
                       color: on ? meta.chipOn : "#666",
                       fontWeight: "700",
+                      fontSize: key === "sma200" ? 11 : 11,
                     }}
                   >
                     {meta.label}
@@ -490,6 +596,28 @@ export default function ChartScreen({
                 </Pressable>
               );
             })}
+
+            {/* 볼린저 밴드 토글 버튼 */}
+            <Pressable
+              onPress={toggleBollinger}
+              style={[
+                styles.chip,
+                { borderColor: bollingerOn ? BOLLINGER_META.line : "#D9D9D9" },
+                bollingerOn
+                  ? { backgroundColor: BOLLINGER_META.chipBg }
+                  : styles.chipOff,
+              ]}
+            >
+              <Text
+                style={{
+                  color: bollingerOn ? BOLLINGER_META.chipOn : "#666",
+                  fontWeight: "700",
+                  fontSize: 11,
+                }}
+              >
+                {BOLLINGER_META.label}
+              </Text>
+            </Pressable>
           </ScrollView>
         )}
       </View>
@@ -498,6 +626,7 @@ export default function ChartScreen({
       <View style={styles.scrollableContent}>
         <View style={styles.chartContainer}>
           <WebView
+            key={`webview-${forceUpdate}`} // forceUpdate로 강제 리렌더링
             ref={webRef}
             originWhitelist={["*"]}
             source={{ html: chartHtml }}
@@ -598,7 +727,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 16,
     minWidth: 50,
-    maxWidth: 60,
+    maxWidth: 70,
     alignItems: "center",
     justifyContent: "center",
   },
