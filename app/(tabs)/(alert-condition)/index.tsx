@@ -106,22 +106,37 @@ export default function AlertCondition() {
       // 2. Triggered 알림 조회 (조건 만족한 알림들)
       const triggeredRes = await alertService.getTriggeredAlerts(accessToken);
       console.log("🔥 [조건 알림] getTriggeredAlerts 응답:", triggeredRes);
-      
-      const triggeredConditionAlerts = triggeredRes.filter((a: any) => !a.stockCode);
-      console.log("🔥 [조건 알림] 조건 알림만 필터링:", triggeredConditionAlerts);
-      
+
+      const triggeredConditionAlerts = triggeredRes.filter(
+        (a: any) => !a.stockCode
+      );
+      console.log(
+        "🔥 [조건 알림] 조건 알림만 필터링:",
+        triggeredConditionAlerts
+      );
+
       const triggeredAlertIds = new Set(
         triggeredConditionAlerts.map((a: any) => String(a.alertId))
       );
-      console.log("🔥 [조건 알림] Triggered AlertIds Set:", Array.from(triggeredAlertIds));
+      console.log(
+        "🔥 [조건 알림] Triggered AlertIds Set:",
+        Array.from(triggeredAlertIds)
+      );
 
       // 3. 조건별 활성화된 기업 수 조회
-      const triggeredConditionData = await alertService.getTriggeredConditionAlerts(accessToken);
-      console.log("🔥 [조건 알림] getTriggeredConditionAlerts 응답:", triggeredConditionData);
-      
+      const triggeredConditionData =
+        await alertService.getTriggeredConditionAlerts(accessToken);
+      console.log(
+        "🔥 [조건 알림] getTriggeredConditionAlerts 응답:",
+        triggeredConditionData
+      );
+
       // 조건명으로 activeCompanyCount 매핑
       const activeCountMap = new Map(
-        triggeredConditionData.map((item) => [item.conditionName, item.activeCompanyCount])
+        triggeredConditionData.map((item) => [
+          item.conditionName,
+          item.activeCompanyCount,
+        ])
       );
 
       const rawList = Array.isArray(res?.data) ? res.data : [];
@@ -145,8 +160,10 @@ export default function AlertCondition() {
 
             const isTriggered = triggeredAlertIds.has(alertId);
             const activeCount = activeCountMap.get(alert.title) || 0;
-            console.log(`🔥 [조건 알림 ${alertId}] enabled=${alert.isActive}, isTriggered=${isTriggered}, activeCount=${activeCount}`);
-            
+            console.log(
+              `🔥 [조건 알림 ${alertId}] enabled=${alert.isActive}, isTriggered=${isTriggered}, activeCount=${activeCount}`
+            );
+
             return {
               id: alertId,
               name: alert.title || "조건 알림",
@@ -333,8 +350,10 @@ export default function AlertCondition() {
           data={alerts
             .filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
             .filter((c) =>
-              showOnlyActive 
-                ? c.enabled && c.activeCompanyCount !== undefined && c.activeCompanyCount > 0
+              showOnlyActive
+                ? c.enabled &&
+                  c.activeCompanyCount !== undefined &&
+                  c.activeCompanyCount > 0
                 : true
             )}
           showsVerticalScrollIndicator={false}
@@ -344,6 +363,7 @@ export default function AlertCondition() {
           rightOpenValue={-deleteWidth}
           disableRightSwipe
           closeOnRowPress
+          contentContainerStyle={styles.listContent}
           renderItem={({ item, index }) => {
             const fadeAnim = fadeAnimations[item.id] || new Animated.Value(1);
             const filtered = alerts.filter((c) =>
@@ -373,11 +393,9 @@ export default function AlertCondition() {
                 >
                   <View style={styles.itemText}>
                     <View style={styles.nameContainer}>
-                      {item.enabled && 
-                       item.activeCompanyCount !== undefined && 
-                       item.activeCompanyCount > 0 && (
-                        <BlinkingDot />
-                      )}
+                      {item.enabled &&
+                        item.activeCompanyCount !== undefined &&
+                        item.activeCompanyCount > 0 && <BlinkingDot />}
                       <Text style={styles.name}>{item.name}</Text>
                     </View>
 
@@ -459,6 +477,9 @@ export default function AlertCondition() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  listContent: {
+    paddingBottom: 120,
+  },
   searchWrapper: {
     flexDirection: "row",
     alignItems: "center",
@@ -533,9 +554,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 30,
     bottom: 110,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 66,
+    height: 66,
+    borderRadius: 33,
     backgroundColor: "black",
     justifyContent: "center",
     alignItems: "center",

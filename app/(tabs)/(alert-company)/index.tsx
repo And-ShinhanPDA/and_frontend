@@ -325,6 +325,7 @@ export default function AlertCompany() {
           rightOpenValue={-deleteWidth}
           disableRightSwipe
           closeOnRowPress
+          contentContainerStyle={styles.listContent}
           renderItem={({ item, index }) => {
             const fadeAnim =
               fadeAnimations[item.stockCode] || new Animated.Value(1);
@@ -431,6 +432,9 @@ export default function AlertCompany() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  listContent: {
+    paddingBottom: 120,
+  },
   searchWrapper: {
     flexDirection: "row",
     alignItems: "center",
