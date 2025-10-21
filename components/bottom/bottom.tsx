@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "expo-router";
 import React from "react";
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 
-type TabName = "조건 검색" | "기업 알림" | "홈" | "차트" | "히스토리";
+type TabName = "조건 검색" | "기업 알림" | "홈" | "종목 차트" | "히스토리";
 
 interface CustomBottomTabProps {
   activeTab?: TabName;
@@ -16,6 +16,11 @@ export function CustomBottomTab({ activeTab }: CustomBottomTabProps) {
 
   const tabs = [
     {
+      name: "홈" as TabName,
+      path: "/(tabs)/(home)",
+      icon: require("@/assets/images/bottomNavigation/home.png"),
+    },
+    {
       name: "조건 검색" as TabName,
       path: "/(tabs)/(alert-condition)",
       icon: require("@/assets/images/bottomNavigation/condition.png"),
@@ -26,12 +31,7 @@ export function CustomBottomTab({ activeTab }: CustomBottomTabProps) {
       icon: require("@/assets/images/bottomNavigation/company.png"),
     },
     {
-      name: "홈" as TabName,
-      path: "/(tabs)/(home)",
-      icon: require("@/assets/images/bottomNavigation/home.png"),
-    },
-    {
-      name: "차트" as TabName,
+      name: "종목 차트" as TabName,
       path: "/(tabs)/(chart)",
       icon: require("@/assets/images/bottomNavigation/chart.png"),
     },

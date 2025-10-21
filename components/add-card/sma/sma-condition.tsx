@@ -11,6 +11,7 @@ import {
     View,
 } from "react-native";
 import AddIcon from "../../../assets/images/add.svg";
+import ChevronDown from "../../../assets/images/ChevronDown.svg";
 import EditIcon from "../../../assets/images/edit.svg";
 import ConditionTooltip from "../../condition/condition-tooltip";
 import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
@@ -109,13 +110,25 @@ export default function SMAConditionCard({
               <Text style={styles.title}>SMA</Text>
               <ConditionTooltip description={CONDITION_DESCRIPTIONS.sma} />
             </View>
-            <TouchableOpacity onPress={() => setIsOpen(true)}>
-              {hasCondition ? (
-                <EditIcon width={18} height={18} />
-              ) : (
-                <AddIcon width={30} height={30} />
+            <View style={styles.rightButtons}>
+              {hasCondition && (
+                <View
+                  style={[
+                    styles.chevronWrapper,
+                    expanded && { transform: [{ rotate: "180deg" }] },
+                  ]}
+                >
+                  <ChevronDown width={18} height={18} />
+                </View>
               )}
-            </TouchableOpacity>
+              <TouchableOpacity onPress={() => setIsOpen(true)}>
+                {hasCondition ? (
+                  <EditIcon width={18} height={18} />
+                ) : (
+                  <AddIcon width={30} height={30} />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
 
           {expanded && conditionData && 
@@ -202,6 +215,15 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#111",
     fontFamily: "Pretendard",
+  },
+  rightButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 20,
+  },
+  chevronWrapper: {
+    justifyContent: "center",
+    alignItems: "center",
   },
   divider: {
     height: 1,

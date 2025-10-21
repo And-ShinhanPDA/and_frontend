@@ -56,7 +56,7 @@ export default function AlertAdditional() {
   return (
     <View style={styles.container}>
       <CustomHeader
-        title="차트"
+        title="종목 차트"
         showBackButton={false}
         rightButtons="mypage"
         userName={user?.name || "사용자"}
@@ -87,7 +87,7 @@ export default function AlertAdditional() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
-      <CustomBottomTab activeTab="차트" />
+      <CustomBottomTab activeTab="종목 차트" />
     </View>
   );
 }

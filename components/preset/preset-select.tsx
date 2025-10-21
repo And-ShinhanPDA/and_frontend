@@ -1,7 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { presetService } from "@/services/preset-service";
-import { extractIndicatorCategories } from "@/utils/parseConditions";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -64,7 +63,9 @@ interface Preset {
 }
 
 const { width } = Dimensions.get("window");
-const CARD_WIDTH = (width - 40 * 2 - 14) / 2;
+const HORIZONTAL_PADDING = 24;
+const GAP = 16;
+const CARD_WIDTH = (width - HORIZONTAL_PADDING * 2 - GAP) / 2;
 
 interface PresetSelectProps {
   onClose: () => void;
@@ -129,17 +130,35 @@ export default function PresetSelect({
       return matches;
     })
     .map((preset) => {
-      // custom 카테고리는 동적으로 지표 추출, 나머지는 하드코딩된 설명 사용
-      const desc =
+      // 지표 카테고리를 태그 배열로 추출
+      const tagSet = new Set<string>();
+      if (preset.conditions) {
+        preset.conditions.forEach((c: any) => {
+          const indicator = c.indicator || "";
+          if (indicator.includes("PRICE")) tagSet.add("가격");
+          else if (indicator.includes("RATE")) tagSet.add("변동률");
+          else if (indicator.includes("TRAILING")) tagSet.add("후행");
+          else if (indicator.includes("52W")) tagSet.add("52주");
+          else if (indicator.includes("VOLUME")) tagSet.add("거래량");
+          else if (indicator.includes("SMA")) tagSet.add("SMA");
+          else if (indicator.includes("RSI")) tagSet.add("RSI");
+          else if (indicator.includes("BB")) tagSet.add("볼린저밴드");
+        });
+      }
+      const tags = Array.from(tagSet);
+
+      // 이미지 선택 (내 프리셋은 icon.png)
+      const image =
         preset.category === "custom"
-          ? extractIndicatorCategories(preset.conditions)
-          : descMap[preset.title] || `조건 ${preset.conditions.length}개`;
+          ? require("@/assets/images/icon.png")
+          : imageMap[preset.title] || PresetDefault;
 
       return {
         id: preset.presetId,
         name: preset.title,
-        desc: desc,
-        image: imageMap[preset.title] || PresetDefault,
+        desc: "", // 더 이상 사용 안 함
+        tags: tags,
+        image: image,
       };
     });
 
@@ -395,10 +414,10 @@ export default function PresetSelect({
                         {typeof p.image === "number" ? (
                           <Image
                             source={p.image}
-                            style={{ width: 90, height: 90 }}
+                            style={{ width: 140, height: 140 }}
                           />
                         ) : (
-                          <p.image width={90} height={90} />
+                          <p.image width={140} height={140} />
                         )}
                       </View>
 
@@ -406,7 +425,21 @@ export default function PresetSelect({
                         <Text style={styles.name}>{p.name}</Text>
                       </View>
 
-                      <Text style={styles.desc}>{p.desc}</Text>
+                      {/* 지표 태그 표시 */}
+                      <View style={styles.tagContainer}>
+                        {p.tags.slice(0, 3).map((tag: string, idx: number) => (
+                          <View key={idx} style={styles.tag}>
+                            <Text style={styles.tagText}>{tag}</Text>
+                          </View>
+                        ))}
+                        {p.tags.length > 3 && (
+                          <View style={styles.tag}>
+                            <Text style={styles.tagText}>
+                              +{p.tags.length - 3}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
                     </TouchableOpacity>
 
                     {/* 삭제 버튼 - view 모드 + 편집 모드일 때만 표시 */}
@@ -504,55 +537,58 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   scrollContent: {
-    paddingTop: 16,
+    paddingTop: 20,
     paddingBottom: 20,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   grid: {
     width: "100%",
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "center",
-    gap: 12,
+    justifyContent: "flex-start",
+    columnGap: 16,
+    rowGap: 20,
   },
   card: {
     width: CARD_WIDTH,
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1.5,
     borderColor: "#E0E0E0",
-    marginBottom: 12,
     position: "relative",
     overflow: "visible",
   },
   cardTouchable: {
-    paddingVertical: 20,
-    paddingHorizontal: 14,
+    padding: 16,
     alignItems: "center",
+    justifyContent: "center",
     width: "100%",
-    minHeight: 160,
+    minHeight: 200,
   },
   imageContainer: {
     position: "absolute",
+    left: 0,
     right: 0,
-    top: 8,
-    opacity: 0.8,
-  },
-  textCenter: {
-    flex: 1,
+    top: 0,
+    bottom: 0,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 12,
-    marginBottom: 16,
+    opacity: 0.4,
+  },
+  textCenter: {
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
     zIndex: 1,
   },
   name: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "700",
     color: "#111",
     textAlign: "center",
     fontFamily: "Pretendard",
-    marginBottom: 8,
+    lineHeight: 20,
   },
   desc: {
     fontSize: 11,
@@ -561,6 +597,29 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     fontFamily: "Pretendard",
     fontWeight: "400",
+  },
+  tagContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+    width: "100%",
+  },
+  tag: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    backgroundColor: "#fff",
+  },
+  tagText: {
+    fontSize: 11,
+    color: "#333",
+    fontFamily: "Pretendard",
+    fontWeight: 600,
   },
   closeBtn: {
     backgroundColor: "#4CC439",

@@ -1,20 +1,20 @@
 import { COMPANIES } from "@/constants/companies";
 import {
-    treemap as d3Treemap,
-    treemapSquarify as d3TreemapSquarify,
-    hierarchy,
+  treemap as d3Treemap,
+  treemapSquarify as d3TreemapSquarify,
+  hierarchy,
 } from "d3-hierarchy";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Animated,
-    Image,
-    LayoutChangeEvent,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Animated,
+  Image,
+  LayoutChangeEvent,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import Svg, { Rect, Text as SvgText } from "react-native-svg";
 
@@ -418,6 +418,43 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
           </>
         ) : null}
       </View>
+
+      {/* 색상 범례 */}
+      {!loading && companies.length > 0 && (
+        <View style={styles.legendContainer}>
+          <Text style={styles.legendTitle}>변동률 색상 가이드</Text>
+          <View style={styles.legendGrid}>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendBox, { backgroundColor: "#F63C3C" }]} />
+              <Text style={styles.legendText}>+3% 이상</Text>
+            </View>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendBox, { backgroundColor: "#9F373A" }]} />
+              <Text style={styles.legendText}>+1% ~ +3%</Text>
+            </View>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendBox, { backgroundColor: "#6B3439" }]} />
+              <Text style={styles.legendText}>+0.3% ~ +1%</Text>
+            </View>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendBox, { backgroundColor: "#32373C" }]} />
+              <Text style={styles.legendText}>-0.3% ~ +0.3%</Text>
+            </View>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendBox, { backgroundColor: "#263D53" }]} />
+              <Text style={styles.legendText}>-1% ~ -0.3%</Text>
+            </View>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendBox, { backgroundColor: "#1F4D75" }]} />
+              <Text style={styles.legendText}>-3% ~ -1%</Text>
+            </View>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendBox, { backgroundColor: "#018DFF" }]} />
+              <Text style={styles.legendText}>-3% 이하</Text>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -479,5 +516,47 @@ const styles = StyleSheet.create({
     fontFamily: "Pretendard",
     textAlign: "center",
     paddingVertical: 20,
+  },
+  legendContainer: {
+    backgroundColor: "#FAFAFA",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 0,
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+  },
+  legendTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#111",
+    fontFamily: "Pretendard",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  legendGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  legendRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "48%",
+    marginBottom: 6,
+  },
+  legendBox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    marginRight: 8,
+    borderWidth: 0.5,
+    borderColor: "rgba(0,0,0,0.1)",
+  },
+  legendText: {
+    fontSize: 12,
+    color: "#555",
+    fontFamily: "Pretendard",
+    fontWeight: "500",
   },
 });
