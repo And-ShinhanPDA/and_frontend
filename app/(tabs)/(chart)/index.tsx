@@ -2,8 +2,9 @@ import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
 import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { refreshWidgetManually } from "@/services/widgetShare";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   FlatList,
   Image,
@@ -36,6 +37,14 @@ export default function AlertAdditional() {
   const onSubmit = async () => {
     router.replace("/(tabs)");
   };
+
+  // 위젯 새로고침 (화면 포커스 시)
+  useFocusEffect(
+    useCallback(() => {
+      console.log("🔄 [차트] 화면 포커스 - 위젯 새로고침");
+      refreshWidgetManually();
+    }, [])
+  );
 
   const renderItem = ({ item }: any) => (
     <TouchableOpacity

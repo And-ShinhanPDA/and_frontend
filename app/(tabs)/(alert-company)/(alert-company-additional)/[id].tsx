@@ -14,21 +14,21 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { alertService } from "@/services/alert-service";
 import {
-    CurrentData,
-    currentDataService,
+  CurrentData,
+  currentDataService,
 } from "@/services/current-data-service";
 import { presetService } from "@/services/preset-service";
 import { refreshWidgetManually } from "@/services/widgetShare";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function CompanyAlertDetail() {

@@ -1,13 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";

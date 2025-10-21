@@ -162,7 +162,10 @@ export default function AlertConditionDetail() {
         };
       });
 
-      console.log("🔥 [CompanyList] 최종 포맷된 기업 수:", formattedCompanies.length);
+      console.log(
+        "🔥 [CompanyList] 최종 포맷된 기업 수:",
+        formattedCompanies.length
+      );
       setCompanies(formattedCompanies);
       console.log(
         `조건 검색 결과 ${formattedCompanies.length}개 기업 로드 완료`
@@ -414,10 +417,7 @@ export default function AlertConditionDetail() {
         onClose={() => setIsPresetOpen(false)}
         ratio={0.85}
       >
-        <PresetSelect 
-          onClose={() => setIsPresetOpen(false)} 
-          mode="view"
-        />
+        <PresetSelect onClose={() => setIsPresetOpen(false)} mode="view" />
       </ConditionBottomSheet>
 
       <CustomBottomTab activeTab="조건 검색" />

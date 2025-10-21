@@ -4,7 +4,7 @@ import axios from "axios";
 const BASE_URL = process.env.EXPO_PUBLIC_USER_URL;
 
 export const authService = {
-  // 회원가입
+  // 회원가입: 이메일, 이름, 패스워드만 전송
   async signUp(payload: SignUpPayload): Promise<User> {
     const url = `${BASE_URL}/api/auth/signup`;
 
@@ -12,9 +12,9 @@ export const authService = {
       name: payload.name,
       email: payload.email,
       password: payload.password,
-      fcmToken: payload.fcmToken,
-      deviceId: payload.deviceId,
     };
+
+    console.log("📤 [회원가입] 요청 데이터:", requestBody);
 
     try {
       const res = await axios.post<AuthResponse<User>>(url, requestBody, {
@@ -22,23 +22,43 @@ export const authService = {
         validateStatus: (status) => status >= 200 && status < 500,
       });
 
+      console.log("📥 [회원가입] 응답 상태:", res.status);
+
       if (res.status < 200 || res.status >= 300) {
         throw new Error(res.data?.message || `회원가입에 실패했습니다.`);
       }
 
+      console.log("✅ [회원가입] 성공:", res.data.data);
       return res.data.data;
     } catch (err: any) {
       const errorMsg = getErrorMessage(err);
+      console.error("❌ [회원가입] 실패:", errorMsg);
       throw new Error(errorMsg);
     }
   },
-  // 로그인
+  // 로그인: 이메일, 패스워드, FCM 토큰, 디바이스 ID 전송
   async signIn(payload: SignInPayload): Promise<{
     user: User;
     accessToken: string;
     refreshTokenId: string;
   }> {
     const url = `${BASE_URL}/api/auth/login`;
+
+    const requestBody = {
+      email: payload.email,
+      password: payload.password,
+      fcmToken: payload.fcmToken,
+      deviceId: payload.deviceId,
+    };
+
+    console.log("📤 [로그인] 요청 데이터:", {
+      email: requestBody.email,
+      password: "***",
+      fcmToken: requestBody.fcmToken
+        ? `${requestBody.fcmToken.substring(0, 20)}...`
+        : "없음",
+      deviceId: requestBody.deviceId,
+    });
 
     try {
       const res = await axios.post<
@@ -50,10 +70,12 @@ export const authService = {
           refreshTokenId: string;
           deviceId: string;
         }>
-      >(url, payload, {
+      >(url, requestBody, {
         timeout: 15000,
         validateStatus: (status) => status >= 200 && status < 500,
       });
+
+      console.log("📥 [로그인] 응답 상태:", res.status);
 
       if (res.status < 200 || res.status >= 300) {
         throw new Error(res.data?.message || `로그인에 실패했습니다.`);
@@ -65,6 +87,12 @@ export const authService = {
         name: res.data.data.name,
       };
 
+      console.log("✅ [로그인] 성공:", {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+      });
+
       return {
         user,
         accessToken: res.data.data.accessToken,
@@ -72,6 +100,7 @@ export const authService = {
       };
     } catch (err: any) {
       const errorMsg = getErrorMessage(err);
+      console.error("❌ [로그인] 실패:", errorMsg);
       throw new Error(errorMsg);
     }
   },

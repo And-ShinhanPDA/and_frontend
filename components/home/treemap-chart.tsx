@@ -163,15 +163,15 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
   // 상자 클릭 핸들러
   const handleBoxPress = (stockCode: string, companyName: string) => {
     console.log(`📊 [히트맵] ${companyName} (${stockCode}) 클릭`);
-    
+
     // 기업 알림 목록 화면으로 먼저 이동
     router.replace("/(tabs)/(alert-company)");
-    
+
     // 약간의 딜레이 후 기업 상세 화면으로 push
     setTimeout(() => {
       router.push({
         pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
-        params: { 
+        params: {
           id: stockCode,
           name: companyName,
         },
@@ -207,7 +207,7 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
   return (
     <View>
       <View style={styles.titleContainer}>
-        <Text style={styles.cardTitle}>내 알림들 한 눈에 보기</Text>
+        <Text style={styles.cardTitle}>최근 일주일 활성화 된 알림 히트맵</Text>
       </View>
       <View style={styles.card} onLayout={handleLayout}>
         {loading ? (
@@ -227,169 +227,169 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
           <>
             <Svg width={cardWidth} height={CARD_HEIGHT} pointerEvents="none">
               {leaves.map((leaf, i) => {
-              const { x0, y0, x1, y1 } = leaf;
-              const w = x1 - x0;
-              const h = y1 - y0;
-              const company = leaf.data as CompanyNode;
-              const bg = getColor(company.percent);
-              const textColor = getTextColor(bg);
-              const isTop3 = top3Values.includes(company.name);
+                const { x0, y0, x1, y1 } = leaf;
+                const w = x1 - x0;
+                const h = y1 - y0;
+                const company = leaf.data as CompanyNode;
+                const bg = getColor(company.percent);
+                const textColor = getTextColor(bg);
+                const isTop3 = top3Values.includes(company.name);
 
-              // 세로로 긴 컨테이너 판별 (높이가 너비의 1.5배 이상)
-              const isTallContainer = h > w * 1.5;
+                // 세로로 긴 컨테이너 판별 (높이가 너비의 1.5배 이상)
+                const isTallContainer = h > w * 1.5;
 
-              const baseFontSize = Math.max(
-                9,
-                Math.min(
-                  w / (isTop3 ? 3.5 : 4.5),
-                  h / (isTop3 ? 4.5 : 5.5),
-                  isTop3 ? 22 : 18
-                )
-              );
+                const baseFontSize = Math.max(
+                  9,
+                  Math.min(
+                    w / (isTop3 ? 3.5 : 4.5),
+                    h / (isTop3 ? 4.5 : 5.5),
+                    isTop3 ? 22 : 18
+                  )
+                );
 
-              // 세로로 긴 컨테이너는 폰트 크기를 더 작게
-              const adjustedBaseFontSize = isTallContainer
-                ? baseFontSize * 0.7
-                : baseFontSize;
+                // 세로로 긴 컨테이너는 폰트 크기를 더 작게
+                const adjustedBaseFontSize = isTallContainer
+                  ? baseFontSize * 0.7
+                  : baseFontSize;
 
-              const nameLines = wrapText(
-                company.name,
-                w - 6,
-                adjustedBaseFontSize
-              );
-              const isMultiLine = nameLines.length > 1;
+                const nameLines = wrapText(
+                  company.name,
+                  w - 6,
+                  adjustedBaseFontSize
+                );
+                const isMultiLine = nameLines.length > 1;
 
-              const nameFontSize = adjustedBaseFontSize;
-              const countFontSize = Math.max(7, adjustedBaseFontSize * 0.8);
-              const percentFontSize = Math.max(7, adjustedBaseFontSize * 0.8);
+                const nameFontSize = adjustedBaseFontSize;
+                const countFontSize = Math.max(7, adjustedBaseFontSize * 0.8);
+                const percentFontSize = Math.max(7, adjustedBaseFontSize * 0.8);
 
-              const nameLineHeight = nameFontSize + 1;
-              const spacing = isTop3 ? 4 : 3;
+                const nameLineHeight = nameFontSize + 1;
+                const spacing = isTop3 ? 4 : 3;
 
-              let totalHeight = 0;
-              totalHeight += isMultiLine ? nameLineHeight * 2 : nameFontSize;
-              totalHeight += spacing;
-              if (isTop3) {
-                totalHeight += countFontSize;
+                let totalHeight = 0;
+                totalHeight += isMultiLine ? nameLineHeight * 2 : nameFontSize;
                 totalHeight += spacing;
-              }
-              totalHeight += percentFontSize;
+                if (isTop3) {
+                  totalHeight += countFontSize;
+                  totalHeight += spacing;
+                }
+                totalHeight += percentFontSize;
 
-              let scale = 1;
-              if (totalHeight > h - 8) {
-                scale = (h - 8) / totalHeight;
-              }
+                let scale = 1;
+                if (totalHeight > h - 8) {
+                  scale = (h - 8) / totalHeight;
+                }
 
-              const finalNameFontSize = nameFontSize * scale;
-              const finalCountFontSize = countFontSize * scale;
-              const finalPercentFontSize = percentFontSize * scale;
-              const finalNameLineHeight = nameLineHeight * scale;
-              const finalSpacing = spacing * scale;
+                const finalNameFontSize = nameFontSize * scale;
+                const finalCountFontSize = countFontSize * scale;
+                const finalPercentFontSize = percentFontSize * scale;
+                const finalNameLineHeight = nameLineHeight * scale;
+                const finalSpacing = spacing * scale;
 
-              const centerY = y0 + h / 2;
-              const scaledTotalHeight = totalHeight * scale;
-              let currentY = centerY - scaledTotalHeight / 2;
+                const centerY = y0 + h / 2;
+                const scaledTotalHeight = totalHeight * scale;
+                let currentY = centerY - scaledTotalHeight / 2;
 
-              // 등락률 텍스트의 너비 체크 및 조정
-              const percentText =
-                company.percent > 0
-                  ? `+${company.percent.toFixed(2)}%`
-                  : `${company.percent.toFixed(2)}%`;
-              const estimatedPercentWidth =
-                percentText.length * finalPercentFontSize * 0.6;
-              const percentScale =
-                estimatedPercentWidth > w - 8
-                  ? (w - 8) / estimatedPercentWidth
-                  : 1;
-              const adjustedPercentFontSize =
-                finalPercentFontSize * percentScale;
+                // 등락률 텍스트의 너비 체크 및 조정
+                const percentText =
+                  company.percent > 0
+                    ? `+${company.percent.toFixed(2)}%`
+                    : `${company.percent.toFixed(2)}%`;
+                const estimatedPercentWidth =
+                  percentText.length * finalPercentFontSize * 0.6;
+                const percentScale =
+                  estimatedPercentWidth > w - 8
+                    ? (w - 8) / estimatedPercentWidth
+                    : 1;
+                const adjustedPercentFontSize =
+                  finalPercentFontSize * percentScale;
 
-              return (
-                <React.Fragment key={i}>
-                  <Rect
-                    x={x0}
-                    y={y0}
-                    width={w}
-                    height={h}
-                    fill={bg}
-                    stroke="#111"
-                    strokeWidth={0.4}
-                    rx={3}
-                  />
+                return (
+                  <React.Fragment key={i}>
+                    <Rect
+                      x={x0}
+                      y={y0}
+                      width={w}
+                      height={h}
+                      fill={bg}
+                      stroke="#111"
+                      strokeWidth={0.4}
+                      rx={3}
+                    />
 
-                  {/* 회사명 */}
-                  {nameLines.map((line: string, idx: number) => {
-                    const y =
-                      currentY +
-                      (idx === 0
-                        ? finalNameFontSize / 2
-                        : finalNameLineHeight + finalNameFontSize / 2);
-                    return (
-                      <SvgText
-                        key={`name-${idx}`}
-                        x={x0 + w / 2}
-                        y={y}
-                        fontSize={finalNameFontSize}
-                        fontWeight="bold"
-                        fill={textColor}
-                        textAnchor="middle"
-                        alignmentBaseline="middle"
-                      >
-                        {line}
-                      </SvgText>
-                    );
-                  })}
-
-                  {(() => {
-                    currentY += isMultiLine
-                      ? finalNameLineHeight * 2
-                      : finalNameFontSize;
-                    currentY += finalSpacing * (isTop3 ? 1.5 : 1);
-                    return null;
-                  })()}
-
-                  {/* 알림 개수 */}
-                  {isTop3 &&
-                    (() => {
-                      // 실제 알림 개수 표시 (actualCount가 있으면 사용, 없으면 value)
-                      const displayCount =
-                        company.actualCount !== undefined
-                          ? company.actualCount
-                          : Math.floor(company.value);
-                      const countText = `알림 ${displayCount}개`;
-                      const result = (
+                    {/* 회사명 */}
+                    {nameLines.map((line: string, idx: number) => {
+                      const y =
+                        currentY +
+                        (idx === 0
+                          ? finalNameFontSize / 2
+                          : finalNameLineHeight + finalNameFontSize / 2);
+                      return (
                         <SvgText
+                          key={`name-${idx}`}
                           x={x0 + w / 2}
-                          y={currentY + finalCountFontSize / 2}
-                          fontSize={finalCountFontSize}
-                          fontWeight="600"
+                          y={y}
+                          fontSize={finalNameFontSize}
+                          fontWeight="bold"
                           fill={textColor}
                           textAnchor="middle"
                           alignmentBaseline="middle"
-                          opacity={0.9}
                         >
-                          {countText}
+                          {line}
                         </SvgText>
                       );
-                      currentY += finalCountFontSize + finalSpacing * 2;
-                      return result;
+                    })}
+
+                    {(() => {
+                      currentY += isMultiLine
+                        ? finalNameLineHeight * 2
+                        : finalNameFontSize;
+                      currentY += finalSpacing * (isTop3 ? 1.5 : 1);
+                      return null;
                     })()}
 
-                  {/* 등락률 */}
-                  <SvgText
-                    x={x0 + w / 2}
-                    y={currentY + adjustedPercentFontSize / 2}
-                    fontSize={adjustedPercentFontSize}
-                    fontWeight="400"
-                    fill={textColor}
-                    textAnchor="middle"
-                    alignmentBaseline="middle"
-                  >
-                    {percentText}
-                  </SvgText>
-                </React.Fragment>
-              );
-            })}
+                    {/* 알림 개수 */}
+                    {isTop3 &&
+                      (() => {
+                        // 실제 알림 개수 표시 (actualCount가 있으면 사용, 없으면 value)
+                        const displayCount =
+                          company.actualCount !== undefined
+                            ? company.actualCount
+                            : Math.floor(company.value);
+                        const countText = `알림 ${displayCount}개`;
+                        const result = (
+                          <SvgText
+                            x={x0 + w / 2}
+                            y={currentY + finalCountFontSize / 2}
+                            fontSize={finalCountFontSize}
+                            fontWeight="600"
+                            fill={textColor}
+                            textAnchor="middle"
+                            alignmentBaseline="middle"
+                            opacity={0.9}
+                          >
+                            {countText}
+                          </SvgText>
+                        );
+                        currentY += finalCountFontSize + finalSpacing * 2;
+                        return result;
+                      })()}
+
+                    {/* 등락률 */}
+                    <SvgText
+                      x={x0 + w / 2}
+                      y={currentY + adjustedPercentFontSize / 2}
+                      fontSize={adjustedPercentFontSize}
+                      fontWeight="400"
+                      fill={textColor}
+                      textAnchor="middle"
+                      alignmentBaseline="middle"
+                    >
+                      {percentText}
+                    </SvgText>
+                  </React.Fragment>
+                );
+              })}
             </Svg>
 
             {/* 클릭 가능한 투명 레이어 */}
@@ -409,7 +409,9 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
                     width: w,
                     height: h,
                   }}
-                  onPress={() => handleBoxPress(company.stockCode, company.name)}
+                  onPress={() =>
+                    handleBoxPress(company.stockCode, company.name)
+                  }
                 >
                   {/* 투명한 터치 영역 */}
                 </Pressable>
@@ -422,34 +424,48 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
       {/* 색상 범례 */}
       {!loading && companies.length > 0 && (
         <View style={styles.legendContainer}>
-          <Text style={styles.legendTitle}>변동률 색상 가이드</Text>
+          <Text style={styles.legendTitle}>가격 변동률 색상 가이드</Text>
           <View style={styles.legendGrid}>
             <View style={styles.legendRow}>
-              <View style={[styles.legendBox, { backgroundColor: "#F63C3C" }]} />
+              <View
+                style={[styles.legendBox, { backgroundColor: "#F63C3C" }]}
+              />
               <Text style={styles.legendText}>+3% 이상</Text>
             </View>
             <View style={styles.legendRow}>
-              <View style={[styles.legendBox, { backgroundColor: "#9F373A" }]} />
+              <View
+                style={[styles.legendBox, { backgroundColor: "#9F373A" }]}
+              />
               <Text style={styles.legendText}>+1% ~ +3%</Text>
             </View>
             <View style={styles.legendRow}>
-              <View style={[styles.legendBox, { backgroundColor: "#6B3439" }]} />
+              <View
+                style={[styles.legendBox, { backgroundColor: "#6B3439" }]}
+              />
               <Text style={styles.legendText}>+0.3% ~ +1%</Text>
             </View>
             <View style={styles.legendRow}>
-              <View style={[styles.legendBox, { backgroundColor: "#32373C" }]} />
+              <View
+                style={[styles.legendBox, { backgroundColor: "#32373C" }]}
+              />
               <Text style={styles.legendText}>-0.3% ~ +0.3%</Text>
             </View>
             <View style={styles.legendRow}>
-              <View style={[styles.legendBox, { backgroundColor: "#263D53" }]} />
+              <View
+                style={[styles.legendBox, { backgroundColor: "#263D53" }]}
+              />
               <Text style={styles.legendText}>-1% ~ -0.3%</Text>
             </View>
             <View style={styles.legendRow}>
-              <View style={[styles.legendBox, { backgroundColor: "#1F4D75" }]} />
+              <View
+                style={[styles.legendBox, { backgroundColor: "#1F4D75" }]}
+              />
               <Text style={styles.legendText}>-3% ~ -1%</Text>
             </View>
             <View style={styles.legendRow}>
-              <View style={[styles.legendBox, { backgroundColor: "#018DFF" }]} />
+              <View
+                style={[styles.legendBox, { backgroundColor: "#018DFF" }]}
+              />
               <Text style={styles.legendText}>-3% 이하</Text>
             </View>
           </View>

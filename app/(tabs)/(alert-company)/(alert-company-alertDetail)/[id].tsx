@@ -1,12 +1,12 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import BollingerBandConditionReadonly from "@/components/add-card/bollingerband/bollingerband-condition-readonly";
@@ -55,7 +55,7 @@ export default function CompanyAlertDetail() {
   const [saving, setSaving] = useState(false);
   const [alertData, setAlertData] = useState<any>(null);
   const [title, setTitle] = useState("");
-  
+
   // 기업명 (params에서 전달된 값 또는 alertData에서 가져옴)
   const displayCompanyName = companyName || alertData?.stockName || "기업 알림";
 

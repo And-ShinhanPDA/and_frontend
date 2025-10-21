@@ -9,8 +9,7 @@ export const presetService = {
     const url = `${BASE_URL}/api/presets`;
 
     try {
-      const res = await apiClient.get(url, {
-      });
+      const res = await apiClient.get(url, {});
 
       return res.data;
     } catch (err: any) {
@@ -23,8 +22,7 @@ export const presetService = {
     const url = `${BASE_URL}/api/presets/${presetId}`;
 
     try {
-      const res = await apiClient.get(url, {
-      });
+      const res = await apiClient.get(url, {});
 
       return res.data;
     } catch (err: any) {
@@ -37,8 +35,7 @@ export const presetService = {
     const url = `${BASE_URL}/api/presets`;
 
     try {
-      const res = await apiClient.post(url, payload, {
-      });
+      const res = await apiClient.post(url, payload, {});
 
       return res.data;
     } catch (err: any) {
@@ -51,8 +48,7 @@ export const presetService = {
     const url = `${BASE_URL}/api/presets/${presetId}`;
 
     try {
-      const res = await apiClient.put(url, payload, {
-      });
+      const res = await apiClient.put(url, payload, {});
 
       return res.data;
     } catch (err: any) {
@@ -65,8 +61,7 @@ export const presetService = {
     const url = `${BASE_URL}/api/presets/${presetId}`;
 
     try {
-      const res = await apiClient.delete(url, {
-      });
+      const res = await apiClient.delete(url, {});
 
       return res.data;
     } catch (err: any) {

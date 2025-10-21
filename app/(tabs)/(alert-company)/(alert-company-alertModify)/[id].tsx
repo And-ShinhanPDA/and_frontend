@@ -1,19 +1,19 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
@@ -69,8 +69,18 @@ export default function ConditionAlertDetail() {
     const parsed: any = {
       price: { limits: [], changes: [] },
       change: { dailyChanges: [], baseChanges: [] },
-      trailing: { stopPrice: "", stopPercent: "", risePrice: "", risePercent: "" },
-      week52: { highAlert: false, lowAlert: false, highProximity: null, lowProximity: null },
+      trailing: {
+        stopPrice: "",
+        stopPercent: "",
+        risePrice: "",
+        risePercent: "",
+      },
+      week52: {
+        highAlert: false,
+        lowAlert: false,
+        highProximity: null,
+        lowProximity: null,
+      },
       volume: { avgRise: null, avgDrop: null, spike: false },
       sma: { target: null, goldenCross: false, deadCross: false },
       rsi: { overbought: false, oversold: false },
@@ -80,7 +90,8 @@ export default function ConditionAlertDetail() {
     conditions.forEach((cond) => {
       const { indicator, threshold } = cond;
       const thresholdStr = threshold !== null ? String(threshold) : "";
-      const absThresholdStr = threshold !== null ? String(Math.abs(threshold)) : "";
+      const absThresholdStr =
+        threshold !== null ? String(Math.abs(threshold)) : "";
 
       // 가격
       if (indicator === "PRICE_ABOVE") {
@@ -88,54 +99,84 @@ export default function ConditionAlertDetail() {
       } else if (indicator === "PRICE_BELOW") {
         parsed.price.limits.push({ comparison: "이하", amount: thresholdStr });
       } else if (indicator === "PRICE_CHANGE") {
-        parsed.price.changes.push({ direction: threshold >= 0 ? "+" : "-", amount: absThresholdStr });
+        parsed.price.changes.push({
+          direction: threshold >= 0 ? "+" : "-",
+          amount: absThresholdStr,
+        });
       }
       // 변동률
       else if (indicator === "PRICE_RATE_DAILY_UP") {
-        parsed.change.dailyChanges.push({ direction: "+", amount: absThresholdStr });
+        parsed.change.dailyChanges.push({
+          direction: "+",
+          amount: absThresholdStr,
+        });
       } else if (indicator === "PRICE_RATE_DAILY_DOWN") {
-        parsed.change.dailyChanges.push({ direction: "-", amount: absThresholdStr });
+        parsed.change.dailyChanges.push({
+          direction: "-",
+          amount: absThresholdStr,
+        });
       } else if (indicator === "PRICE_RATE_BASE_UP") {
-        parsed.change.baseChanges.push({ direction: "+", amount: absThresholdStr });
+        parsed.change.baseChanges.push({
+          direction: "+",
+          amount: absThresholdStr,
+        });
       } else if (indicator === "PRICE_RATE_BASE_DOWN") {
-        parsed.change.baseChanges.push({ direction: "-", amount: absThresholdStr });
+        parsed.change.baseChanges.push({
+          direction: "-",
+          amount: absThresholdStr,
+        });
       }
       // 후행
-      else if (indicator === "TRAILING_STOP_LOSS_PRICE") parsed.trailing.stopPrice = thresholdStr;
-      else if (indicator === "TRAILING_STOP_LOSS_PERCENT") parsed.trailing.stopPercent = thresholdStr;
-      else if (indicator === "TRAILING_BUY_PRICE") parsed.trailing.risePrice = thresholdStr;
-      else if (indicator === "TRAILING_BUY_PERCENT") parsed.trailing.risePercent = thresholdStr;
+      else if (indicator === "TRAILING_STOP_LOSS_PRICE")
+        parsed.trailing.stopPrice = thresholdStr;
+      else if (indicator === "TRAILING_STOP_LOSS_PERCENT")
+        parsed.trailing.stopPercent = thresholdStr;
+      else if (indicator === "TRAILING_BUY_PRICE")
+        parsed.trailing.risePrice = thresholdStr;
+      else if (indicator === "TRAILING_BUY_PERCENT")
+        parsed.trailing.risePercent = thresholdStr;
       // 52주
       else if (indicator === "HIGH_52W") parsed.week52.highAlert = true;
       else if (indicator === "LOW_52W") parsed.week52.lowAlert = true;
-      else if (indicator === "NEAR_HIGH_52W") parsed.week52.highProximity = { value: thresholdStr };
-      else if (indicator === "NEAR_LOW_52W") parsed.week52.lowProximity = { value: thresholdStr };
+      else if (indicator === "NEAR_HIGH_52W")
+        parsed.week52.highProximity = { value: thresholdStr };
+      else if (indicator === "NEAR_LOW_52W")
+        parsed.week52.lowProximity = { value: thresholdStr };
       // 거래량
-      else if (indicator === "VOLUME_AVG_DEV_UP") parsed.volume.avgRise = thresholdStr;
-      else if (indicator === "VOLUME_AVG_DEV_DOWN") parsed.volume.avgDrop = thresholdStr;
-      else if (indicator === "VOLUME_CHANGE_PERCENT_UP") parsed.volume.spike = true;
+      else if (indicator === "VOLUME_AVG_DEV_UP")
+        parsed.volume.avgRise = thresholdStr;
+      else if (indicator === "VOLUME_AVG_DEV_DOWN")
+        parsed.volume.avgDrop = thresholdStr;
+      else if (indicator === "VOLUME_CHANGE_PERCENT_UP")
+        parsed.volume.spike = true;
       // SMA
-      else if (indicator.startsWith("SMA_")) parsed.sma.target = { indicator, threshold };
+      else if (indicator.startsWith("SMA_"))
+        parsed.sma.target = { indicator, threshold };
       else if (indicator === "GOLDEN_CROSS") parsed.sma.goldenCross = true;
       else if (indicator === "DEAD_CROSS") parsed.sma.deadCross = true;
       // RSI
       else if (indicator === "RSI_OVER") parsed.rsi.overbought = true;
       else if (indicator === "RSI_UNDER") parsed.rsi.oversold = true;
       // 볼린저밴드
-      else if (indicator === "BOLLINGER_UPPER") parsed.bollingerband.upper = true;
-      else if (indicator === "BOLLINGER_LOWER") parsed.bollingerband.lower = true;
+      else if (indicator === "BOLLINGER_UPPER")
+        parsed.bollingerband.upper = true;
+      else if (indicator === "BOLLINGER_LOWER")
+        parsed.bollingerband.lower = true;
     });
 
     return parsed;
   }, []);
 
   // 프리셋 선택 핸들러
-  const handlePresetSelect = useCallback((presetId: number, conditions: any[]) => {
-    console.log("프리셋 적용:", presetId, conditions);
-    const parsed = parsePresetConditions(conditions);
-    setPresetConditions(parsed);
-    setIsPresetOpen(false);
-  }, [parsePresetConditions]);
+  const handlePresetSelect = useCallback(
+    (presetId: number, conditions: any[]) => {
+      console.log("프리셋 적용:", presetId, conditions);
+      const parsed = parsePresetConditions(conditions);
+      setPresetConditions(parsed);
+      setIsPresetOpen(false);
+    },
+    [parsePresetConditions]
+  );
 
   // 프리셋 적용을 위한 상태
   const [presetConditions, setPresetConditions] = useState<any>({});
@@ -203,7 +244,7 @@ export default function ConditionAlertDetail() {
     const original = alertData?.conditions
       ? parseConditionsForCards(alertData.conditions)
       : null;
-    
+
     // 프리셋이 적용되었으면 프리셋 조건을 우선 사용
     if (Object.keys(presetConditions).length > 0) {
       return {
@@ -211,7 +252,7 @@ export default function ConditionAlertDetail() {
         ...presetConditions,
       };
     }
-    
+
     return original;
   }, [alertData?.conditions, presetConditions]);
 
@@ -487,7 +528,7 @@ export default function ConditionAlertDetail() {
         onClose={() => setIsPresetOpen(false)}
         ratio={0.8}
       >
-        <PresetSelect 
+        <PresetSelect
           mode="select"
           onClose={() => setIsPresetOpen(false)}
           onPresetSelect={handlePresetSelect}
