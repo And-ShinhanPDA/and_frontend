@@ -1,3 +1,4 @@
+import { CONDITION_DESCRIPTIONS } from "@/constants/conditionDescriptions";
 import React, { useEffect, useState } from "react";
 import {
     LayoutAnimation,
@@ -11,6 +12,7 @@ import {
 } from "react-native";
 import AddIcon from "../../../assets/images/add.svg";
 import EditIcon from "../../../assets/images/edit.svg";
+import ConditionTooltip from "../../condition/condition-tooltip";
 import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
 import RSIConditionContent from "./rsi-condition-content";
 
@@ -90,7 +92,10 @@ export default function RSIConditionCard({
       <Pressable onPress={hasCondition ? toggleExpand : undefined}>
         <View style={styles.card}>
           <View style={styles.header}>
-            <Text style={styles.title}>RSI</Text>
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>RSI</Text>
+              <ConditionTooltip description={CONDITION_DESCRIPTIONS.rsi} />
+            </View>
             <TouchableOpacity onPress={() => setIsOpen(true)}>
               {hasCondition ? (
                 <EditIcon width={18} height={18} />
@@ -152,6 +157,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
+  },
+  titleRow: {
+    flexDirection: "row",
     alignItems: "center",
   },
   title: { 

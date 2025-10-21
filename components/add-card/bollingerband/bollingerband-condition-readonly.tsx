@@ -1,5 +1,7 @@
+import { CONDITION_DESCRIPTIONS } from "@/constants/conditionDescriptions";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import ConditionTooltip from "../../condition/condition-tooltip";
 
 interface BollingerBandConditionReadonlyCardProps {
   conditionData: {
@@ -18,7 +20,10 @@ export default function BollingerBandConditionReadonlyCard({
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.title}>볼린저밴드</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>볼린저밴드</Text>
+          <ConditionTooltip description={CONDITION_DESCRIPTIONS.bollingerband} />
+        </View>
       </View>
 
       <View style={styles.divider} />
@@ -53,6 +58,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
+  },
+  titleRow: {
+    flexDirection: "row",
     alignItems: "center",
   },
   title: { 

@@ -295,13 +295,19 @@ export default function PresetModify() {
         showsVerticalScrollIndicator={false}
       >
         {/* 제목 입력 */}
-        <TextInput
-          style={styles.titleInput}
-          placeholder="프리셋 제목을 입력하세요"
-          placeholderTextColor="#A4A4A4"
-          value={title}
-          onChangeText={setTitle}
-        />
+        <View style={styles.titleCard}>
+          <View style={styles.titleHeader}>
+            <Text style={styles.titleLabel}>제목</Text>
+          </View>
+          <View style={styles.titleDivider} />
+          <TextInput
+            style={styles.titleInput}
+            placeholder="프리셋 제목을 입력하세요"
+            placeholderTextColor="#A4A4A4"
+            value={title}
+            onChangeText={setTitle}
+          />
+        </View>
 
         <View style={styles.divider} />
 
@@ -364,17 +370,39 @@ const styles = StyleSheet.create({
     color: "#666",
     fontFamily: "Pretendard",
   },
-  titleInput: {
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    fontSize: 15,
-    color: "#333",
+  titleCard: {
     backgroundColor: "#fff",
-    marginVertical: 10,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginVertical: 8,
+  },
+  titleHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  titleLabel: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#111",
     fontFamily: "Pretendard",
+  },
+  titleDivider: {
+    height: 1,
+    backgroundColor: "#F0F0F0",
+    marginTop: 12,
+    marginBottom: 10,
+    marginHorizontal: -16,
+  },
+  titleInput: {
+    fontSize: 15,
+    color: "#111",
+    backgroundColor: "#fff",
+    fontFamily: "Pretendard",
+    paddingVertical: 4,
   },
   divider: {
     height: 7,

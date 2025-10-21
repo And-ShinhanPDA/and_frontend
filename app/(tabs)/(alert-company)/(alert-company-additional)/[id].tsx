@@ -14,21 +14,21 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { alertService } from "@/services/alert-service";
 import {
-  CurrentData,
-  currentDataService,
+    CurrentData,
+    currentDataService,
 } from "@/services/current-data-service";
 import { presetService } from "@/services/preset-service";
 import { refreshWidgetManually } from "@/services/widgetShare";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 export default function CompanyAlertDetail() {
@@ -41,7 +41,6 @@ export default function CompanyAlertDetail() {
   const scrollViewRef = useRef<ScrollView>(null);
   const sectionRefs = useRef<{ [key: string]: View | null }>({});
   const tabs = [
-    "제목",
     "가격",
     "변동률",
     "후행",
@@ -477,7 +476,12 @@ export default function CompanyAlertDetail() {
         <View
           ref={(ref) => (sectionRefs.current["title"] = ref)}
           collapsable={false}
+          style={styles.titleCard}
         >
+          <View style={styles.titleHeader}>
+            <Text style={styles.titleLabel}>제목</Text>
+          </View>
+          <View style={styles.titleDivider} />
           <TextInput
             style={styles.titleInput}
             placeholder="이 조건을 대표할 수 있는 한 줄 제목"
@@ -648,17 +652,39 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
 
-  titleInput: {
-    borderWidth: 1,
-    borderColor: "#E8E8E8",
-    borderRadius: 10,
-    paddingVertical: 14,
+  titleCard: {
+    backgroundColor: "#fff",
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 14,
+    paddingVertical: 16,
     paddingHorizontal: 16,
+    marginVertical: 8,
+  },
+  titleHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  titleLabel: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#111",
+    fontFamily: "Pretendard",
+  },
+  titleDivider: {
+    height: 1,
+    backgroundColor: "#F0F0F0",
+    marginTop: 12,
+    marginBottom: 10,
+    marginHorizontal: -16,
+  },
+  titleInput: {
     fontSize: 15,
     color: "#111",
     backgroundColor: "#fff",
-    marginVertical: 12,
     fontFamily: "Pretendard",
+    paddingVertical: 4,
   },
 
   scrollContent: {

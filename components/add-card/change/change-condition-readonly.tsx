@@ -1,5 +1,7 @@
+import { CONDITION_DESCRIPTIONS } from "@/constants/conditionDescriptions";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import ConditionTooltip from "../../condition/condition-tooltip";
 import { ChangeConditionData } from "./change-condition-content";
 
 interface ChangeConditionReadonlyCardProps {
@@ -14,7 +16,10 @@ export default function ChangeConditionReadonlyCard({
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.title}>변동률</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>변동률</Text>
+          <ConditionTooltip description={CONDITION_DESCRIPTIONS.change} />
+        </View>
       </View>
 
       <View style={styles.divider} />
@@ -69,6 +74,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
+  },
+  titleRow: {
+    flexDirection: "row",
     alignItems: "center",
   },
   title: { 

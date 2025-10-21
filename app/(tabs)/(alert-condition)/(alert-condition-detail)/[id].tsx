@@ -15,12 +15,12 @@ import { parseConditionsForCards } from "@/utils/parseConditions";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 // TODO: types로 빼기
@@ -109,12 +109,12 @@ export default function ConditionAlertDetail() {
   // 탭 터치 시 해당 섹션으로 스크롤
   const scrollToSection = (tabName: string) => {
     const sectionMap: { [key: string]: string } = {
-      "변동률": "change",
+      변동률: "change",
       "52주": "week52",
-      "거래량": "volume",
-      "SMA": "sma",
-      "RSI": "rsi",
-      "볼린저밴드": "bollingerband",
+      거래량: "volume",
+      SMA: "sma",
+      RSI: "rsi",
+      볼린저밴드: "bollingerband",
     };
 
     const sectionKey = sectionMap[tabName];
@@ -274,21 +274,27 @@ export default function ConditionAlertDetail() {
           ref={(ref) => (sectionRefs.current["change"] = ref)}
           collapsable={false}
         >
-          <ChangeConditionReadonlyCard conditionData={parsedConditions?.change} />
+          <ChangeConditionReadonlyCard
+            conditionData={parsedConditions?.change}
+          />
         </View>
 
         <View
           ref={(ref) => (sectionRefs.current["week52"] = ref)}
           collapsable={false}
         >
-          <Week52ConditionReadonlyCard conditionData={parsedConditions?.week52} />
+          <Week52ConditionReadonlyCard
+            conditionData={parsedConditions?.week52}
+          />
         </View>
 
         <View
           ref={(ref) => (sectionRefs.current["volume"] = ref)}
           collapsable={false}
         >
-          <VolumeConditionReadonlyCard conditionData={parsedConditions?.volume} />
+          <VolumeConditionReadonlyCard
+            conditionData={parsedConditions?.volume}
+          />
         </View>
 
         <View

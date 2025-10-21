@@ -1,3 +1,4 @@
+import { CONDITION_DESCRIPTIONS } from "@/constants/conditionDescriptions";
 import React from "react";
 import {
     Platform,
@@ -6,6 +7,7 @@ import {
     UIManager,
     View
 } from "react-native";
+import ConditionTooltip from "../../condition/condition-tooltip";
 import { PriceConditionData } from "./price-condition-content";
 
 if (
@@ -27,7 +29,10 @@ export default function PriceConditionReadonlyCard({
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.title}>가격</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>가격</Text>
+          <ConditionTooltip description={CONDITION_DESCRIPTIONS.price} />
+        </View>
       </View>
 
       <View style={styles.divider} />
@@ -97,6 +102,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
+  },
+  titleRow: {
+    flexDirection: "row",
     alignItems: "center",
   },
   title: { 

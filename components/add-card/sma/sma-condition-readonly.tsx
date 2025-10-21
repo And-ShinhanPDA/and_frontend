@@ -1,5 +1,7 @@
+import { CONDITION_DESCRIPTIONS } from "@/constants/conditionDescriptions";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import ConditionTooltip from "../../condition/condition-tooltip";
 
 interface SMAConditionReadonlyCardProps {
   conditionData: {
@@ -17,7 +19,10 @@ export default function SMAConditionReadonlyCard({
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.title}>SMA</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>SMA</Text>
+          <ConditionTooltip description={CONDITION_DESCRIPTIONS.sma} />
+        </View>
       </View>
 
       <View style={styles.divider} />
@@ -67,6 +72,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
+  },
+  titleRow: {
+    flexDirection: "row",
     alignItems: "center",
   },
   title: { 

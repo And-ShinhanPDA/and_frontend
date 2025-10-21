@@ -3,24 +3,49 @@ export const chartHtml = `
 <html>
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
-    html, body, #wrap { margin: 0; padding: 0; height: 100%; width: 100%; background: #ffffff; overflow: hidden; }
+    html, body, #wrap { margin: 0; padding: 0; height: 100%; width: 100%; background: #ffffff; overflow: hidden; touch-action: pan-x pan-y; }
     #wrap { position: absolute; inset: 0; display: flex; flex-direction: column; }
-    #main { flex: 11; }
-    #vol  { flex: 2.2; }
-    #rsi  { flex: 1.8; }
+    #main { flex: 11; position: relative; }
+    #vol  { flex: 2.2; position: relative; }
+    #rsi  { flex: 1.8; position: relative; }
+    
+    .chart-label {
+      position: absolute;
+      top: 8px;
+      left: 12px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 1000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    #main-label { top: 8px; left: 12px; }
+    #vol-label { top: 8px; left: 12px; }
+    #rsi-label { top: 8px; left: 12px; }
   </style>
 </head>
 <body>
   <div id="wrap">
-    <div id="main"></div>
-    <div id="vol"></div>
-    <div id="rsi"></div>
+    <div id="main">
+      <div id="main-label" class="chart-label">가격</div>
+    </div>
+    <div id="vol">
+      <div id="vol-label" class="chart-label">거래량</div>
+    </div>
+    <div id="rsi">
+      <div id="rsi-label" class="chart-label">RSI</div>
+    </div>
   </div>
   <script>
     (function(){
       const send = (o)=>window.ReactNativeWebView.postMessage(JSON.stringify(o));
+      
       const load=()=>new Promise(res=>{
         const s=document.createElement('script');
         s.src='https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js';
@@ -82,20 +107,21 @@ export const chartHtml = `
       let markers=[],s5Arr=[],s10Arr=[],s20Arr=[],s30Arr=[],s50Arr=[],s60Arr=[],s100Arr=[],s200Arr=[];
       let alertMarkers=[];
       let crosshairHooked = false;
+      let period = '1D';
 
-      const COLORS = {
-        sma5:   '#FF8A80', 
-        sma10:  '#81C784', 
-        sma20:  '#90CAF9', 
-        sma30:  '#FFB74D', 
-        sma50:  '#BA68C8', 
-        sma60:  '#B39DDB', 
-        sma100: '#FFCC80', 
-        sma200: '#A5D6A7', 
-        boll:   'rgba(0,0,0,0.25)',
-        up:     '#4CC439',
-        down:   '#EF5350',
-      };
+        const COLORS = {
+          sma5:   '#FF8A80', 
+          sma10:  '#FFA726', 
+          sma20:  '#90CAF9', 
+          sma30:  '#66BB6A', 
+          sma50:  '#AB47BC', 
+          sma60:  '#B39DDB', 
+          sma100: '#FFCC80', 
+          sma200: '#A1887F', 
+          boll:   'rgba(0,0,0,0.25)',
+          up:     '#4CC439',
+          down:   '#EF5350',
+        };
 
       const smaAt=(arr,t)=>arr.find(x=>x.time===t)?.value;
 
@@ -122,16 +148,26 @@ export const chartHtml = `
       };
 
       const resizeAll = () => {
-        if(!chart||!volChart||!rsiChart) return;
+        if(!chart) return;
         const main = document.getElementById('main');
-        const volD = document.getElementById('vol');
-        const rsiD = document.getElementById('rsi');
         chart.resize(main.clientWidth, main.clientHeight);
-        volChart.resize(volD.clientWidth, volD.clientHeight);
-        rsiChart.resize(rsiD.clientWidth, rsiD.clientHeight);
+        
+        // 거래량 차트는 항상 리사이즈, RSI 차트는 일봉일 때만
+        const volD = document.getElementById('vol');
+        if(volChart && volD) volChart.resize(volD.clientWidth, volD.clientHeight);
+        
+        if (period === '1D') {
+          const rsiD = document.getElementById('rsi');
+          if(rsiChart && rsiD) rsiChart.resize(rsiD.clientWidth, rsiD.clientHeight);
+        }
       };
 
       const applySmaToggle = (smaOn) => {
+        // 1분봉일 때는 SMA 적용하지 않음
+        if (period !== '1D') {
+          console.log('[Chart HTML] 1분봉: SMA 토글 무시');
+          return;
+        }
 
         const show = (series, arr, on, color) => {
           try { series.applyOptions({ visible: !!on, color, lineWidth: on ? 1.5 : 1 }); } catch(e){}
@@ -149,8 +185,11 @@ export const chartHtml = `
         }
       };
 
-      const applyAll=({period,data,smaOn,bollingerOn,alertMarkers:receivedMarkers})=>{
+      const applyAll=({period: newPeriod,data,smaOn,bollingerOn,alertMarkers:receivedMarkers})=>{
         if(!window.LightweightCharts)return;
+        
+        // period 업데이트
+        period = newPeriod;
         
         // 알림 마커 저장
         alertMarkers = receivedMarkers || [];
@@ -341,6 +380,7 @@ export const chartHtml = `
             }
           });
 
+          // 거래량 차트는 항상 생성 (일봉과 1분봉 모두)
           volChart=LightweightCharts.createChart(document.getElementById('vol'),{
             layout:{background:{color:'#ffffff'},textColor:'#333'},
             grid:{vertLines:{color:'#f7f7f7'},horzLines:{color:'#f7f7f7'}},
@@ -351,20 +391,22 @@ export const chartHtml = `
             });
           vol=volChart.addHistogramSeries({priceFormat:{type:'volume'}});
 
-          rsiChart=LightweightCharts.createChart(document.getElementById('rsi'),{
-            layout:{background:{color:'#ffffff'},textColor:'#333'},
-            grid:{vertLines:{color:'#f7f7f7'},horzLines:{color:'#f7f7f7'}},
-            timeScale:{visible:false},
+          // RSI 차트는 일봉일 때만 생성
+          if (period === '1D') {
+            rsiChart=LightweightCharts.createChart(document.getElementById('rsi'),{
+              layout:{background:{color:'#ffffff'},textColor:'#333'},
+              grid:{vertLines:{color:'#f7f7f7'},horzLines:{color:'#f7f7f7'}},
+              timeScale:{visible:false},
 
+              handleScroll: false, 
+              handleScale: false,
+              });
 
-            handleScroll: false, 
-            handleScale: false,
-            });
-
-          rsi=rsiChart.addLineSeries({color:'#e75480',lineWidth:2});
-          const t0=data[0].time,tN=data[data.length-1].time;
-          const addHline=(v,c)=>rsiChart.addLineSeries({color:c,lineWidth:1,priceLineVisible:false}).setData([{time:t0,value:v},{time:tN,value:v}]);
-          addHline(30,'#00B0F0'); addHline(70,'#E8395F');
+            rsi=rsiChart.addLineSeries({color:'#e75480',lineWidth:2});
+            const t0=data[0].time,tN=data[data.length-1].time;
+            const addHline=(v,c)=>rsiChart.addLineSeries({color:c,lineWidth:1,priceLineVisible:false}).setData([{time:t0,value:v},{time:tN,value:v}]);
+            addHline(30,'#00B0F0'); addHline(70,'#E8395F');
+          }
 
           // 가격 포맷 설정 (천 단위 구분자)
           chart.applyOptions({
@@ -383,7 +425,12 @@ export const chartHtml = `
             },
           });
 
-          syncCharts(chart, [volChart, rsiChart]);
+          // 차트 동기화 (거래량은 항상, RSI는 일봉일 때만)
+          const chartsToSync = [volChart];
+          if (period === '1D' && rsiChart) {
+            chartsToSync.push(rsiChart);
+          }
+          syncCharts(chart, chartsToSync);
           new ResizeObserver(resizeAll).observe(document.getElementById('wrap'));
         } else {
           // 차트가 이미 있을 때 timeScale 옵션 업데이트
@@ -392,25 +439,75 @@ export const chartHtml = `
           });
         }
 
+        // period에 따라 RSI 차트만 표시/숨김 제어 (거래량은 항상 표시)
+        const volDiv = document.getElementById('vol');
+        const rsiDiv = document.getElementById('rsi');
+        if (volDiv) volDiv.style.display = 'block'; // 거래량 차트는 항상 표시
+        if (rsiDiv) rsiDiv.style.display = period === '1D' ? 'block' : 'none';
+        
+        // 라벨 업데이트
+        const mainLabel = document.getElementById('main-label');
+        const volLabel = document.getElementById('vol-label');
+        const rsiLabel = document.getElementById('rsi-label');
+        
+        if (mainLabel) {
+          mainLabel.textContent = period === '1D' ? '일봉' : '1분봉';
+        }
+        if (volLabel) {
+          volLabel.textContent = '거래량';
+        }
+        if (rsiLabel) {
+          rsiLabel.textContent = 'RSI';
+        }
+
         candle.setData(data);
         
-        // 차트 초기 뷰 설정 (적절한 범위로 자동 조정)
-        setTimeout(() => {
-          if (data.length > 0) {
-            // 최근 30개 데이터 포인트를 보여주도록 설정
-            const visibleRange = Math.min(30, data.length);
-            const startTime = data[data.length - visibleRange].time;
-            const endTime = data[data.length - 1].time;
-            
-            chart.timeScale().setVisibleRange({
-              from: startTime,
-              to: endTime,
-            });
-            
-            // 가격 스케일 자동 조정
-            chart.timeScale().fitContent();
-          }
-        }, 100);
+         // 차트 초기 뷰 설정 (차트가 새로 생성되거나 업데이트될 때마다 적용)
+         setTimeout(() => {
+           if (data.length > 0) {
+             // 일봉일 때는 10월부터 한 달치 데이터를 보여주도록 설정
+             if (period === '1D') {
+               // 10월 데이터 찾기
+               const octoberData = data.filter(d => {
+                 const date = new Date(d.time * 1000);
+                 const month = date.getMonth() + 1; // 0-based이므로 +1
+                 return month === 10; // 10월
+               });
+               
+               if (octoberData.length > 0) {
+                 // 10월 첫 번째 데이터부터 한 달치 (약 30일) 표시
+                 const octoberStart = octoberData[0].time;
+                 const octoberEnd = octoberData[octoberData.length - 1].time;
+                 
+                 // 10월 데이터가 있으면 10월부터 표시, 없으면 최근 30개 데이터 표시
+                 chart.timeScale().setVisibleRange({
+                   from: octoberStart,
+                   to: octoberEnd,
+                 });
+               } else {
+                 // 10월 데이터가 없으면 최근 30개 데이터 표시
+                 const visibleRange = Math.min(30, data.length);
+                 const startTime = data[data.length - visibleRange].time;
+                 const endTime = data[data.length - 1].time;
+                 
+                 chart.timeScale().setVisibleRange({
+                   from: startTime,
+                   to: endTime,
+                 });
+               }
+             } else {
+               // 분봉일 때는 최근 30개 데이터 포인트 표시
+               const visibleRange = Math.min(30, data.length);
+               const startTime = data[data.length - visibleRange].time;
+               const endTime = data[data.length - 1].time;
+               
+               chart.timeScale().setVisibleRange({
+                 from: startTime,
+                 to: endTime,
+               });
+             }
+           }
+         }, 500);
         
         // 일봉일 때만 SMA, Bollinger Band 계산
         if (period === '1D') {
@@ -428,19 +525,37 @@ export const chartHtml = `
           }
         } else {
           // 분봉일 때는 SMA 라인 숨기기
-          s5.setData([]); s10.setData([]); s20.setData([]); s30.setData([]);
-          s50.setData([]); s60.setData([]); s100.setData([]); s200.setData([]);
-          upper.setData([]); lower.setData([]);
-          s5Arr=[]; s10Arr=[]; s20Arr=[]; s30Arr=[]; s50Arr=[]; s60Arr=[]; s100Arr=[]; s200Arr=[];
+          if(s5) s5.setData([]); 
+          if(s10) s10.setData([]); 
+          if(s20) s20.setData([]); 
+          if(s30) s30.setData([]);
+          if(s50) s50.setData([]); 
+          if(s60) s60.setData([]); 
+          if(s100) s100.setData([]); 
+          if(s200) s200.setData([]);
+          if(upper) upper.setData([]); 
+          if(lower) lower.setData([]);
+          
+          // SMA 배열들도 완전히 초기화
+          s5Arr=[]; s10Arr=[]; s20Arr=[]; s30Arr=[]; 
+          s50Arr=[]; s60Arr=[]; s100Arr=[]; s200Arr=[];
+          
+          console.log('[Chart HTML] 1분봉 전환: SMA 데이터 초기화 완료');
         }
         
-        vol.setData(data.map(d=>({time:d.time,value:d.volume,color:d.close>=d.open?COLORS.up:COLORS.down})));
+        // 거래량 차트는 항상 데이터 설정 (일봉과 1분봉 모두)
+        const volumeData = data.map(d=>({time:d.time,value:d.volume,color:d.close>=d.open?COLORS.up:COLORS.down}));
+        console.log('[Chart HTML] 거래량 데이터 설정:', volumeData.slice(0, 3));
+        if(vol) vol.setData(volumeData);
         
-        // RSI는 데이터가 충분할 때만 계산 (분봉에도 표시)
-        if (data.length > 14) {
-          rsi.setData(calcRSI(data));
-        } else {
-          rsi.setData([]);
+        // RSI는 일봉일 때만 데이터 설정
+        if (period === '1D') {
+          // RSI는 데이터가 충분할 때만 계산
+          if (data.length > 14) {
+            if(rsi) rsi.setData(calcRSI(data));
+          } else {
+            if(rsi) rsi.setData([]);
+          }
         }
 
         // 알림 히스토리 마커 (일봉일 때만)
@@ -590,6 +705,15 @@ export const chartHtml = `
         resizeAll();
       };
 
+      const toggleSubCharts = (show) => {
+        const volDiv = document.getElementById('vol');
+        const rsiDiv = document.getElementById('rsi');
+        // 거래량 차트는 항상 show 파라미터에 따라 표시/숨김
+        if (volDiv) volDiv.style.display = show ? 'block' : 'none';
+        // RSI 차트는 일봉일 때만 show 파라미터에 따라 표시/숨김
+        if (rsiDiv) rsiDiv.style.display = (show && period === '1D') ? 'block' : 'none';
+      };
+
       load().then(()=>{
         // WebView 준비 완료 신호 전송
         send({type:'webviewReady'});
@@ -597,6 +721,7 @@ export const chartHtml = `
         const onMsg=(e)=>{try{
           const m=JSON.parse(e.data);
           if(m.type==='setAll')applyAll(m.payload);
+          else if(m.type==='toggleSubCharts')toggleSubCharts(m.payload.showSubCharts);
         }catch{}};
         document.addEventListener('message',onMsg);
         window.addEventListener('message',onMsg);
