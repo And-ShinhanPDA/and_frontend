@@ -3,6 +3,7 @@ import { AuthTextInput } from "@/components/ui/TextInput";
 import { Typography } from "@/components/ui/Typography";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCustomAlert } from "@/hooks/use-custom-alert";
+import { getDeviceId } from "@/utils/deviceInfo";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -33,7 +34,13 @@ export default function LoginScreen() {
 
     try {
       setLoading(true);
-      await signIn({ email, password });
+
+      // 디바이스 ID 가져오기
+      const deviceId = await getDeviceId();
+
+      console.log("🆔 [Login] deviceId:", deviceId);
+
+      await signIn({ email, password, deviceId });
       router.replace("/(tabs)");
     } catch (error: any) {
       showAlert({

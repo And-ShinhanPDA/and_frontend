@@ -1,5 +1,9 @@
 export type User = { id: number; name: string; email: string };
-export type SignInPayload = { email: string; password: string };
+export type SignInPayload = {
+  email: string;
+  password: string;
+  deviceId: string;
+};
 export type SignUpPayload = {
   name: string;
   email: string;

@@ -52,11 +52,11 @@ export default function PriceAlertToast() {
         `[토스트 클릭] ID: ${currentAlert.id}, 기업: ${currentAlert.name}로 히스토리 이동`
       );
 
-      // 알림 히스토리 탭으로 이동 (특정 알림 ID 전달)
+      // 알림 히스토리 탭으로 이동 (히스토리 고유 ID 전달)
       router.push({
         pathname: "/(tabs)/(alert-history)",
         params: {
-          highlightAlertId: currentAlert.id.toString(),
+          highlightHistoryId: currentAlert.id.toString(),
           highlightCompany: currentAlert.name,
         },
       });
