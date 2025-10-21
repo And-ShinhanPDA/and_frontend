@@ -23,23 +23,16 @@ export default function ConditionTooltip({ description }: ConditionTooltipProps)
 
   const handlePress = () => {
     iconRef.current?.measure((fx, fy, width, height, px, py) => {
-      const tooltipWidth = 250;
+      const tooltipWidth = 200;
       const padding = 20;
       
-      // 아이콘 오른쪽에 툴팁 표시
-      let x = px + width + 10;
+      // 항상 아이콘 오른쪽에 툴팁 표시
+      const x = px + width + 8;
       
-      // 화면 오른쪽 경계를 벗어나면 왼쪽에 표시
-      if (x + tooltipWidth + padding > SCREEN_WIDTH) {
-        x = px - tooltipWidth - 10;
-      }
+      // 아이콘 수직 중앙에 맞춰 Y 위치 조정
+      const tooltipY = py - 12;
       
-      // 왼쪽 경계도 체크
-      if (x < padding) {
-        x = padding;
-      }
-      
-      setPosition({ x, y: py });
+      setPosition({ x, y: tooltipY });
       setVisible(true);
     });
   };
@@ -101,42 +94,44 @@ const styles = StyleSheet.create({
     position: "absolute",
     flexDirection: "row",
     alignItems: "center",
-    maxWidth: 250,
+    maxWidth: 200,
   },
   tooltipArrowContainer: {
     justifyContent: "center",
     alignItems: "center",
     marginRight: -1,
+    height: 40,
   },
   tooltipArrowLeft: {
     width: 0,
     height: 0,
     backgroundColor: "transparent",
     borderStyle: "solid",
-    borderTopWidth: 6,
-    borderBottomWidth: 6,
-    borderRightWidth: 8,
+    borderTopWidth: 8,
+    borderBottomWidth: 8,
+    borderRightWidth: 10,
     borderTopColor: "transparent",
     borderBottomColor: "transparent",
     borderRightColor: "#333",
   },
   tooltipContent: {
     backgroundColor: "#333",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    width: 200,
   },
   tooltipText: {
     color: "#fff",
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
     fontFamily: "Pretendard",
-    textAlign: "center",
+    textAlign: "left",
   },
 });
 

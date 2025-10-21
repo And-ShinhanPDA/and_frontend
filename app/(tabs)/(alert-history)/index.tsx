@@ -411,93 +411,107 @@ export default function AlertHistory() {
                   const isConditionSearch = alert.stockCode === "조건검색";
 
                   return (
-                    <View
+                    <Pressable
                       key={index}
-                      style={[
-                        styles.timelineRow,
-                        isHighlighted &&
-                          !isConditionSearch &&
-                          styles.highlightedRow,
-                      ]}
+                      onPress={() => {
+                        if (isConditionSearch) {
+                          router.push("/(tabs)/(alert-condition)");
+                        }
+                      }}
                     >
-                      <View style={styles.timeline}>
-                        {index === 0 ? (
-                          <View
-                            style={
-                              isConditionSearch
-                                ? styles.conditionSearchOuterCircle
-                                : styles.outerCircle
-                            }
-                          >
+                      <View
+                        style={[
+                          styles.timelineRow,
+                          isHighlighted &&
+                            !isConditionSearch &&
+                            styles.highlightedRow,
+                        ]}
+                      >
+                        <View style={styles.timeline}>
+                          {index === 0 ? (
                             <View
                               style={
                                 isConditionSearch
-                                  ? styles.conditionSearchInnerDot
-                                  : styles.innerDot
+                                  ? styles.conditionSearchOuterCircle
+                                  : styles.outerCircle
+                              }
+                            >
+                              <View
+                                style={
+                                  isConditionSearch
+                                    ? styles.conditionSearchInnerDot
+                                    : styles.innerDot
+                                }
+                              />
+                            </View>
+                          ) : (
+                            <View
+                              style={
+                                isConditionSearch
+                                  ? styles.conditionSearchSingleCircle
+                                  : styles.singleCircle
                               }
                             />
-                          </View>
-                        ) : (
-                          <View
-                            style={
-                              isConditionSearch
-                                ? styles.conditionSearchSingleCircle
-                                : styles.singleCircle
-                            }
-                          />
-                        )}
-                        {index !== item.items.length - 1 && (
-                          <View
-                            style={
-                              isConditionSearch
-                                ? styles.conditionSearchLine
-                                : styles.line
-                            }
-                          />
-                        )}
-                      </View>
+                          )}
+                          {index !== item.items.length - 1 && (
+                            <View
+                              style={
+                                isConditionSearch
+                                  ? styles.conditionSearchLine
+                                  : styles.line
+                              }
+                            />
+                          )}
+                        </View>
 
-                      <View style={styles.alertContent}>
-                        <View style={styles.alertHeader}>
+                        <View style={styles.alertContent}>
+                          <View style={styles.alertHeader}>
+                            <Text
+                              style={[
+                                styles.alertTitle,
+                                isHighlighted &&
+                                  !isConditionSearch &&
+                                  styles.highlightedTitle,
+                              ]}
+                            >
+                              {companyName} | {alert.title}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.alertTime,
+                                isHighlighted &&
+                                  !isConditionSearch &&
+                                  styles.highlightedTime,
+                              ]}
+                            >
+                              {alert.time}
+                            </Text>
+                          </View>
                           <Text
                             style={[
-                              styles.alertTitle,
+                              styles.alertDesc,
                               isHighlighted &&
                                 !isConditionSearch &&
-                                styles.highlightedTitle,
+                                styles.highlightedDesc,
                             ]}
                           >
-                            {companyName} | {alert.title}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.alertTime,
-                              isHighlighted &&
-                                !isConditionSearch &&
-                                styles.highlightedTime,
-                            ]}
-                          >
-                            {alert.time}
+                            {alert.desc}
                           </Text>
                         </View>
-                        <Text
-                          style={[
-                            styles.alertDesc,
-                            isHighlighted &&
-                              !isConditionSearch &&
-                              styles.highlightedDesc,
-                          ]}
-                        >
-                          {alert.desc}
-                        </Text>
                       </View>
-                    </View>
+                    </Pressable>
                   );
                 })}
               </View>
             )}
             ListEmptyComponent={
-              <Text style={styles.noAlert}>기록이 없습니다.</Text>
+              <View style={styles.emptyContainer}>
+                <Image
+                  source={require("@/assets/images/icon.png")}
+                  style={styles.emptyIcon}
+                />
+                <Text style={styles.emptyText}>알림 히스토리가 없습니다.</Text>
+              </View>
             }
           />
         </View>
@@ -762,6 +776,26 @@ const styles = StyleSheet.create({
   alertTime: { fontSize: 13, color: "#999" },
   alertDesc: { fontSize: 13, color: "#555", marginTop: 3, lineHeight: 18 },
   noAlert: { textAlign: "center", color: "#aaa", marginTop: 30 },
+
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 80,
+    paddingHorizontal: 20,
+  },
+  emptyIcon: {
+    width: 100,
+    height: 100,
+    marginBottom: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#999",
+    fontFamily: "Pretendard",
+    fontWeight: "500",
+    textAlign: "center",
+  },
 
   // 하이라이트 스타일
   highlightedRow: {
