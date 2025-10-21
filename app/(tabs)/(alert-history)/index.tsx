@@ -14,6 +14,7 @@ import React, {
   useState,
 } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   Modal,
@@ -53,6 +54,7 @@ export default function AlertHistory() {
   const [showOnlyCondition, setShowOnlyCondition] = useState(false);
   const { accessToken, signOut, user } = useAuth();
   const [alertsByDate, setAlertsByDate] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const scrollViewRef = useRef<FlatList>(null);
   const [highlightedAlertId, setHighlightedAlertId] = useState<string | null>(
@@ -215,6 +217,7 @@ export default function AlertHistory() {
         if (!accessToken) return;
 
         try {
+          setLoading(true);
           const formattedStart = startDate
             ? startDate.toISOString().split("T")[0]
             : undefined;
@@ -329,6 +332,8 @@ export default function AlertHistory() {
           console.log(logMessage);
         } catch (err) {
           console.error("알림 이력 조회 실패:", err);
+        } finally {
+          setLoading(false);
         }
       };
 
@@ -394,6 +399,13 @@ export default function AlertHistory() {
 
   return (
     <View style={styles.container}>
+      {/* 로딩 오버레이 */}
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#4CC53A" />
+          <Text style={styles.loadingText}>로딩 중...</Text>
+        </View>
+      )}
       <CustomHeader
         title="알림 히스토리"
         showBackButton={false}
@@ -414,9 +426,10 @@ export default function AlertHistory() {
             {COMPANIES.map(({ id, logo, name }) => (
               <TouchableOpacity
                 key={id}
-                onPress={() =>
-                  setSelectedCompany((prev) => (prev === id ? null : id))
-                }
+                onPress={() => {
+                  setLoading(true);
+                  setSelectedCompany((prev) => (prev === id ? null : id));
+                }}
                 style={styles.companyItem}
               >
                 <View
@@ -460,7 +473,13 @@ export default function AlertHistory() {
                 !showOnlyCondition && styles.conditionFilterButtonActive,
                 pressed && styles.conditionFilterButtonPressed,
               ]}
-              onPress={() => setShowOnlyCondition(!showOnlyCondition)}
+              onPress={() => {
+                setLoading(true);
+                setTimeout(() => {
+                  setShowOnlyCondition(!showOnlyCondition);
+                  setLoading(false);
+                }, 100);
+              }}
             >
               <Text
                 style={[
@@ -505,8 +524,23 @@ export default function AlertHistory() {
                   const isConditionSearch = alert.stockCode === "조건검색";
 
                   return (
-                    <View
+                    <Pressable
                       key={index}
+                      onPress={() => {
+                        if (isConditionSearch) {
+                          router.push("/(tabs)/(alert-condition)");
+                        } else if (alert.stockCode) {
+                          router.push({
+                            pathname: "/(tabs)/(chart)/[chartId]",
+                            params: {
+                              chartId: alert.stockCode,
+                              name: companyName,
+                              stockCode: alert.stockCode,
+                              highlightTime: alert.time,
+                            },
+                          });
+                        }
+                      }}
                       style={[
                         styles.timelineRow,
                         isHighlighted &&
@@ -585,13 +619,19 @@ export default function AlertHistory() {
                           {alert.desc}
                         </Text>
                       </View>
-                    </View>
+                    </Pressable>
                   );
                 })}
               </View>
             )}
             ListEmptyComponent={
-              <Text style={styles.noAlert}>기록이 없습니다.</Text>
+              <View style={styles.emptyContainer}>
+                {/* <Image
+                  //source={require("@/assets/images/empty.png")}
+                  style={styles.emptyIcon}
+                /> */}
+                <Text style={styles.emptyText}>알림 히스토리가 없습니다.</Text>
+              </View>
             }
           />
         </View>
@@ -856,7 +896,44 @@ const styles = StyleSheet.create({
   alertTime: { fontSize: 13, color: "#999" },
   alertDesc: { fontSize: 13, color: "#555", marginTop: 3, lineHeight: 18 },
   noAlert: { textAlign: "center", color: "#aaa", marginTop: 30 },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 80,
+    paddingHorizontal: 20,
+  },
+  emptyIcon: {
+    width: 100,
+    height: 100,
+    marginBottom: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#999",
+    fontFamily: "Pretendard",
+    fontWeight: "500",
+    textAlign: "center",
+  },
 
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#fff",
+    fontWeight: "600",
+    fontFamily: "Pretendard",
+  },
   // 하이라이트 스타일
   highlightedRow: {
     backgroundColor: "#E8F5E9", // 연한 초록색 배경
