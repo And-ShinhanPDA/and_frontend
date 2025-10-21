@@ -722,6 +722,38 @@ export const chartHtml = `
           const m=JSON.parse(e.data);
           if(m.type==='setAll')applyAll(m.payload);
           else if(m.type==='toggleSubCharts')toggleSubCharts(m.payload.showSubCharts);
+          else if(m.type==='highlightTime'){
+            // highlightTime으로 차트 이동 및 마커 표시
+            const targetTime = m.time;
+            console.log('[차트 HTML] highlightTime 받음:', targetTime);
+            
+            // 차트에서 해당 시점으로 스크롤 및 마커 표시
+            if(mainSeries && targetTime){
+              try{
+                // 시간 문자열을 파싱 (예: "14:30")
+                const [hour, minute] = targetTime.split(':').map(Number);
+                const today = new Date();
+                today.setHours(hour, minute, 0, 0);
+                const targetTimestamp = Math.floor(today.getTime() / 1000);
+                
+                // 해당 시점으로 이동
+                mainChart.timeScale().scrollToPosition(5, false);
+                
+                // 마커 추가 (빨간 점)
+                const markers = [{
+                  time: targetTimestamp,
+                  position: 'inBar',
+                  color: '#FF4444',
+                  shape: 'circle',
+                  text: '알림',
+                  size: 2
+                }];
+                mainSeries.setMarkers(markers);
+              }catch(err){
+                console.error('[차트 HTML] highlightTime 처리 에러:', err);
+              }
+            }
+          }
         }catch{}};
         document.addEventListener('message',onMsg);
         window.addEventListener('message',onMsg);

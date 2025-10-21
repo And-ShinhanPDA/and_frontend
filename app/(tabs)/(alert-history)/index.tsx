@@ -416,6 +416,17 @@ export default function AlertHistory() {
                       onPress={() => {
                         if (isConditionSearch) {
                           router.push("/(tabs)/(alert-condition)");
+                        } else if (alert.stockCode) {
+                          // 기업 알림 - 차트 화면으로 이동
+                          router.push({
+                            pathname: "/(tabs)/(chart)/[chartId]",
+                            params: {
+                              chartId: alert.stockCode,
+                              name: companyName,
+                              stockCode: alert.stockCode,
+                              highlightTime: alert.time,
+                            },
+                          });
                         }
                       }}
                     >

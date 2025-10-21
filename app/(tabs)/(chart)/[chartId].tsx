@@ -5,9 +5,10 @@ import React, { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 export default function ChartDetail() {
-  const { name, stockCode } = useLocalSearchParams<{
+  const { name, stockCode, highlightTime } = useLocalSearchParams<{
     name: string;
     stockCode: string;
+    highlightTime?: string;
   }>();
   const router = useRouter();
 
@@ -63,6 +64,7 @@ export default function ChartDetail() {
         companyName={companyName}
         stockCode={code}
         onPriceUpdate={setCurrentPrice}
+        highlightTime={highlightTime}
       />
     </View>
   );

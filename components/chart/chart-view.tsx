@@ -2,11 +2,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 import { chartService } from "@/services/chart-service";
 import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { WebView, WebViewMessageEvent } from "react-native-webview";
@@ -109,10 +109,12 @@ export default function ChartScreen({
   companyName,
   stockCode,
   onPriceUpdate,
+  highlightTime,
 }: {
   companyName: string;
   stockCode: string;
   onPriceUpdate?: (price: any) => void;
+  highlightTime?: string;
 }) {
   // console.log("[차트] ChartScreen 컴포넌트 렌더링됨:", {
   //   companyName,
@@ -184,6 +186,20 @@ export default function ChartScreen({
   useEffect(() => {
     alertHistoryMarkersRef.current = alertHistoryMarkers;
   }, [alertHistoryMarkers]);
+
+  // highlightTime이 있으면 차트에 전달
+  useEffect(() => {
+    if (highlightTime && webViewLoaded && webRef.current) {
+      console.log("[차트] highlightTime 전달:", highlightTime);
+      webRef.current.postMessage(
+        JSON.stringify({
+          type: "highlightTime",
+          time: highlightTime,
+        })
+      );
+    }
+  }, [highlightTime, webViewLoaded]);
+
   const SMA_META = {
     sma5: {
       label: "SMA5",
