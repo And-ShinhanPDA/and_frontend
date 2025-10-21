@@ -35,8 +35,7 @@ export const alertService = {
       url.searchParams.append("enabled", String(params.enabled));
 
     try {
-      const res = await apiClient.get(url.toString(), {
-      });
+      const res = await apiClient.get(url.toString(), {});
 
       return res.data;
     } catch (err: any) {
@@ -49,8 +48,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/companies?alerted=true`;
 
     try {
-      const res = await apiClient.get(url, {
-      });
+      const res = await apiClient.get(url, {});
 
       const { data } = res.data ?? {};
 
@@ -80,12 +78,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/${alertId}/toggle`;
 
     try {
-      const res = await apiClient.patch(
-        url,
-        { isActive },
-        {
-        }
-      );
+      const res = await apiClient.patch(url, { isActive }, {});
 
       return res.data;
     } catch (err: any) {
@@ -102,12 +95,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/companies/${stockCode}/toggle`;
 
     try {
-      const res = await apiClient.patch(
-        url,
-        { isActive },
-        {
-        }
-      );
+      const res = await apiClient.patch(url, { isActive }, {});
 
       return res.data;
     } catch (err: any) {
@@ -119,8 +107,7 @@ export const alertService = {
   async deleteCompanyAlerts(accessToken: string, stockCode: string) {
     const url = `${BASE_URL}/api/alerts/companies/${stockCode}`;
     try {
-      const res = await apiClient.delete(url, {
-      });
+      const res = await apiClient.delete(url, {});
       return res.data;
     } catch (err: any) {
       throw new Error(getErrorMessage(err));
@@ -132,8 +119,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/${alertId}`;
 
     try {
-      const res = await apiClient.get(url, {
-      });
+      const res = await apiClient.get(url, {});
 
       return res.data;
     } catch (err: any) {
@@ -160,8 +146,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/${alertId}`;
 
     try {
-      const res = await apiClient.patch(url, payload, {
-      });
+      const res = await apiClient.patch(url, payload, {});
 
       return res.data;
     } catch (err: any) {
@@ -174,8 +159,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/${alertId}`;
 
     try {
-      const res = await apiClient.delete(url, {
-      });
+      const res = await apiClient.delete(url, {});
 
       return res.data;
     } catch (err: any) {
@@ -187,8 +171,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/triggered`;
 
     try {
-      const res = await apiClient.get(url, {
-      });
+      const res = await apiClient.get(url, {});
 
       const rawData = res.data?.data || [];
 
@@ -238,8 +221,7 @@ export const alertService = {
     }
 
     try {
-      const res = await apiClient.get(url.toString(), {
-      });
+      const res = await apiClient.get(url.toString(), {});
 
       const rawData = res.data?.data || [];
 
@@ -263,8 +245,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/condition/${alertId}`;
 
     try {
-      const res = await apiClient.get(url, {
-      });
+      const res = await apiClient.get(url, {});
 
       const { code, message, data } = res.data ?? {};
 
@@ -323,8 +304,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/condition/triggered`;
 
     try {
-      const res = await apiClient.get(url, {
-      });
+      const res = await apiClient.get(url, {});
 
       const { code, message, data } = res.data ?? {};
 
@@ -356,8 +336,7 @@ export const alertService = {
     console.log("[GET] 요청 URL:", url);
 
     try {
-      const res = await apiClient.get(url, {
-      });
+      const res = await apiClient.get(url, {});
 
       const { code, message, data } = res.data ?? {};
       if (!Array.isArray(data)) {
@@ -380,8 +359,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/heatmap`;
 
     try {
-      const res = await apiClient.get(url, {
-      });
+      const res = await apiClient.get(url, {});
 
       const { code, message, data } = res.data ?? {};
 
@@ -415,8 +393,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/price/${stockCode}`;
 
     try {
-      const res = await apiClient.get(url, {
-      });
+      const res = await apiClient.get(url, {});
 
       const { data } = res.data ?? {};
       return data?.isPrice ?? false;
@@ -438,12 +415,7 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/price/${stockCode}`;
 
     try {
-      const res = await apiClient.patch(
-        url,
-        { togglePrice },
-        {
-        }
-      );
+      const res = await apiClient.patch(url, { togglePrice }, {});
 
       const { message, data } = res.data ?? {};
 

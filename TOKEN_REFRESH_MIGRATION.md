@@ -3,6 +3,7 @@
 ## ✅ 완료된 작업
 
 ### 1. 글로벌 API 클라이언트 생성 (`services/api-client.ts`)
+
 - ✅ Request Interceptor: 모든 요청에 자동으로 `Authorization: Bearer {token}` 추가
 - ✅ Response Interceptor: 401 에러 발생 시 자동 토큰 갱신 후 재시도
 - ✅ 동시 요청 처리: 여러 API가 동시에 401을 받아도 리프레시는 한 번만 실행
@@ -11,6 +12,7 @@
 ### 2. 서비스 파일 마이그레이션 완료
 
 #### ✅ alert-service.ts (17개 함수)
+
 - `createAlert` - 알림 등록
 - `getUserAlerts` - 사용자 보유 알림 조회
 - `getAlert` - 알림 상세 조회
@@ -28,6 +30,7 @@
 - `updatePriceOnOffStatus` - 가격 알림 ON/OFF 업데이트
 
 #### ✅ preset-service.ts (5개 함수)
+
 - `getPresetList` - 전체 프리셋 조회
 - `getPresetById` - 프리셋 상세 조회
 - `createPreset` - 프리셋 생성
@@ -35,6 +38,7 @@
 - `deletePreset` - 프리셋 삭제
 
 #### ✅ current-data-service.ts (7개 함수)
+
 - `getCurrentData` - 현재 시점 데이터 조회
 - `getCurrentPrice` - 현재가 조회
 - `getSMAValues` - SMA 값 조회
@@ -44,16 +48,19 @@
 - `getVolumeAnalysis` - 거래량 분석 조회
 
 #### ✅ chart-service.ts (3개 함수)
+
 - `getDailyCandles` - 일봉 차트 데이터 조회
 - `getMinuteCandles` - 분봉 차트 데이터 조회
 - `getCurrentPrice` - 현재가 조회
 
 #### ℹ️ auth-service.ts (변경 없음)
+
 - `signUp` - 회원가입 (토큰 없음)
 - `signIn` - 로그인 (토큰 없음)
 - `refresh` - 토큰 갱신 (api-client interceptor에서 자동 처리)
 
 #### ℹ️ widgetShare.ts (변경 없음)
+
 - API 호출 없음 (로컬 데이터 저장만 처리)
 
 ## 🎯 동작 흐름
@@ -98,6 +105,7 @@ AuthContext에서 자동 로그아웃 처리
 ## 📋 변경 사항 요약
 
 ### Before (기존)
+
 ```typescript
 // services/alert-service.ts
 import axios from "axios";
@@ -114,6 +122,7 @@ async getUserAlerts(accessToken: string) {
 ```
 
 ### After (변경 후)
+
 ```typescript
 // services/alert-service.ts
 import { apiClient } from "./api-client";
@@ -125,6 +134,7 @@ async getUserAlerts(accessToken: string) {
 ```
 
 ## ✅ 검증 완료
+
 - ✅ 모든 서비스 파일에서 axios → apiClient 변경 완료
 - ✅ Authorization 헤더 수동 추가 코드 제거
 - ✅ Content-Type 헤더 제거 (apiClient 기본값 사용)

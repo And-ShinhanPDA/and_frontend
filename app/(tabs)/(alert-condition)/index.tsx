@@ -9,15 +9,15 @@ import { getIndicatorCategoriesArray } from "@/utils/parseConditions";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Animated,
-  Image,
-  Pressable,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Animated,
+    Image,
+    Pressable,
+    StyleSheet,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
 
@@ -28,6 +28,7 @@ type AlertCondition = {
   enabled: boolean;
   tags: string[];
   isTriggered?: boolean; // 조건 만족하여 활성화된 상태
+  activeCompanyCount?: number; // 활성화된 기업 수
 };
 
 // 깜빡이는 점 컴포넌트
@@ -104,10 +105,23 @@ export default function AlertCondition() {
 
       // 2. Triggered 알림 조회 (조건 만족한 알림들)
       const triggeredRes = await alertService.getTriggeredAlerts(accessToken);
+      console.log("🔥 [조건 알림] getTriggeredAlerts 응답:", triggeredRes);
+      
+      const triggeredConditionAlerts = triggeredRes.filter((a: any) => !a.stockCode);
+      console.log("🔥 [조건 알림] 조건 알림만 필터링:", triggeredConditionAlerts);
+      
       const triggeredAlertIds = new Set(
-        triggeredRes
-          .filter((a: any) => !a.stockCode)
-          .map((a: any) => String(a.alertId))
+        triggeredConditionAlerts.map((a: any) => String(a.alertId))
+      );
+      console.log("🔥 [조건 알림] Triggered AlertIds Set:", Array.from(triggeredAlertIds));
+
+      // 3. 조건별 활성화된 기업 수 조회
+      const triggeredConditionData = await alertService.getTriggeredConditionAlerts(accessToken);
+      console.log("🔥 [조건 알림] getTriggeredConditionAlerts 응답:", triggeredConditionData);
+      
+      // 조건명으로 activeCompanyCount 매핑
+      const activeCountMap = new Map(
+        triggeredConditionData.map((item) => [item.conditionName, item.activeCompanyCount])
       );
 
       const rawList = Array.isArray(res?.data) ? res.data : [];
@@ -129,12 +143,17 @@ export default function AlertCondition() {
 
             const alertId = String(alert.id || alert.alertId);
 
+            const isTriggered = triggeredAlertIds.has(alertId);
+            const activeCount = activeCountMap.get(alert.title) || 0;
+            console.log(`🔥 [조건 알림 ${alertId}] enabled=${alert.isActive}, isTriggered=${isTriggered}, activeCount=${activeCount}`);
+            
             return {
               id: alertId,
               name: alert.title || "조건 알림",
               enabled: alert.isActive || false,
               tags: tags, // 중복 제거는 getIndicatorCategoriesArray에서 처리됨
-              isTriggered: triggeredAlertIds.has(alertId), // 조건 만족 여부
+              isTriggered: isTriggered, // 조건 만족 여부
+              activeCompanyCount: activeCount, // 활성화된 기업 수
             };
           }
         );
@@ -352,7 +371,7 @@ export default function AlertCondition() {
                 >
                   <View style={styles.itemText}>
                     <View style={styles.nameContainer}>
-                      {item.enabled && item.isTriggered && <BlinkingDot />}
+                      {item.enabled && item.activeCompanyCount && item.activeCompanyCount > 0 && <BlinkingDot />}
                       <Text style={styles.name}>{item.name}</Text>
                     </View>
 

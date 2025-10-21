@@ -120,14 +120,19 @@ export default function CompanyAlertDetail() {
       const triggeredRes = await alertService.getTriggeredAlerts(accessToken, [
         id,
       ]);
+      console.log(`🔥 [기업 상세 ${id}] getTriggeredAlerts 응답:`, triggeredRes);
+      
       const triggeredAlertIds = new Set(
         triggeredRes.map((a: any) => String(a.alertId))
       );
+      console.log(`🔥 [기업 상세 ${id}] Triggered AlertIds:`, Array.from(triggeredAlertIds));
 
       if (res?.data && Array.isArray(res.data)) {
         // TODO: 실제 구조에 맞게 변환 필요
         const formatted = res.data.map((a: any) => {
           const alertId = String(a.alertId ?? a.id ?? "0");
+          const isTriggered = triggeredAlertIds.has(alertId);
+          console.log(`🔥 [기업 상세 알림 ${alertId}] enabled=${a.enabled}, isTriggered=${isTriggered}`);
           return {
             id: alertId,
             name: a.title ?? "알림 이름 없음",

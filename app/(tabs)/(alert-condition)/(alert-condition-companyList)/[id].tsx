@@ -131,16 +131,18 @@ export default function AlertConditionDetail() {
       setLoading(true);
       setError(null);
 
+      console.log("🔥 [CompanyList] 파라미터:", { id, name, tags });
       const results = await alertService.getConditionSearchResults(
         accessToken,
         id
       );
+      console.log("🔥 [CompanyList] getConditionSearchResults 응답:", results);
 
       const firstItem = results[0];
       const fields = firstItem ? Object.keys(firstItem.values || {}) : [];
       const validFields = fields.filter((field) => FIELD_MAPPING[field]);
 
-      console.log("사용 가능한 필드들:", validFields);
+      console.log("🔥 [CompanyList] 사용 가능한 필드들:", validFields);
       setAvailableFields(validFields);
 
       const formattedCompanies: Company[] = results.map((item: any) => {
@@ -160,6 +162,7 @@ export default function AlertConditionDetail() {
         };
       });
 
+      console.log("🔥 [CompanyList] 최종 포맷된 기업 수:", formattedCompanies.length);
       setCompanies(formattedCompanies);
       console.log(
         `조건 검색 결과 ${formattedCompanies.length}개 기업 로드 완료`

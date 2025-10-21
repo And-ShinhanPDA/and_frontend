@@ -18,7 +18,9 @@ import Benjamin from "../../assets/images/preset/benjamin.svg";
 import Charlie from "../../assets/images/preset/charlie.svg";
 import Jesse from "../../assets/images/preset/jesse.svg";
 import Mark from "../../assets/images/preset/mark.svg";
+import Me from "../../assets/images/preset/me.svg";
 import Peter from "../../assets/images/preset/peter.svg";
+import Poll from "../../assets/images/preset/poll.svg";
 import Warren from "../../assets/images/preset/warren.svg";
 
 const PresetDefault = require("../../assets/images/preset/preset-default-image.png");
@@ -31,6 +33,8 @@ const imageMap: { [key: string]: any } = {
   "추세 추종": PresetDefault,
   "제시 리버모어": Jesse,
   "마크 미너비니": Mark,
+  "폴 튜더 존스": Poll,
+  "마이클 버리": Me,
 };
 
 // 추천 프리셋과 유명인 프리셋에 대한 지표 설명
@@ -303,7 +307,9 @@ export default function PresetSelect({
       <View style={styles.header}>
         <Text style={styles.headerTitle}>프리셋 관리</Text>
         <Text style={styles.headerSubtitle}>
-          {mode === "select" ? "프리셋을 선택하여 조건을 불러오세요" : "저장된 프리셋을 확인하세요"}
+          {mode === "select"
+            ? "프리셋을 선택하여 조건을 불러오세요"
+            : "저장된 프리셋을 확인하세요"}
         </Text>
       </View>
 
@@ -324,8 +330,8 @@ export default function PresetSelect({
         ))}
       </View>
 
-      <TouchableOpacity 
-        activeOpacity={1} 
+      <TouchableOpacity
+        activeOpacity={1}
         onPress={cancelAllEditMode}
         style={{ flex: 1 }}
       >
@@ -336,93 +342,95 @@ export default function PresetSelect({
         >
           {currentList.length === 0 ? (
             <View style={styles.emptyContainer}>
-            <Image
-              source={require("@/assets/images/icon.png")}
-              style={styles.emptyIcon}
-            />
-            <Text style={styles.emptyText}>
-              {category === "내" ? "저장된 프리셋이 없습니다" : "프리셋을 불러오는 중..."}
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.grid}>
-            {currentList.map((p) => {
-            // 애니메이션 값 초기화
-            if (!shakeAnimations.current[p.id]) {
-              shakeAnimations.current[p.id] = new Animated.Value(0);
-            }
-            if (!fadeAnimations.current[p.id]) {
-              fadeAnimations.current[p.id] = new Animated.Value(0);
-            }
-            if (!scaleAnimations.current[p.id]) {
-              scaleAnimations.current[p.id] = new Animated.Value(1);
-            }
+              <Image
+                source={require("@/assets/images/icon.png")}
+                style={styles.emptyIcon}
+              />
+              <Text style={styles.emptyText}>
+                {category === "내"
+                  ? "저장된 프리셋이 없습니다"
+                  : "프리셋을 불러오는 중..."}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.grid}>
+              {currentList.map((p) => {
+                // 애니메이션 값 초기화
+                if (!shakeAnimations.current[p.id]) {
+                  shakeAnimations.current[p.id] = new Animated.Value(0);
+                }
+                if (!fadeAnimations.current[p.id]) {
+                  fadeAnimations.current[p.id] = new Animated.Value(0);
+                }
+                if (!scaleAnimations.current[p.id]) {
+                  scaleAnimations.current[p.id] = new Animated.Value(1);
+                }
 
-            const rotation = shakeAnimations.current[p.id].interpolate({
-              inputRange: [-1, 1],
-              outputRange: ["-3deg", "3deg"],
-            });
+                const rotation = shakeAnimations.current[p.id].interpolate({
+                  inputRange: [-1, 1],
+                  outputRange: ["-3deg", "3deg"],
+                });
 
-            return (
-              <Animated.View
-                key={p.id}
-                style={[
-                  styles.card,
-                  {
-                    transform: [
-                      { rotate: rotation },
-                      { scale: scaleAnimations.current[p.id] },
-                    ],
-                  },
-                ]}
-              >
-                <TouchableOpacity
-                  style={styles.cardTouchable}
-                  onPress={() => handlePress(p.id)}
-                  onLongPress={() => handleLongPress(p.id)}
-                  delayLongPress={400}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.imageContainer}>
-                    {typeof p.image === "number" ? (
-                      <Image
-                        source={p.image}
-                        style={{ width: 90, height: 90 }}
-                      />
-                    ) : (
-                      <p.image width={90} height={90} />
-                    )}
-                  </View>
-
-                  <View style={styles.textCenter}>
-                    <Text style={styles.name}>{p.name}</Text>
-                  </View>
-
-                  <Text style={styles.desc}>{p.desc}</Text>
-                </TouchableOpacity>
-
-                {/* 삭제 버튼 - view 모드 + 편집 모드일 때만 표시 */}
-                {mode === "view" && editMode[p.id] && (
+                return (
                   <Animated.View
+                    key={p.id}
                     style={[
-                      styles.deleteButton,
-                      { opacity: fadeAnimations.current[p.id] },
+                      styles.card,
+                      {
+                        transform: [
+                          { rotate: rotation },
+                          { scale: scaleAnimations.current[p.id] },
+                        ],
+                      },
                     ]}
                   >
                     <TouchableOpacity
-                      style={styles.deleteButtonInner}
-                      onPress={() => handleDelete(p.id)}
-                      activeOpacity={0.7}
+                      style={styles.cardTouchable}
+                      onPress={() => handlePress(p.id)}
+                      onLongPress={() => handleLongPress(p.id)}
+                      delayLongPress={400}
+                      activeOpacity={0.8}
                     >
-                      <Text style={styles.deleteButtonText}>✕</Text>
+                      <View style={styles.imageContainer}>
+                        {typeof p.image === "number" ? (
+                          <Image
+                            source={p.image}
+                            style={{ width: 90, height: 90 }}
+                          />
+                        ) : (
+                          <p.image width={90} height={90} />
+                        )}
+                      </View>
+
+                      <View style={styles.textCenter}>
+                        <Text style={styles.name}>{p.name}</Text>
+                      </View>
+
+                      <Text style={styles.desc}>{p.desc}</Text>
                     </TouchableOpacity>
+
+                    {/* 삭제 버튼 - view 모드 + 편집 모드일 때만 표시 */}
+                    {mode === "view" && editMode[p.id] && (
+                      <Animated.View
+                        style={[
+                          styles.deleteButton,
+                          { opacity: fadeAnimations.current[p.id] },
+                        ]}
+                      >
+                        <TouchableOpacity
+                          style={styles.deleteButtonInner}
+                          onPress={() => handleDelete(p.id)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.deleteButtonText}>✕</Text>
+                        </TouchableOpacity>
+                      </Animated.View>
+                    )}
                   </Animated.View>
-                )}
-              </Animated.View>
-            );
-          })}
-          </View>
-        )}
+                );
+              })}
+            </View>
+          )}
         </ScrollView>
       </TouchableOpacity>
 
@@ -481,17 +489,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAFAFA",
     alignItems: "center",
   },
-  activeTab: { 
+  activeTab: {
     backgroundColor: "#4CC439",
     borderColor: "#4CC439",
   },
-  tabText: { 
-    fontSize: 14, 
+  tabText: {
+    fontSize: 14,
     color: "#666",
     fontWeight: "600",
     fontFamily: "Pretendard",
   },
-  activeTabText: { 
+  activeTabText: {
     color: "#fff",
     fontWeight: "700",
   },
@@ -563,9 +571,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 24,
   },
-  closeText: { 
-    color: "#fff", 
-    fontWeight: "700", 
+  closeText: {
+    color: "#fff",
+    fontWeight: "700",
     fontSize: 16,
     fontFamily: "Pretendard",
   },

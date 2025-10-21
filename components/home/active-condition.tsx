@@ -4,12 +4,12 @@ import { saveActivatedConditions } from "@/services/widgetShare";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
+    Animated,
+    Image,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 type Condition = {
@@ -79,55 +79,52 @@ export default function ActivatedConditionCard() {
     }
 
     try {
-      // stockCode가 null인 알림 = 조건 검색 알림
-      const res = await alertService.getTriggeredAlerts(accessToken);
+      // 조건별 활성화된 기업 수 조회 (이 API가 메인)
+      const conditionData: TriggeredCondition[] =
+        await alertService.getTriggeredConditionAlerts(accessToken);
+      console.log("🔥 [홈-조건] getTriggeredConditionAlerts 응답:", conditionData);
 
-      // stockCode가 null인 알림만 필터링 (조건 알림)
-      const conditionAlerts = res.filter((a: any) => a.stockCode === null);
+      // 전체 조건 알림 조회 (알림 ID 매핑용)
+      const allAlertsRes = await alertService.getUserAlerts(accessToken);
+      const allConditionAlerts = Array.isArray(allAlertsRes?.data)
+        ? allAlertsRes.data.filter(
+            (a: any) => a.stockCode === null || a.stockCode === undefined
+          )
+        : [];
+      console.log("🔥 [홈-조건] 전체 조건 알림:", allConditionAlerts);
 
-      // 알림 ID별로 그룹핑
-      const grouped: Record<string, { count: number; alert: any }> = {};
-      conditionAlerts.forEach((a: any) => {
-        const alertId = String(a.alertId) || "unknown";
-        if (!grouped[alertId]) {
-          grouped[alertId] = { count: 0, alert: a };
-        }
-        grouped[alertId].count += 1;
-      });
+      // 조건명으로 알림 ID 매핑
+      const nameToIdMap = new Map(
+        allConditionAlerts.map((a: any) => [
+          a.title,
+          String(a.id || a.alertId),
+        ])
+      );
+      console.log("🔥 [홈-조건] 조건명→ID 매핑:", Array.from(nameToIdMap.entries()));
 
-      const formatted: Condition[] = Object.entries(grouped).map(
-        ([alertId, data], index) => {
-          // conditions를 indicatorSnapshot으로 변환
-          const indicators: Record<string, string> = {};
-          if (data.alert.conditions && Array.isArray(data.alert.conditions)) {
-            data.alert.conditions.forEach((cond: any, idx: number) => {
-              const indicatorName = cond.indicator || `조건${idx + 1}`;
-              const description = cond.description || indicatorName;
-              indicators[indicatorName] = description;
-            });
-          }
-
-          const indicatorSnapshot =
-            Object.keys(indicators).length > 0
-              ? JSON.stringify(indicators)
-              : undefined;
-
+      // API 응답을 Condition 타입으로 변환 (활성화 1개 이상만)
+      const formatted: Condition[] = conditionData
+        .filter((item) => item.activeCompanyCount > 0)
+        .map((item, index) => {
+          const alertId = nameToIdMap.get(item.conditionName) || String(index + 1);
+          console.log(`🔥 [홈-조건] ${item.conditionName} → alertId=${alertId}, count=${item.activeCompanyCount}`);
+          
           return {
-            id: Number(alertId) || index + 1,
-            name: data.alert.title || data.alert.message || "조건 알림",
-            count: data.count,
-            indicatorSnapshot,
+            id: Number(alertId),
+            name: item.conditionName,
+            count: item.activeCompanyCount,
+            indicatorSnapshot: undefined,
             iconName: undefined,
           };
-        }
-      );
+        });
 
       setConditions(formatted);
       saveActivatedConditions(formatted); // 위젯 공유용 저장
-      console.log("[홈] 활성화된 조건 알림:", formatted.length);
-      console.log("📊 [조건 알림 상세]:", formatted);
+      console.log("✅ [홈-조건] 활성화된 조건 알림:", formatted.length);
+      console.log("📊 [홈-조건] 상세 데이터:", formatted);
     } catch (err) {
-      console.error("활성화된 조건 알림 조회 실패:", err);
+      console.error("❌ [홈-조건] 활성화된 조건 알림 조회 실패:", err);
+      setConditions([]);
     }
   };
 
@@ -167,7 +164,12 @@ export default function ActivatedConditionCard() {
             return (
               <Pressable
                 key={item.id}
-                onPress={() =>
+                onPress={() => {
+                  console.log("🔥 [홈-조건] 조건 클릭:", {
+                    id: item.id,
+                    name: item.name,
+                    count: item.count,
+                  });
                   router.push({
                     pathname:
                       "/(tabs)/(alert-condition)/(alert-condition-companyList)/[id]",
@@ -176,8 +178,8 @@ export default function ActivatedConditionCard() {
                       name: item.name,
                       tags: "[]",
                     },
-                  })
-                }
+                  });
+                }}
               >
                 <View style={[styles.row, isLast && styles.rowLast]}>
                   <View style={styles.left}>

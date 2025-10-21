@@ -103,11 +103,15 @@ export default function AlertCompany() {
 
       // 2. Triggered 알림 조회 (조건 만족한 알림들)
       const triggeredRes = await alertService.getTriggeredAlerts(accessToken);
+      console.log("🔥 [기업 알림] getTriggeredAlerts 전체 응답:", triggeredRes);
+      
+      const triggeredCompanyAlerts = triggeredRes.filter((a: any) => a.stockCode);
+      console.log("🔥 [기업 알림] 기업 알림만 필터링:", triggeredCompanyAlerts);
+      
       const triggeredStockCodes = new Set(
-        triggeredRes
-          .filter((a: any) => a.stockCode)
-          .map((a: any) => a.stockCode)
+        triggeredCompanyAlerts.map((a: any) => a.stockCode)
       );
+      console.log("🔥 [기업 알림] Triggered StockCodes Set:", Array.from(triggeredStockCodes));
 
       const rawList = Array.isArray(res) ? res : [];
 
