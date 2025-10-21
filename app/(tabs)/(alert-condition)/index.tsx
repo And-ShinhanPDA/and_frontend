@@ -333,7 +333,9 @@ export default function AlertCondition() {
           data={alerts
             .filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
             .filter((c) =>
-              showOnlyActive ? c.enabled && c.isTriggered : true
+              showOnlyActive 
+                ? c.enabled && c.activeCompanyCount !== undefined && c.activeCompanyCount > 0
+                : true
             )}
           showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.id}
