@@ -371,7 +371,11 @@ export default function AlertCondition() {
                 >
                   <View style={styles.itemText}>
                     <View style={styles.nameContainer}>
-                      {item.enabled && item.activeCompanyCount && item.activeCompanyCount > 0 && <BlinkingDot />}
+                      {item.enabled && 
+                       item.activeCompanyCount !== undefined && 
+                       item.activeCompanyCount > 0 && (
+                        <BlinkingDot />
+                      )}
                       <Text style={styles.name}>{item.name}</Text>
                     </View>
 
