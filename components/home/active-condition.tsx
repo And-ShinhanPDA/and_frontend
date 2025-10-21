@@ -4,12 +4,12 @@ import { saveActivatedConditions } from "@/services/widgetShare";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Image,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Animated,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 type Condition = {
@@ -82,7 +82,10 @@ export default function ActivatedConditionCard() {
       // 조건별 활성화된 기업 수 조회 (이 API가 메인)
       const conditionData: TriggeredCondition[] =
         await alertService.getTriggeredConditionAlerts(accessToken);
-      console.log("🔥 [홈-조건] getTriggeredConditionAlerts 응답:", conditionData);
+      console.log(
+        "🔥 [홈-조건] getTriggeredConditionAlerts 응답:",
+        conditionData
+      );
 
       // 전체 조건 알림 조회 (알림 ID 매핑용)
       const allAlertsRes = await alertService.getUserAlerts(accessToken);
@@ -97,10 +100,13 @@ export default function ActivatedConditionCard() {
       const nameToAlertMap = new Map(
         allConditionAlerts.map((a: any) => [
           a.title,
-          { id: String(a.id || a.alertId), conditions: a.conditions }
+          { id: String(a.id || a.alertId), conditions: a.conditions },
         ])
       );
-      console.log("🔥 [홈-조건] 조건명→Alert 매핑:", Array.from(nameToAlertMap.entries()));
+      console.log(
+        "🔥 [홈-조건] 조건명→Alert 매핑:",
+        Array.from(nameToAlertMap.entries())
+      );
 
       // API 응답을 Condition 타입으로 변환 (활성화 1개 이상만)
       const formatted: Condition[] = conditionData
@@ -108,14 +114,15 @@ export default function ActivatedConditionCard() {
         .map((item, index) => {
           const alertData = nameToAlertMap.get(item.conditionName);
           const alertId = alertData?.id || String(index + 1);
-          
+
           // indicatorSnapshot 생성 (위젯에서 사용)
           let indicatorSnapshot: string | undefined = undefined;
           if (alertData?.conditions && Array.isArray(alertData.conditions)) {
             const indicators: Record<string, string> = {};
             alertData.conditions.forEach((cond: any) => {
               const indicatorName = cond.indicator || "";
-              const description = cond.description || String(cond.threshold || "");
+              const description =
+                cond.description || String(cond.threshold || "");
               if (indicatorName) {
                 indicators[indicatorName] = description;
               }
@@ -124,9 +131,11 @@ export default function ActivatedConditionCard() {
               indicatorSnapshot = JSON.stringify(indicators);
             }
           }
-          
-          console.log(`🔥 [홈-조건] ${item.conditionName} → alertId=${alertId}, count=${item.activeCompanyCount}, indicators=${indicatorSnapshot}`);
-          
+
+          console.log(
+            `🔥 [홈-조건] ${item.conditionName} → alertId=${alertId}, count=${item.activeCompanyCount}, indicators=${indicatorSnapshot}`
+          );
+
           return {
             id: Number(alertId),
             name: item.conditionName,
@@ -204,7 +213,7 @@ export default function ActivatedConditionCard() {
                     <View style={styles.dot} />
                     <Text style={styles.name}>{item.name}</Text>
                   </View>
-                  <Text style={styles.count}>{item.count}개 활성화</Text>
+                  <Text style={styles.count}>{item.count}개 기업 활성화</Text>
                 </View>
               </Pressable>
             );
