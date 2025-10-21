@@ -120,19 +120,27 @@ export default function CompanyAlertDetail() {
       const triggeredRes = await alertService.getTriggeredAlerts(accessToken, [
         id,
       ]);
-      console.log(`🔥 [기업 상세 ${id}] getTriggeredAlerts 응답:`, triggeredRes);
-      
+      console.log(
+        `🔥 [기업 상세 ${id}] getTriggeredAlerts 응답:`,
+        triggeredRes
+      );
+
       const triggeredAlertIds = new Set(
         triggeredRes.map((a: any) => String(a.alertId))
       );
-      console.log(`🔥 [기업 상세 ${id}] Triggered AlertIds:`, Array.from(triggeredAlertIds));
+      console.log(
+        `🔥 [기업 상세 ${id}] Triggered AlertIds:`,
+        Array.from(triggeredAlertIds)
+      );
 
       if (res?.data && Array.isArray(res.data)) {
         // TODO: 실제 구조에 맞게 변환 필요
         const formatted = res.data.map((a: any) => {
           const alertId = String(a.alertId ?? a.id ?? "0");
           const isTriggered = triggeredAlertIds.has(alertId);
-          console.log(`🔥 [기업 상세 알림 ${alertId}] enabled=${a.enabled}, isTriggered=${isTriggered}`);
+          console.log(
+            `🔥 [기업 상세 알림 ${alertId}] enabled=${a.enabled}, isTriggered=${isTriggered}`
+          );
           return {
             id: alertId,
             name: a.title ?? "알림 이름 없음",
@@ -331,6 +339,7 @@ export default function CompanyAlertDetail() {
         rightOpenValue={-deleteWidth}
         disableRightSwipe
         closeOnRowPress
+        contentContainerStyle={styles.listContent}
         ListHeaderComponent={<FixedPriceRow />}
         renderItem={({ item, index }) => {
           const fadeAnim = fadeAnimations[item.id] || new Animated.Value(1);
@@ -440,6 +449,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
+  listContent: {
+    paddingBottom: 120,
+  },
 
   /* 필터 버튼 */
   filterButtonContainer: {
@@ -524,9 +536,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 30,
     bottom: 110,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 66,
+    height: 66,
+    borderRadius: 33,
     backgroundColor: "black",
     justifyContent: "center",
     alignItems: "center",

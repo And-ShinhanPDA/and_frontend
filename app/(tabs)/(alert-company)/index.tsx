@@ -104,14 +104,19 @@ export default function AlertCompany() {
       // 2. Triggered 알림 조회 (조건 만족한 알림들)
       const triggeredRes = await alertService.getTriggeredAlerts(accessToken);
       console.log("🔥 [기업 알림] getTriggeredAlerts 전체 응답:", triggeredRes);
-      
-      const triggeredCompanyAlerts = triggeredRes.filter((a: any) => a.stockCode);
+
+      const triggeredCompanyAlerts = triggeredRes.filter(
+        (a: any) => a.stockCode
+      );
       console.log("🔥 [기업 알림] 기업 알림만 필터링:", triggeredCompanyAlerts);
-      
+
       const triggeredStockCodes = new Set(
         triggeredCompanyAlerts.map((a: any) => a.stockCode)
       );
-      console.log("🔥 [기업 알림] Triggered StockCodes Set:", Array.from(triggeredStockCodes));
+      console.log(
+        "🔥 [기업 알림] Triggered StockCodes Set:",
+        Array.from(triggeredStockCodes)
+      );
 
       const rawList = Array.isArray(res) ? res : [];
 
@@ -515,9 +520,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 30,
     bottom: 110,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 66,
+    height: 66,
+    borderRadius: 33,
     backgroundColor: "black",
     justifyContent: "center",
     alignItems: "center",
