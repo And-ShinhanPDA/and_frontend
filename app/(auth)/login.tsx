@@ -3,7 +3,7 @@ import { AuthTextInput } from "@/components/ui/TextInput";
 import { Typography } from "@/components/ui/Typography";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCustomAlert } from "@/hooks/use-custom-alert";
-import { getDeviceId } from "@/utils/deviceInfo";
+import { getDeviceId, getFCMToken } from "@/utils/deviceInfo";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -35,12 +35,19 @@ export default function LoginScreen() {
     try {
       setLoading(true);
 
+      // FCM 토큰 가져오기
+      const fcmToken = await getFCMToken();
+      console.log(
+        "🔔 [Login] FCM Token:",
+        fcmToken ? `${fcmToken.substring(0, 20)}...` : "없음"
+      );
+
       // 디바이스 ID 가져오기
       const deviceId = await getDeviceId();
+      console.log("🆔 [Login] Device ID:", deviceId);
 
-      console.log("🆔 [Login] deviceId:", deviceId);
-
-      await signIn({ email, password, deviceId });
+      // 로그인: 이메일, 패스워드, FCM 토큰, 디바이스 ID 전송
+      await signIn({ email, password, fcmToken, deviceId });
       router.replace("/(tabs)");
     } catch (error: any) {
       showAlert({

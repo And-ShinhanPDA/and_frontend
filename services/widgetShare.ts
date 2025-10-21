@@ -14,6 +14,8 @@ export const saveActivatedConditions = async (data: any) => {
     const jsonString = JSON.stringify(data);
     console.log("🔄 [Widget] 조건 알림 데이터 저장 시작...");
     console.log("📦 [Widget] 저장할 데이터:", jsonString);
+    console.log(`📊 [Widget] 데이터 개수: ${data.length}개`);
+    console.log(`📊 [Widget] App Group ID: ${APP_GROUP_ID}`);
 
     await SharedGroupPreferences.setItem(
       "activatedConditions",
@@ -22,12 +24,20 @@ export const saveActivatedConditions = async (data: any) => {
     );
 
     console.log("✅ [Widget] 조건 알림 데이터 저장 완료!");
-    console.log(`📊 [Widget] 저장된 조건 수: ${data.length}개`);
+
+    // 저장된 데이터 다시 읽어서 확인
+    const readBack = await SharedGroupPreferences.getItem(
+      "activatedConditions",
+      APP_GROUP_ID
+    );
+    console.log("🔍 [Widget] 저장 후 확인:", readBack);
 
     // 위젯 즉시 갱신
     if (WidgetReloader) {
       WidgetReloader.reloadAllWidgets();
       console.log("🔄 [Widget] 위젯 새로고침 요청 완료");
+    } else {
+      console.warn("⚠️ [Widget] WidgetReloader 모듈을 찾을 수 없습니다");
     }
   } catch (e) {
     console.error("❌ [Widget] 조건 알림 데이터 저장 실패:", e);

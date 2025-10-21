@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_ID_KEY = "refresh_token_id";
+const DEVICE_ID_KEY = "device_id";
 const USER_KEY = "user_info";
 
 export function useAuthLogic() {
@@ -43,11 +44,13 @@ export function useAuthLogic() {
     })();
   }, []);
 
-  // 로그인
-  const signIn = useCallback(async ({ email, password }: SignInPayload) => {
+  // 로그인: 이메일, 패스워드, FCM 토큰, 디바이스 ID
+  const signIn = useCallback(async ({ email, password, fcmToken, deviceId }: SignInPayload) => {
     const { user, accessToken, refreshTokenId } = await authService.signIn({
       email,
       password,
+      fcmToken,
+      deviceId,
     });
 
     console.log("=== 로그인 성공 ===");
@@ -56,23 +59,27 @@ export function useAuthLogic() {
     await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, String(accessToken));
     await SecureStore.setItemAsync(REFRESH_ID_KEY, String(refreshTokenId));
     await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+    
+    // deviceId 저장 (리프레시 토큰용)
+    await SecureStore.setItemAsync(DEVICE_ID_KEY, deviceId);
+    console.log("📱 [로그인] deviceId 저장:", deviceId);
 
     setAccessToken(accessToken);
     setRefreshTokenId(refreshTokenId);
     setUser(user);
   }, []);
 
-  // 회원가입
+  // 회원가입: 이메일, 이름, 패스워드만
   const signUp = useCallback(
-    async ({ name, email, password, fcmToken, deviceId }: SignUpPayload) => {
-      console.log("🔄 [useAuthLogic] signUp 호출:", { name, email, fcmToken, deviceId });
+    async ({ name, email, password }: SignUpPayload) => {
+      console.log("🔄 [useAuthLogic] signUp 호출:", { name, email });
       const user = await authService.signUp({ 
         name, 
         email, 
-        password, 
-        fcmToken, 
-        deviceId 
+        password,
       });
+      
+      console.log("✅ [useAuthLogic] 회원가입 완료:", user);
       setUser(user);
     },
     []
@@ -113,6 +120,7 @@ export function useAuthLogic() {
     } finally {
       await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
       await SecureStore.deleteItemAsync(REFRESH_ID_KEY);
+      await SecureStore.deleteItemAsync(DEVICE_ID_KEY);
       await SecureStore.deleteItemAsync(USER_KEY);
       setUser(null);
       setAccessToken(null);

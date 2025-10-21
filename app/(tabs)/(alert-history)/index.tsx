@@ -3,6 +3,7 @@ import CustomHeader from "@/components/header/header";
 import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import { refreshWidgetManually } from "@/services/widgetShare";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -176,6 +177,9 @@ export default function AlertHistory() {
         if (!accessToken) return;
 
         try {
+          console.log("🔄 [알림 히스토리] 화면 포커스 - 위젯 새로고침");
+          refreshWidgetManually(); // 위젯 새로고침
+
           setLoading(true);
           const formattedStart = startDate
             ? startDate.toISOString().split("T")[0]

@@ -4,8 +4,6 @@ import { Typography } from "@/components/ui/Typography";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { SignUpFormValues, SignUpPayload } from "@/types/auth";
-import { getDeviceId, getFCMToken } from "@/utils/deviceInfo";
-import { requestNotificationPermission } from "@/utils/notificationPermission";
 import { validateSignUp } from "@/utils/validators";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -44,30 +42,11 @@ export default function SignUpScreen() {
     try {
       setLoading(true);
 
-      // 1. 알림 권한 요청
-      console.log("🔔 [SIGNUP] 알림 권한 요청 시작...");
-      const permissionGranted = await requestNotificationPermission();
-
-      let fcmToken = "";
-      if (permissionGranted) {
-        // 2. 권한 승인 시 FCM 토큰 발급
-        const token = await getFCMToken();
-        fcmToken = token || "";
-        console.log("🔥 [SIGNUP] FCM Token:", fcmToken || "<empty>");
-      } else {
-        console.log("⚠️ [SIGNUP] 알림 권한 거부됨 - 토큰 없이 진행");
-      }
-
-      // 3. 디바이스 ID 가져오기
-      const deviceId = await getDeviceId();
-      console.log("🆔 [SIGNUP] Device ID:", deviceId);
-
+      // 회원가입: 이메일, 이름, 패스워드만 전송
       const payload: SignUpPayload = {
         name,
         email,
         password,
-        fcmToken,
-        deviceId,
       };
 
       console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -75,18 +54,7 @@ export default function SignUpScreen() {
       console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       console.log("👤 name:", payload.name);
       console.log("📧 email:", payload.email);
-      console.log(
-        "🔒 password:",
-        payload.password ? "***" + payload.password.slice(-3) : "(empty)"
-      );
-      console.log(
-        "🔥 fcmToken:",
-        payload.fcmToken ? payload.fcmToken.substring(0, 30) + "..." : "(empty)"
-      );
-      console.log("🆔 deviceId:", payload.deviceId || "(empty)");
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log("📤 [SIGNUP] JSON.stringify(payload):");
-      console.log(JSON.stringify(payload, null, 2));
+      console.log("🔒 password:", payload.password ? "********" : "(empty)");
       console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
       await signUp(payload);

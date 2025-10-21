@@ -359,24 +359,37 @@ export const alertService = {
     const url = `${BASE_URL}/api/alerts/heatmap`;
 
     try {
+      console.log(`📊 [히트맵 API] 요청: ${url}`);
+      console.log(`📊 [히트맵 API] 파라미터: 없음 (백엔드가 기준 결정)`);
+
       const res = await apiClient.get(url, {});
 
       const { code, message, data } = res.data ?? {};
+
+      console.log(`📊 [히트맵 API] 응답 코드: ${code}`);
+      console.log(`📊 [히트맵 API] 응답 메시지: ${message}`);
 
       if (!data || !Array.isArray(data.alerts)) {
         console.warn("[경고] data.alerts 필드가 배열이 아닙니다:", data);
         return [];
       }
 
-      console.log(`[알림 히트맵 조회 성공] ${data.alerts.length}개 기업`);
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log(`📊 [알림 히트맵 조회 성공] 총 ${data.alerts.length}개 기업`);
+      console.log(
+        `📊 [히트맵 기준] 백엔드 응답에 따름 (보통 오늘 또는 최근 24시간)`
+      );
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
       data.alerts.forEach((alert: any, i: number) => {
         console.log(
-          `#${i + 1} [${alert.stockCode}] 알림 ${
+          `  #${i + 1} [${alert.stockCode}] 알림 ${
             alert.alertCount
           }개, 가격변동률: ${alert.priceRate}%`
         );
       });
+
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
       return data.alerts;
     } catch (err: any) {

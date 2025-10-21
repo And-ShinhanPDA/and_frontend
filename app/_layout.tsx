@@ -79,41 +79,47 @@ function RouterGate() {
 
       // myapp://alert-company-alertDetail?id=123&stockCode=005930&name=삼성전자
       // myapp://alert-condition-companyList?id=123&name=조건명
-      
+
       try {
         const urlObj = new URL(url);
         const hostname = urlObj.hostname;
         const searchParams = new URLSearchParams(urlObj.search);
-        
-        console.log("📲 [Deep Link] Parsed:", { hostname, params: Object.fromEntries(searchParams) });
+
+        console.log("📲 [Deep Link] Parsed:", {
+          hostname,
+          params: Object.fromEntries(searchParams),
+        });
 
         if (hostname === "alert-company-alertDetail") {
           const alertId = searchParams.get("id");
           const stockCode = searchParams.get("stockCode");
           const name = searchParams.get("name");
-          
+
           if (alertId && stockCode) {
-            console.log(`📲 [Deep Link] 기업 알림 상세로 이동: ${name} (${stockCode})`);
-            
+            console.log(
+              `📲 [Deep Link] 기업 알림 상세로 이동: ${name} (${stockCode})`
+            );
+
             // 네비게이션 스택 구성: 기업 알림 목록 → 기업 상세 → 알림 상세
             // 1. 먼저 기업 알림 목록 화면으로 이동
             router.replace("/(tabs)/(alert-company)");
-            
+
             // 2. 약간의 딜레이 후 기업 상세 화면을 push
             setTimeout(() => {
               router.push({
                 pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
-                params: { 
+                params: {
                   id: stockCode,
                   name: name || "", // 기업명 전달
                 },
               });
-              
+
               // 3. 그 다음 알림 상세 화면을 push
               setTimeout(() => {
                 router.push({
-                  pathname: "/(tabs)/(alert-company)/(alert-company-alertDetail)/[id]",
-                  params: { 
+                  pathname:
+                    "/(tabs)/(alert-company)/(alert-company-alertDetail)/[id]",
+                  params: {
                     id: alertId,
                     stockCode: stockCode,
                     companyName: name || "",
@@ -125,13 +131,24 @@ function RouterGate() {
         } else if (hostname === "alert-condition-companyList") {
           const id = searchParams.get("id");
           const name = searchParams.get("name");
-          
+
           if (id) {
-            console.log(`📲 [Deep Link] 조건 검색 상세로 이동: ${name} (${id})`);
-            router.push({
-              pathname: "/(tabs)/(alert-condition)/(alert-condition-companyList)/[id]",
-              params: { id, name: name || "", tags: "[]" },
-            });
+            console.log(
+              `📲 [Deep Link] 조건 검색 상세로 이동: ${name} (${id})`
+            );
+
+            // 네비게이션 스택 구성: 조건 검색 목록 → 조건 상세 (기업 리스트)
+            // 1. 먼저 조건 검색 목록 화면으로 이동
+            router.replace("/(tabs)/(alert-condition)");
+
+            // 2. 그 다음 조건 상세 (기업 리스트) 화면으로 push
+            setTimeout(() => {
+              router.push({
+                pathname:
+                  "/(tabs)/(alert-condition)/(alert-condition-companyList)/[id]",
+                params: { id, name: name || "", tags: "[]" },
+              });
+            }, 100);
           }
         }
       } catch (error) {
@@ -160,34 +177,39 @@ function RouterGate() {
     if (!isLoggedIn) return;
 
     // 앱이 foreground 상태일 때 알림 수신
-    const unsubscribeForeground = messaging().onMessage(async (remoteMessage) => {
-      console.log("📱 [Notification] 포어그라운드 알림 수신:", remoteMessage);
+    const unsubscribeForeground = messaging().onMessage(
+      async (remoteMessage) => {
+        console.log("📱 [Notification] 포어그라운드 알림 수신:", remoteMessage);
 
-      try {
-        // notifee를 사용하여 시스템 알림 표시
-        await notifee.displayNotification({
-          title: remoteMessage.notification?.title || "알림",
-          body: remoteMessage.notification?.body || "",
-          android: {
-            channelId: "default",
-            smallIcon: "ic_launcher",
-            pressAction: {
-              id: "default",
+        try {
+          // notifee를 사용하여 시스템 알림 표시
+          await notifee.displayNotification({
+            title: remoteMessage.notification?.title || "알림",
+            body: remoteMessage.notification?.body || "",
+            android: {
+              channelId: "default",
+              smallIcon: "ic_launcher",
+              pressAction: {
+                id: "default",
+              },
             },
-          },
-          ios: {
-            foregroundPresentationOptions: {
-              alert: true,
-              badge: true,
-              sound: true,
+            ios: {
+              foregroundPresentationOptions: {
+                alert: true,
+                badge: true,
+                sound: true,
+              },
             },
-          },
-        });
-        console.log("✅ [Notification] 포어그라운드 알림 표시 완료");
-      } catch (error) {
-        console.error("❌ [Notification] 포어그라운드 알림 표시 실패:", error);
+          });
+          console.log("✅ [Notification] 포어그라운드 알림 표시 완료");
+        } catch (error) {
+          console.error(
+            "❌ [Notification] 포어그라운드 알림 표시 실패:",
+            error
+          );
+        }
       }
-    });
+    );
 
     return () => {
       unsubscribeForeground();
@@ -199,17 +221,25 @@ function RouterGate() {
     if (!isLoggedIn) return;
 
     // 백그라운드 상태에서 알림 터치 시
-    const unsubscribeBackground = messaging().onNotificationOpenedApp((remoteMessage) => {
-      console.log("📱 [Notification] 알림 터치됨 (Background):", remoteMessage);
-      router.push("/(tabs)/(alert-history)");
-    });
+    const unsubscribeBackground = messaging().onNotificationOpenedApp(
+      (remoteMessage) => {
+        console.log(
+          "📱 [Notification] 알림 터치됨 (Background):",
+          remoteMessage
+        );
+        router.push("/(tabs)/(alert-history)");
+      }
+    );
 
     // 앱이 종료된 상태에서 알림 터치로 열린 경우
     messaging()
       .getInitialNotification()
       .then((remoteMessage) => {
         if (remoteMessage) {
-          console.log("📱 [Notification] 알림 터치로 앱 실행됨 (Quit state):", remoteMessage);
+          console.log(
+            "📱 [Notification] 알림 터치로 앱 실행됨 (Quit state):",
+            remoteMessage
+          );
           // 약간의 딜레이 후 이동 (앱 초기화 대기)
           setTimeout(() => {
             router.push("/(tabs)/(alert-history)");
@@ -273,7 +303,7 @@ export default function RootLayout() {
           importance: 4, // High importance
           sound: "default",
         });
-        
+
         console.log("✅ [Notifee] 채널 초기화 완료");
       } catch (error) {
         console.error("❌ [Notifee] 초기화 실패:", error);
