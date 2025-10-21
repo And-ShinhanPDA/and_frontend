@@ -332,9 +332,10 @@ export default function AlertHistory() {
             {COMPANIES.map(({ id, logo, name }) => (
               <TouchableOpacity
                 key={id}
-                onPress={() =>
-                  setSelectedCompany((prev) => (prev === id ? null : id))
-                }
+                onPress={() => {
+                  setLoading(true);
+                  setSelectedCompany((prev) => (prev === id ? null : id));
+                }}
                 style={styles.companyItem}
               >
                 <View
