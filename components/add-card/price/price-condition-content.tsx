@@ -2,14 +2,14 @@ import ConditionInput from "@/components/condition/condition-input";
 import ConditionSection from "@/components/condition/condition-section";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  LayoutAnimation,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  UIManager,
-  View,
+    LayoutAnimation,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    UIManager,
+    View,
 } from "react-native";
 import ConditionMinus from "../../../assets/images/condition-minus.svg";
 
@@ -157,9 +157,24 @@ export default function PriceConditionContent({
   };
 
   return (
-    <ScrollView style={styles.wrapper}>
-      <View style={styles.container}>
-        <Text style={styles.sectionTitle}>가격</Text>
+    <View style={styles.wrapper}>
+      <View style={styles.header}>
+        <Text style={styles.sectionTitle}>가격 설정</Text>
+        <Text style={styles.sectionSubtitle}>
+          목표 가격 및 변동 조건을 설정하세요
+        </Text>
+      </View>
+
+      <ScrollView 
+        style={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+        bounces={true}
+        scrollEventThrottle={16}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContentContainer}
+      >
+        <View style={styles.container}>
 
         {/* 가격 제한 */}
         <ConditionSection
@@ -173,16 +188,6 @@ export default function PriceConditionContent({
           renderRow={(r) =>
             toggles.limit && (
               <View key={r.id} style={styles.rowContainer}>
-                <ConditionInput
-                  value={r.amount}
-                  placeholder={`${r.comparison} 금액`}
-                  unit="원"
-                  onChange={(v) =>
-                    setLimits((prev) =>
-                      prev.map((p) => (p.id === r.id ? { ...p, amount: v } : p))
-                    )
-                  }
-                />
                 <Text
                   style={[
                     styles.compareBadge,
@@ -193,6 +198,16 @@ export default function PriceConditionContent({
                 >
                   {r.comparison}
                 </Text>
+                <ConditionInput
+                  value={r.amount}
+                  placeholder="금액 입력"
+                  unit="원"
+                  onChange={(v) =>
+                    setLimits((prev) =>
+                      prev.map((p) => (p.id === r.id ? { ...p, amount: v } : p))
+                    )
+                  }
+                />
                 {String(r.amount).trim() !== "" && (
                   <TouchableOpacity
                     style={styles.removeButton}
@@ -234,9 +249,7 @@ export default function PriceConditionContent({
                 </Text>
                 <ConditionInput
                   value={r.amount}
-                  placeholder={`시가 대비 ${
-                    r.direction === "+" ? "상승" : "하락"
-                  } 금액`}
+                  placeholder="금액 입력"
                   unit="원"
                   onChange={(v) =>
                     setOpenChanges((prev) =>
@@ -285,9 +298,7 @@ export default function PriceConditionContent({
                 </Text>
                 <ConditionInput
                   value={r.amount}
-                  placeholder={`현재가 대비 ${
-                    r.direction === "+" ? "상승" : "하락"
-                  } 금액`}
+                  placeholder="금액 입력"
                   unit="원"
                   onChange={(v) =>
                     setCurrentChanges((prev) =>
@@ -295,7 +306,6 @@ export default function PriceConditionContent({
                     )
                   }
                 />
-
                 {String(r.amount).trim() !== "" && (
                   <TouchableOpacity
                     style={styles.removeButton}
@@ -314,9 +324,10 @@ export default function PriceConditionContent({
             )
           }
         />
-      </View>
+        </View>
+      </ScrollView>
 
-      {/* 하단 버튼 */}
+      {/* 하단 버튼 - 고정 */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
           <Text style={styles.resetText}>초기화</Text>
@@ -325,78 +336,128 @@ export default function PriceConditionContent({
           <Text style={styles.confirmText}>확인</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: { flex: 1, backgroundColor: "#fff" },
-  container: { paddingHorizontal: 16, paddingVertical: 10 },
-  sectionTitle: { fontSize: 15, fontWeight: "600", marginBottom: 10 },
+  wrapper: { 
+    flex: 1, 
+    backgroundColor: "#fff",
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+    backgroundColor: "#FAFAFA",
+  },
+  sectionTitle: { 
+    fontSize: 18, 
+    fontWeight: "700", 
+    color: "#111",
+    marginBottom: 6,
+    fontFamily: "Pretendard",
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    color: "#666",
+    fontWeight: "400",
+    fontFamily: "Pretendard",
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  scrollContentContainer: {
+    paddingBottom: 20,
+  },
+  container: { 
+    paddingHorizontal: 20, 
+    paddingVertical: 16,
+  },
   rowContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 14,
+    gap: 10,
   },
 
   compareBadge: {
-    marginLeft: 8,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    borderWidth: 1.3,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1.5,
     fontSize: 13,
-    fontWeight: "600",
-    overflow: "hidden",
+    fontWeight: "700",
+    fontFamily: "Pretendard",
+    minWidth: 50,
+    textAlign: "center",
   },
   compareBadgePM: {
-    marginLeft: 8,
-    paddingVertical: 4,
-    marginRight: 8,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    borderWidth: 1.3,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1.5,
     fontSize: 13,
-    fontWeight: "600",
-    overflow: "hidden",
+    fontWeight: "700",
+    fontFamily: "Pretendard",
+    minWidth: 36,
+    textAlign: "center",
   },
   plusBadge: {
     color: "#4CC439",
     borderColor: "#4CC439",
+    backgroundColor: "#F0FDF4",
   },
   minusBadge: {
     color: "#FF3B30",
     borderColor: "#FF3B30",
+    backgroundColor: "#FEF2F2",
   },
 
-  removeButton: { marginLeft: 8 },
+  removeButton: { 
+    marginLeft: 10,
+    padding: 4,
+  },
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingTop: 16,
+    paddingBottom: 24,
     backgroundColor: "#fff",
     borderTopWidth: 1,
-    borderTopColor: "#EAEAEA",
-    marginTop: 10,
+    borderTopColor: "#F0F0F0",
   },
   resetButton: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 10,
-    paddingVertical: 13,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    paddingVertical: 15,
     alignItems: "center",
     marginRight: 8,
+    backgroundColor: "#FAFAFA",
   },
-  resetText: { fontSize: 15, color: "#333", fontWeight: "500" },
+  resetText: { 
+    fontSize: 15, 
+    color: "#333", 
+    fontWeight: "600",
+    fontFamily: "Pretendard",
+  },
   confirmButton: {
     flex: 1,
     backgroundColor: "#4CC439",
-    borderRadius: 10,
-    paddingVertical: 13,
+    borderRadius: 12,
+    paddingVertical: 15,
     alignItems: "center",
     marginLeft: 8,
   },
-  confirmText: { fontSize: 15, color: "#fff", fontWeight: "600" },
+  confirmText: { 
+    fontSize: 15, 
+    color: "#fff", 
+    fontWeight: "700",
+    fontFamily: "Pretendard",
+  },
 });

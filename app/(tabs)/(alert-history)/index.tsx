@@ -14,9 +14,11 @@ import React, {
   useState,
 } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -47,8 +49,10 @@ export default function AlertHistory() {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const [showOnlyCondition, setShowOnlyCondition] = useState(false);
   const { accessToken, signOut, user } = useAuth();
   const [alertsByDate, setAlertsByDate] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const scrollViewRef = useRef<FlatList>(null);
   const [highlightedAlertId, setHighlightedAlertId] = useState<string | null>(
@@ -172,6 +176,7 @@ export default function AlertHistory() {
         if (!accessToken) return;
 
         try {
+          setLoading(true);
           const formattedStart = startDate
             ? startDate.toISOString().split("T")[0]
             : undefined;
@@ -232,6 +237,8 @@ export default function AlertHistory() {
           console.log(logMessage);
         } catch (err) {
           console.error("알림 이력 조회 실패:", err);
+        } finally {
+          setLoading(false);
         }
       };
 
@@ -239,7 +246,7 @@ export default function AlertHistory() {
     }, [selectedCompany, startDate, endDate, accessToken])
   );
 
-  // 날짜 & 기업 필터링
+  // 날짜 & 기업 & 조건 필터링
   const filteredAlerts = useMemo(() => {
     return alertsByDate
       .filter((group) => {
@@ -280,18 +287,31 @@ export default function AlertHistory() {
       .map((group) => ({
         ...group,
         items: group.items.filter((item: AlertItem) => {
+          // 기업 필터링
           if (selectedCompany && item.company !== selectedCompany) return false;
+
+          // 조건 검색 필터링
+          if (showOnlyCondition && item.stockCode !== "조건검색") return false;
+
           return true;
         }),
       }))
       .filter((group) => group.items.length > 0);
-  }, [alertsByDate, selectedCompany, startDate, endDate]);
+  }, [alertsByDate, selectedCompany, startDate, endDate, showOnlyCondition]);
 
   const formatDate = (date: Date | null) =>
     date ? date.toLocaleDateString("ko-KR") : "전체";
 
   return (
     <View style={styles.container}>
+      {/* 로딩 오버레이 */}
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#4CC439" />
+          <Text style={styles.loadingText}>로딩 중...</Text>
+        </View>
+      )}
+
       <CustomHeader
         title="알림 히스토리"
         showBackButton={false}
@@ -309,40 +329,74 @@ export default function AlertHistory() {
             showsHorizontalScrollIndicator={false}
             style={styles.companyScroll}
           >
-            {COMPANIES.map(({ id, logo }) => (
+            {COMPANIES.map(({ id, logo, name }) => (
               <TouchableOpacity
                 key={id}
-                onPress={() =>
-                  setSelectedCompany((prev) => (prev === id ? null : id))
-                }
-                style={[
-                  styles.companyCircle,
-                  selectedCompany === id && styles.activeCompany,
-                ]}
+                onPress={() => {
+                  setLoading(true);
+                  setSelectedCompany((prev) => (prev === id ? null : id));
+                }}
+                style={styles.companyItem}
               >
-                <Image
-                  source={logo}
-                  style={{
-                    width: selectedCompany === id ? 70 : 72,
-                    height: selectedCompany === id ? 70 : 72,
-                    borderRadius: selectedCompany === id ? 35 : 36,
-                  }}
-                  resizeMode="contain"
-                />
+                <View
+                  style={[
+                    styles.companyCircle,
+                    selectedCompany === id && styles.activeCompany,
+                  ]}
+                >
+                  <Image
+                    source={logo}
+                    style={{
+                      width: selectedCompany === id ? 70 : 72,
+                      height: selectedCompany === id ? 70 : 72,
+                      borderRadius: selectedCompany === id ? 35 : 36,
+                    }}
+                    resizeMode="contain"
+                  />
+                </View>
+                <Text style={styles.companyName} numberOfLines={1}>
+                  {name}
+                </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
 
-          {/* 날짜 버튼 */}
-          <TouchableOpacity
-            style={styles.dateButtonSingle}
-            onPress={() => setShowPicker(true)}
-          >
-            <Ionicons name="calendar-outline" size={20} color="#4CC53A" />
-            <Text style={styles.dateButtonText}>
-              {formatDate(startDate)} ~ {formatDate(endDate)}
-            </Text>
-          </TouchableOpacity>
+          {/* 날짜 버튼 & 조건 검색 필터 */}
+          <View style={styles.filterRow}>
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={() => setShowPicker(true)}
+            >
+              <Ionicons name="calendar-outline" size={20} color="#4CC53A" />
+              <Text style={styles.dateButtonText}>
+                {formatDate(startDate)} ~ {formatDate(endDate)}
+              </Text>
+            </TouchableOpacity>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.conditionFilterButton,
+                !showOnlyCondition && styles.conditionFilterButtonActive,
+                pressed && styles.conditionFilterButtonPressed,
+              ]}
+              onPress={() => {
+                setLoading(true);
+                setTimeout(() => {
+                  setShowOnlyCondition(!showOnlyCondition);
+                  setLoading(false);
+                }, 100);
+              }}
+            >
+              <Text
+                style={[
+                  styles.conditionFilterText,
+                  !showOnlyCondition && styles.conditionFilterTextActive,
+                ]}
+              >
+                {showOnlyCondition ? "전체 보기" : "조건 검색 보기"}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* 스크롤 가능한 히스토리 영역 */}
@@ -377,93 +431,118 @@ export default function AlertHistory() {
                   const isConditionSearch = alert.stockCode === "조건검색";
 
                   return (
-                    <View
+                    <Pressable
                       key={index}
-                      style={[
-                        styles.timelineRow,
-                        isHighlighted &&
-                          !isConditionSearch &&
-                          styles.highlightedRow,
-                      ]}
+                      onPress={() => {
+                        if (isConditionSearch) {
+                          router.push("/(tabs)/(alert-condition)");
+                        } else if (alert.stockCode) {
+                          // 기업 알림 - 차트 화면으로 이동
+                          router.push({
+                            pathname: "/(tabs)/(chart)/[chartId]",
+                            params: {
+                              chartId: alert.stockCode,
+                              name: companyName,
+                              stockCode: alert.stockCode,
+                              highlightTime: alert.time,
+                            },
+                          });
+                        }
+                      }}
                     >
-                      <View style={styles.timeline}>
-                        {index === 0 ? (
-                          <View
-                            style={
-                              isConditionSearch
-                                ? styles.conditionSearchOuterCircle
-                                : styles.outerCircle
-                            }
-                          >
+                      <View
+                        style={[
+                          styles.timelineRow,
+                          isHighlighted &&
+                            !isConditionSearch &&
+                            styles.highlightedRow,
+                        ]}
+                      >
+                        <View style={styles.timeline}>
+                          {index === 0 ? (
                             <View
                               style={
                                 isConditionSearch
-                                  ? styles.conditionSearchInnerDot
-                                  : styles.innerDot
+                                  ? styles.conditionSearchOuterCircle
+                                  : styles.outerCircle
+                              }
+                            >
+                              <View
+                                style={
+                                  isConditionSearch
+                                    ? styles.conditionSearchInnerDot
+                                    : styles.innerDot
+                                }
+                              />
+                            </View>
+                          ) : (
+                            <View
+                              style={
+                                isConditionSearch
+                                  ? styles.conditionSearchSingleCircle
+                                  : styles.singleCircle
                               }
                             />
-                          </View>
-                        ) : (
-                          <View
-                            style={
-                              isConditionSearch
-                                ? styles.conditionSearchSingleCircle
-                                : styles.singleCircle
-                            }
-                          />
-                        )}
-                        {index !== item.items.length - 1 && (
-                          <View
-                            style={
-                              isConditionSearch
-                                ? styles.conditionSearchLine
-                                : styles.line
-                            }
-                          />
-                        )}
-                      </View>
+                          )}
+                          {index !== item.items.length - 1 && (
+                            <View
+                              style={
+                                isConditionSearch
+                                  ? styles.conditionSearchLine
+                                  : styles.line
+                              }
+                            />
+                          )}
+                        </View>
 
-                      <View style={styles.alertContent}>
-                        <View style={styles.alertHeader}>
+                        <View style={styles.alertContent}>
+                          <View style={styles.alertHeader}>
+                            <Text
+                              style={[
+                                styles.alertTitle,
+                                isHighlighted &&
+                                  !isConditionSearch &&
+                                  styles.highlightedTitle,
+                              ]}
+                            >
+                              {companyName} | {alert.title}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.alertTime,
+                                isHighlighted &&
+                                  !isConditionSearch &&
+                                  styles.highlightedTime,
+                              ]}
+                            >
+                              {alert.time}
+                            </Text>
+                          </View>
                           <Text
                             style={[
-                              styles.alertTitle,
+                              styles.alertDesc,
                               isHighlighted &&
                                 !isConditionSearch &&
-                                styles.highlightedTitle,
+                                styles.highlightedDesc,
                             ]}
                           >
-                            {companyName} | {alert.title}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.alertTime,
-                              isHighlighted &&
-                                !isConditionSearch &&
-                                styles.highlightedTime,
-                            ]}
-                          >
-                            {alert.time}
+                            {alert.desc}
                           </Text>
                         </View>
-                        <Text
-                          style={[
-                            styles.alertDesc,
-                            isHighlighted &&
-                              !isConditionSearch &&
-                              styles.highlightedDesc,
-                          ]}
-                        >
-                          {alert.desc}
-                        </Text>
                       </View>
-                    </View>
+                    </Pressable>
                   );
                 })}
               </View>
             )}
             ListEmptyComponent={
-              <Text style={styles.noAlert}>기록이 없습니다.</Text>
+              <View style={styles.emptyContainer}>
+                <Image
+                  source={require("@/assets/images/icon.png")}
+                  style={styles.emptyIcon}
+                />
+                <Text style={styles.emptyText}>알림 히스토리가 없습니다.</Text>
+              </View>
             }
           />
         </View>
@@ -565,7 +644,7 @@ export default function AlertHistory() {
           </View>
         </View>
       </Modal>
-      <CustomBottomTab activeTab="기록" />
+      <CustomBottomTab activeTab="히스토리" />
     </View>
   );
 }
@@ -590,6 +669,10 @@ const styles = StyleSheet.create({
   companyScroll: {
     marginBottom: 20,
   },
+  companyItem: {
+    alignItems: "center",
+    marginRight: 12,
+  },
   historyContainer: {
     flex: 1,
     paddingHorizontal: 20,
@@ -601,7 +684,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 10,
     borderWidth: 2,
     borderColor: "transparent",
     padding: 2,
@@ -612,8 +694,24 @@ const styles = StyleSheet.create({
     height: 62,
     borderRadius: 29,
   },
+  companyName: {
+    marginTop: 6,
+    fontSize: 11,
+    color: "#666",
+    fontFamily: "Pretendard",
+    fontWeight: "500",
+    textAlign: "center",
+    width: 80,
+  },
 
-  dateButtonSingle: {
+  filterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 25,
+    gap: 10,
+  },
+  dateButton: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
@@ -621,9 +719,37 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    marginBottom: 25,
   },
-  dateButtonText: { fontSize: 13, marginLeft: 6, color: "#333" },
+  dateButtonText: {
+    fontSize: 13,
+    marginLeft: 6,
+    color: "#333",
+    fontFamily: "Pretendard",
+  },
+  conditionFilterButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 8,
+    backgroundColor: "#FAFAFA",
+  },
+  conditionFilterButtonActive: {
+    backgroundColor: "#4CC439",
+    borderColor: "#4CC439",
+  },
+  conditionFilterButtonPressed: {
+    opacity: 0.7,
+  },
+  conditionFilterText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#666",
+    fontFamily: "Pretendard",
+  },
+  conditionFilterTextActive: {
+    color: "#fff",
+  },
 
   dateSection: { marginBottom: 25 },
   dateHeaderRow: {
@@ -681,6 +807,45 @@ const styles = StyleSheet.create({
   alertTime: { fontSize: 13, color: "#999" },
   alertDesc: { fontSize: 13, color: "#555", marginTop: 3, lineHeight: 18 },
   noAlert: { textAlign: "center", color: "#aaa", marginTop: 30 },
+
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 80,
+    paddingHorizontal: 20,
+  },
+  emptyIcon: {
+    width: 100,
+    height: 100,
+    marginBottom: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#999",
+    fontFamily: "Pretendard",
+    fontWeight: "500",
+    textAlign: "center",
+  },
+
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#fff",
+    fontWeight: "600",
+    fontFamily: "Pretendard",
+  },
 
   // 하이라이트 스타일
   highlightedRow: {

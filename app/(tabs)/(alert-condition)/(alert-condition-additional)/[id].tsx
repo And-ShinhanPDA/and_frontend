@@ -1,13 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { alertService } from "@/services/alert-service";
 import { presetService } from "@/services/preset-service";
+import { refreshWidgetManually } from "@/services/widgetShare";
 
 export default function ConditionAdditional() {
   const router = useRouter();
@@ -32,8 +33,10 @@ export default function ConditionAdditional() {
   const [isPresetOpen, setIsPresetOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const sectionRefs = useRef<{ [key: string]: View | null }>({});
 
-  const tabs = ["제목", "가격", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
+  const tabs = ["변동률", "52주", "거래량", "SMA", "RSI", "볼린저밴드"];
 
   const [conditionGetters, setConditionGetters] = useState<{
     [k: string]: () => any[];
@@ -52,6 +55,34 @@ export default function ConditionAdditional() {
   const handleTempSave = useCallback((id: string, getter: () => any[]) => {
     setConditionGetters((prev) => ({ ...prev, [id]: getter }));
   }, []);
+
+  // 탭 터치 시 해당 섹션으로 스크롤
+  const scrollToSection = (tabName: string) => {
+    const sectionMap: { [key: string]: string } = {
+      제목: "title",
+      변동률: "change",
+      가격: "price",
+      후행: "trailing",
+      "52주": "week52",
+      거래량: "volume",
+      SMA: "sma",
+      RSI: "rsi",
+      볼린저밴드: "bollingerband",
+    };
+
+    const sectionKey = sectionMap[tabName];
+    const section = sectionRefs.current[sectionKey];
+
+    if (section && scrollViewRef.current) {
+      section.measureLayout(
+        scrollViewRef.current as any,
+        (_x, y) => {
+          scrollViewRef.current?.scrollTo({ y: y - 20, animated: true });
+        },
+        () => {}
+      );
+    }
+  };
 
   // 프리셋 조건을 각 카드 형식으로 변환
   const parsePresetConditions = useCallback((conditions: any[]) => {
@@ -198,6 +229,9 @@ export default function ConditionAdditional() {
       console.log("알림 등록 성공:", res);
       setLoading(false);
 
+      // 위젯 즉시 새로고침
+      refreshWidgetManually();
+
       // 프리셋 등록 여부 확인
       showAlert({
         title: "프리셋 등록",
@@ -278,7 +312,11 @@ export default function ConditionAdditional() {
           contentContainerStyle={styles.tabBarContent}
         >
           {tabs.map((tab, idx) => (
-            <TouchableOpacity key={idx} style={styles.tabItem}>
+            <TouchableOpacity
+              key={idx}
+              style={styles.tabItem}
+              onPress={() => scrollToSection(tab)}
+            >
               <Text style={styles.tabText}>{tab}</Text>
             </TouchableOpacity>
           ))}
@@ -287,49 +325,93 @@ export default function ConditionAdditional() {
       </View>
 
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContentContainer}
         nestedScrollEnabled={true}
         keyboardShouldPersistTaps="handled"
       >
-        <TextInput
-          style={styles.titleInput}
-          placeholder="이 조건을 대표할 수 있는 한 줄 제목"
-          placeholderTextColor="#A4A4A4"
-          value={title}
-          onChangeText={setTitle}
-        />
+        <View
+          ref={(ref) => (sectionRefs.current["title"] = ref)}
+          collapsable={false}
+          style={styles.titleCard}
+        >
+          <View style={styles.titleHeader}>
+            <Text style={styles.titleLabel}>제목</Text>
+          </View>
+          <View style={styles.titleDivider} />
+          <TextInput
+            style={styles.titleInput}
+            placeholder="이 조건을 대표할 수 있는 한 줄 제목"
+            placeholderTextColor="#A4A4A4"
+            value={title}
+            onChangeText={setTitle}
+          />
+        </View>
 
         <View style={styles.divider} />
 
         {/* 조건 카드 */}
-        <ChangeConditionCard
-          onTempSave={handleTempSave}
-          initialValue={presetConditions.change}
-        />
-        <Week52ConditionCard
-          onTempSave={handleTempSave}
-          initialValue={presetConditions.week52}
-        />
+        <View
+          ref={(ref) => (sectionRefs.current["change"] = ref)}
+          collapsable={false}
+        >
+          <ChangeConditionCard
+            onTempSave={handleTempSave}
+            initialValue={presetConditions.change}
+          />
+        </View>
 
-        <VolumeConditionCard
-          onTempSave={handleTempSave}
-          initialValue={presetConditions.volume}
-        />
-        <SMAConditionCard
-          onTempSave={handleTempSave}
-          initialValue={presetConditions.sma}
-        />
+        <View
+          ref={(ref) => (sectionRefs.current["week52"] = ref)}
+          collapsable={false}
+        >
+          <Week52ConditionCard
+            onTempSave={handleTempSave}
+            initialValue={presetConditions.week52}
+          />
+        </View>
 
-        <RSIConditionCard
-          onTempSave={handleTempSave}
-          initialValue={presetConditions.rsi}
-        />
-        <BollingerBandCondition
-          onTempSave={handleTempSave}
-          initialValue={presetConditions.bollingerband}
-        />
+        <View
+          ref={(ref) => (sectionRefs.current["volume"] = ref)}
+          collapsable={false}
+        >
+          <VolumeConditionCard
+            onTempSave={handleTempSave}
+            initialValue={presetConditions.volume}
+          />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["sma"] = ref)}
+          collapsable={false}
+        >
+          <SMAConditionCard
+            onTempSave={handleTempSave}
+            initialValue={presetConditions.sma}
+          />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["rsi"] = ref)}
+          collapsable={false}
+        >
+          <RSIConditionCard
+            onTempSave={handleTempSave}
+            initialValue={presetConditions.rsi}
+          />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["bollingerband"] = ref)}
+          collapsable={false}
+        >
+          <BollingerBandCondition
+            onTempSave={handleTempSave}
+            initialValue={presetConditions.bollingerband}
+          />
+        </View>
       </ScrollView>
 
       {/* 하단 버튼 */}
@@ -338,7 +420,7 @@ export default function ConditionAdditional() {
           style={styles.presetButton}
           onPress={() => setIsPresetOpen(true)}
         >
-          <Text style={styles.presetText}>프리셋</Text>
+          <Text style={styles.presetText}>프리셋 가져오기</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
@@ -402,17 +484,39 @@ const styles = StyleSheet.create({
     fontFamily: "Pretendard",
   },
 
-  titleInput: {
-    borderWidth: 1,
-    borderColor: "#E8E8E8",
-    borderRadius: 10,
-    paddingVertical: 14,
+  titleCard: {
+    backgroundColor: "#fff",
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 14,
+    paddingVertical: 16,
     paddingHorizontal: 16,
+    marginVertical: 8,
+  },
+  titleHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  titleLabel: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#111",
+    fontFamily: "Pretendard",
+  },
+  titleDivider: {
+    height: 1,
+    backgroundColor: "#F0F0F0",
+    marginTop: 12,
+    marginBottom: 10,
+    marginHorizontal: -16,
+  },
+  titleInput: {
     fontSize: 15,
     color: "#111",
     backgroundColor: "#fff",
-    marginVertical: 12,
     fontFamily: "Pretendard",
+    paddingVertical: 4,
   },
 
   divider: {
@@ -452,16 +556,16 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
     marginRight: 8,
-    backgroundColor: "#F9F9F9",
+    backgroundColor: "black",
   },
   presetText: {
-    fontSize: 15,
-    color: "#333",
-    fontWeight: "600",
+    fontSize: 13,
+    color: "#fff",
+    fontWeight: "700",
     fontFamily: "Pretendard",
   },
   saveButton: {
-    flex: 1,
+    flex: 2,
     backgroundColor: "#4CC439",
     borderRadius: 10,
     paddingVertical: 14,

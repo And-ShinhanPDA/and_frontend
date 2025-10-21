@@ -2,11 +2,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 import { chartService } from "@/services/chart-service";
 import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { WebView, WebViewMessageEvent } from "react-native-webview";
@@ -16,12 +16,75 @@ import { chartHtml } from "./chart-html";
 type Period = "1m" | "1D";
 const fmt = (n?: number) =>
   typeof n === "number" ? Math.round(n).toLocaleString() : "-";
-const ymd = (sec?: number) =>
-  sec ? new Date(sec * 1000).toLocaleDateString() : "-";
-const weekday = (sec?: number) =>
-  sec
-    ? ["일", "월", "화", "수", "목", "금", "토"][new Date(sec * 1000).getDay()]
-    : "-";
+const ymd = (sec?: number | string) => {
+  if (!sec) return "-";
+  try {
+    let date: Date;
+    if (typeof sec === "string") {
+      // 문자열인 경우 (예: "2025-10-21")
+      date = new Date(sec);
+    } else if (typeof sec === "number") {
+      // 숫자인 경우 (타임스탬프)
+      date = new Date(sec * 1000);
+    } else {
+      return "-";
+    }
+
+    if (isNaN(date.getTime())) return "-";
+
+    // 한국어 형식으로 포맷 (예: 2025년 10월 21일)
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    return `${year}년 ${month}월 ${day}일`;
+  } catch (e) {
+    console.log("[ChartView] ymd error:", e, "sec:", sec);
+    return "-";
+  }
+};
+const weekday = (sec?: number | string) => {
+  if (!sec) return "-";
+  try {
+    let date: Date;
+    if (typeof sec === "string") {
+      // 문자열인 경우 (예: "2025-10-21")
+      date = new Date(sec);
+    } else if (typeof sec === "number") {
+      // 숫자인 경우 (타임스탬프)
+      date = new Date(sec * 1000);
+    } else {
+      return "-";
+    }
+
+    if (isNaN(date.getTime())) return "-";
+    return ["일", "월", "화", "수", "목", "금", "토"][date.getDay()];
+  } catch (e) {
+    console.log("[ChartView] weekday error:", e, "sec:", sec);
+    return "-";
+  }
+};
+const formatTime = (sec?: number | string) => {
+  if (!sec) return "";
+  try {
+    let date: Date;
+    if (typeof sec === "string") {
+      date = new Date(sec);
+    } else if (typeof sec === "number") {
+      date = new Date(sec * 1000);
+    } else {
+      return "";
+    }
+
+    if (isNaN(date.getTime())) return "";
+
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
+  } catch (e) {
+    console.log("[ChartView] formatTime error:", e, "sec:", sec);
+    return "";
+  }
+};
 
 const genCandles = (period: Period, count: number, base = 79200): Candle[] => {
   const out: Candle[] = [];
@@ -46,16 +109,18 @@ export default function ChartScreen({
   companyName,
   stockCode,
   onPriceUpdate,
+  highlightTime,
 }: {
   companyName: string;
   stockCode: string;
   onPriceUpdate?: (price: any) => void;
+  highlightTime?: string;
 }) {
   // console.log("[차트] ChartScreen 컴포넌트 렌더링됨:", {
   //   companyName,
   //   stockCode,
   // });
-  const { accessToken } = useAuth();
+  const { accessToken, refreshAccessToken } = useAuth();
   const [period, setPeriod] = useState<Period>("1D");
   const [smaOn, setSmaOn] = useState({
     sma5: true,
@@ -121,46 +186,65 @@ export default function ChartScreen({
   useEffect(() => {
     alertHistoryMarkersRef.current = alertHistoryMarkers;
   }, [alertHistoryMarkers]);
+
+  // highlightTime이 있으면 차트에 전달
+  useEffect(() => {
+    if (highlightTime && webViewLoaded && webRef.current) {
+      console.log("[차트] highlightTime 전달:", highlightTime);
+      webRef.current.postMessage(
+        JSON.stringify({
+          type: "highlightTime",
+          time: highlightTime,
+        })
+      );
+    }
+  }, [highlightTime, webViewLoaded]);
+
   const SMA_META = {
-    sma5: { label: "5", line: "#FF8A80", chipBg: "#FFEBEE", chipOn: "#FF8A80" }, // 차트 선과 동일
+    sma5: {
+      label: "SMA5",
+      line: "#FF8A80",
+      chipBg: "#FFEBEE",
+      chipOn: "#FF8A80",
+    }, // 차트 선과 동일
     sma10: {
-      label: "10",
+      label: "SMA10",
       line: "#81C784",
       chipBg: "#E8F5E8",
       chipOn: "#81C784",
     }, // 차트 선과 동일
     sma20: {
-      label: "20",
+      label: "SMA20",
       line: "#90CAF9",
       chipBg: "#E3F2FD",
       chipOn: "#90CAF9",
     }, // 차트 선과 동일
     sma30: {
-      label: "30",
+      label: "SMA30",
       line: "#FFB74D",
       chipBg: "#FFF3E0",
       chipOn: "#FFB74D",
     }, // 차트 선과 동일
     sma50: {
-      label: "50",
+      label: "SMA50",
       line: "#BA68C8",
       chipBg: "#F3E5F5",
       chipOn: "#BA68C8",
     }, // 차트 선과 동일
     sma60: {
-      label: "60",
+      label: "SMA60",
       line: "#B39DDB",
       chipBg: "#F3E5F5",
       chipOn: "#B39DDB",
     }, // 차트 선과 동일
     sma100: {
-      label: "100",
+      label: "SMA100",
       line: "#FFCC80",
       chipBg: "#FFF3E0",
       chipOn: "#FFCC80",
     }, // 차트 선과 동일
     sma200: {
-      label: "200",
+      label: "SMA200",
       line: "#A5D6A7",
       chipBg: "#E8F5E8",
       chipOn: "#A5D6A7",
@@ -184,7 +268,10 @@ export default function ChartScreen({
       if (result.length > 0) {
         const lastData = result[result.length - 1];
         setLastCandle({
-          time: new Date(lastData.time).getTime() / 1000,
+          time:
+            typeof lastData.time === "number"
+              ? lastData.time
+              : new Date(lastData.time).getTime() / 1000,
           open: lastData.open,
           high: lastData.high,
           low: lastData.low,
@@ -199,10 +286,14 @@ export default function ChartScreen({
     }
   };
 
-  // 분봉 데이터 fetch
+  // 분봉 데이터 fetch (새로운 API 사용)
   const fetchMinuteData = useCallback(async () => {
     try {
+      console.log("[차트] 분봉 데이터 fetch 시작:", stockCode);
       const result = await chartService.getMinuteCandles(stockCode);
+      console.log("[차트] 분봉 데이터 fetch 완료:", result.length, "개");
+      console.log("[차트] 분봉 데이터 샘플:", result.slice(0, 2));
+
       setCandles(result);
 
       // 마지막 캔들 데이터 저장
@@ -215,14 +306,21 @@ export default function ChartScreen({
           low: lastData.low,
           close: lastData.close,
           volume: lastData.volume,
-          rsi14: lastData.rsi14,
           diffFromPrev: lastData.diffFromPrev,
         });
+
+        // 현재가 업데이트
+        if (onPriceUpdate) {
+          onPriceUpdate({
+            currentPrice: lastData.close,
+            diffFromPrev: lastData.diffFromPrev,
+          });
+        }
       }
     } catch (err) {
       console.error("분봉 데이터 불러오기 실패:", err);
     }
-  }, [stockCode]);
+  }, [stockCode, onPriceUpdate]);
 
   // 현재가 fetch
   const fetchCurrentPrice = useCallback(async () => {
@@ -304,12 +402,22 @@ export default function ChartScreen({
       }
 
       try {
-        console.log("[차트] alertService.getAlertHistory 호출:", stockCode);
+        console.log("[차트] alertService.getAlertHistory 호출:", {
+          stockCode,
+          accessToken: accessToken
+            ? `${accessToken.substring(0, 20)}...`
+            : "null",
+        });
+
         const history = await alertService.getAlertHistory(
           accessToken,
           stockCode
         );
-        //console.log("[차트] 알림 히스토리 API 응답:", history);
+        console.log(
+          "[차트] 알림 히스토리 API 응답:",
+          history?.length || 0,
+          "개 항목"
+        );
 
         // 날짜별로 그룹화하여 하루에 하나의 마커만 표시
         const groupedByDate: { [key: string]: any[] } = {};
@@ -367,8 +475,30 @@ export default function ChartScreen({
         // );
         // //console.log("[차트] 마커 데이터:", markers);
         setAlertHistoryMarkers(markers);
-      } catch (err) {
+      } catch (err: any) {
         console.error("알림 히스토리 조회 실패:", err);
+        console.error("에러 상세:", {
+          message: err?.message,
+          status: err?.response?.status,
+          data: err?.response?.data,
+        });
+
+        // 인증 에러인 경우 토큰 갱신 시도
+        if (err?.response?.status === 401 || err?.message?.includes("인증")) {
+          console.log("[차트] 인증 에러 감지, 토큰 갱신 시도");
+          const refreshSuccess = await refreshAccessToken();
+          if (refreshSuccess) {
+            console.log("[차트] 토큰 갱신 성공, 알림 히스토리 재시도");
+            // 토큰 갱신 성공 시 다시 시도
+            setTimeout(() => {
+              fetchAlertHistory();
+            }, 1000);
+            return;
+          } else {
+            console.log("[차트] 토큰 갱신 실패");
+          }
+        }
+
         setAlertHistoryMarkers([]);
       }
     };
@@ -391,12 +521,40 @@ export default function ChartScreen({
           stockCode
         );
         console.log("[차트] 강제 fetch 결과:", history);
-      } catch (err) {
+      } catch (err: any) {
         console.error("[차트] 강제 fetch 실패:", err);
+        console.error("강제 fetch 에러 상세:", {
+          message: err?.message,
+          status: err?.response?.status,
+          data: err?.response?.data,
+        });
+
+        // 인증 에러인 경우 토큰 갱신 시도
+        if (err?.response?.status === 401 || err?.message?.includes("인증")) {
+          console.log("[차트] 강제 fetch 인증 에러 감지, 토큰 갱신 시도");
+          const refreshSuccess = await refreshAccessToken();
+          if (refreshSuccess) {
+            console.log("[차트] 강제 fetch 토큰 갱신 성공, 재시도");
+            // 토큰 갱신 성공 시 다시 시도
+            setTimeout(async () => {
+              try {
+                const history = await alertService.getAlertHistory(
+                  accessToken,
+                  stockCode
+                );
+                console.log("[차트] 강제 fetch 재시도 성공:", history);
+              } catch (retryErr) {
+                console.error("[차트] 강제 fetch 재시도 실패:", retryErr);
+              }
+            }, 1000);
+          } else {
+            console.log("[차트] 강제 fetch 토큰 갱신 실패");
+          }
+        }
       }
     };
     testFetch();
-  }, []);
+  }, [accessToken, stockCode, refreshAccessToken]);
 
   // 1분마다 자동 갱신 (주석처리 - 업데이트 안되는 문제로)
   // useEffect(() => {
@@ -464,6 +622,20 @@ export default function ChartScreen({
       }, 200);
     }
   }, [webViewLoaded, candles, period, smaOn, bollingerOn, alertHistoryMarkers]);
+
+  // 알림 표시 상태에 따라 차트 가시성 업데이트 (일봉일 때만)
+  useEffect(() => {
+    if (webViewLoaded && webRef.current && period === "1D") {
+      webRef.current?.postMessage(
+        JSON.stringify({
+          type: "toggleSubCharts",
+          payload: {
+            showSubCharts: headerAlerts.length === 0,
+          },
+        })
+      );
+    }
+  }, [webViewLoaded, headerAlerts, period]);
 
   const onMessage = (e: WebViewMessageEvent) => {
     try {
@@ -548,10 +720,12 @@ export default function ChartScreen({
           fmt={fmt}
           ymd={ymd}
           weekday={weekday}
+          formatTime={formatTime}
           diff={displayDiff}
           diffPct={displayDiffPct}
           isUp={displayIsUp}
           currPrice={displayPrice}
+          period={period}
         />
 
         {/* SMA 토글 버튼 (일봉일 때만 표시) */}
@@ -624,7 +798,12 @@ export default function ChartScreen({
 
       {/* 스크롤 가능한 차트 영역 */}
       <View style={styles.scrollableContent}>
-        <View style={styles.chartContainer}>
+        <View
+          style={[
+            styles.chartContainer,
+            period === "1m" && styles.chartContainerMinute,
+          ]}
+        >
           <WebView
             key={`webview-${forceUpdate}`} // forceUpdate로 강제 리렌더링
             ref={webRef}
@@ -632,6 +811,10 @@ export default function ChartScreen({
             source={{ html: chartHtml }}
             javaScriptEnabled
             domStorageEnabled
+            scrollEnabled={false}
+            scalesPageToFit={false}
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
             onMessage={onMessage}
             onLoadEnd={() => {
               setTimeout(() => {
@@ -641,26 +824,26 @@ export default function ChartScreen({
             style={{ flex: 1, backgroundColor: "#ffffff" }}
           />
         </View>
+      </View>
 
-        {/* 기간 버튼 */}
-        <View style={styles.periodBar}>
-          {(["1m", "1D"] as Period[]).map((p) => (
-            <Pressable
-              key={p}
-              onPress={() => changePeriod(p)}
-              style={[styles.periodBtn, period === p && styles.periodBtnActive]}
+      {/* 고정된 기간 버튼 (플로팅) */}
+      <View style={styles.floatingPeriodBar}>
+        {(["1m", "1D"] as Period[]).map((p) => (
+          <Pressable
+            key={p}
+            onPress={() => changePeriod(p)}
+            style={[styles.periodBtn, period === p && styles.periodBtnActive]}
+          >
+            <Text
+              style={[
+                styles.periodText,
+                period === p && styles.periodTextActive,
+              ]}
             >
-              <Text
-                style={[
-                  styles.periodText,
-                  period === p && styles.periodTextActive,
-                ]}
-              >
-                {p === "1m" ? "1분" : "일"}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+              {p === "1m" ? "1분" : "일"}
+            </Text>
+          </Pressable>
+        ))}
       </View>
     </View>
   );
@@ -724,10 +907,10 @@ const styles = StyleSheet.create({
   chip: {
     borderWidth: 1,
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     borderRadius: 16,
-    minWidth: 50,
-    maxWidth: 70,
+    minWidth: 60,
+    maxWidth: 80,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -742,6 +925,27 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#F0F0F0",
     backgroundColor: "#fff",
+  },
+  floatingPeriodBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    paddingVertical: 16,
+    paddingBottom: 30, // 하단 안전 영역 고려
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#E0E0E0",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
   },
   periodBtn: {
     paddingHorizontal: 20,
@@ -758,5 +962,11 @@ const styles = StyleSheet.create({
     flex: 1,
     maxHeight: 400,
     minHeight: 300,
+    paddingBottom: 80, // 플로팅 버튼 공간 확보
+  },
+  chartContainerMinute: {
+    maxHeight: 600, // 1분봉일 때 더 큰 높이 (원래대로)
+    minHeight: 500, // 최소 높이 (원래대로)
+    paddingBottom: 80, // 플로팅 버튼 공간 확보
   },
 });

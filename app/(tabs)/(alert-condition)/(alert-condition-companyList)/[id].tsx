@@ -14,6 +14,8 @@ import {
 
 import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
+import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
+import PresetSelect from "@/components/preset/preset-select";
 import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
@@ -129,16 +131,18 @@ export default function AlertConditionDetail() {
       setLoading(true);
       setError(null);
 
+      console.log("🔥 [CompanyList] 파라미터:", { id, name, tags });
       const results = await alertService.getConditionSearchResults(
         accessToken,
         id
       );
+      console.log("🔥 [CompanyList] getConditionSearchResults 응답:", results);
 
       const firstItem = results[0];
       const fields = firstItem ? Object.keys(firstItem.values || {}) : [];
       const validFields = fields.filter((field) => FIELD_MAPPING[field]);
 
-      console.log("사용 가능한 필드들:", validFields);
+      console.log("🔥 [CompanyList] 사용 가능한 필드들:", validFields);
       setAvailableFields(validFields);
 
       const formattedCompanies: Company[] = results.map((item: any) => {
@@ -158,6 +162,7 @@ export default function AlertConditionDetail() {
         };
       });
 
+      console.log("🔥 [CompanyList] 최종 포맷된 기업 수:", formattedCompanies.length);
       setCompanies(formattedCompanies);
       console.log(
         `조건 검색 결과 ${formattedCompanies.length}개 기업 로드 완료`
@@ -283,6 +288,14 @@ export default function AlertConditionDetail() {
         </View>
       )}
 
+      {/* 기업 리스트 제목 - 데이터가 있을 때만 표시 */}
+      {!loading && !error && companies.length > 0 && (
+        <View style={styles.listTitleContainer}>
+          <Text style={styles.listTitle}>해당 조건에 만족한 기업 리스트</Text>
+          <View style={styles.listTitleDivider} />
+        </View>
+      )}
+
       {/* 테이블 헤더 - 데이터가 있을 때만 표시 */}
       {!loading && !error && companies.length > 0 && (
         <View style={styles.tableHeaderRow}>
@@ -333,6 +346,9 @@ export default function AlertConditionDetail() {
                     style={styles.logo}
                     resizeMode="contain"
                   />
+                  <Text style={styles.companyName} numberOfLines={1}>
+                    {item.name}
+                  </Text>
                 </View>
               )}
             />
@@ -384,9 +400,26 @@ export default function AlertConditionDetail() {
       {/* 데이터가 없을 때 메시지 */}
       {!loading && !error && companies.length === 0 && (
         <View style={styles.emptyContainer}>
+          <Image
+            source={require("@/assets/images/icon.png")}
+            style={styles.emptyIcon}
+          />
           <Text style={styles.emptyText}>조건에 해당하는 기업이 없습니다.</Text>
         </View>
       )}
+
+      {/* 프리셋 모달 */}
+      <ConditionBottomSheet
+        visible={isPresetOpen}
+        onClose={() => setIsPresetOpen(false)}
+        ratio={0.85}
+      >
+        <PresetSelect 
+          onClose={() => setIsPresetOpen(false)} 
+          mode="view"
+        />
+      </ConditionBottomSheet>
+
       <CustomBottomTab activeTab="조건 검색" />
     </View>
   );
@@ -422,7 +455,7 @@ const styles = StyleSheet.create({
   conditionRight: {
     justifyContent: "center",
     alignItems: "center",
-    marginLeft: 12,
+    marginLeft: 0,
   },
 
   conditionTitle: {
@@ -439,8 +472,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     marginRight: 6,
+    marginBottom: 4,
   },
   tagText: { fontSize: 12, fontFamily: "Pretendard" },
+
+  listTitleContainer: {
+    paddingHorizontal: 28,
+    paddingBottom: 12,
+  },
+  listTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#111",
+    fontFamily: "Pretendard",
+    marginBottom: 8,
+  },
+  listTitleDivider: {
+    height: 1,
+    backgroundColor: "#E0E0E0",
+  },
 
   tableHeaderRow: {
     flexDirection: "row",
@@ -450,7 +500,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   fixedColumn: {
-    width: 100,
+    width: 60,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -474,19 +524,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
   },
   fixedColumnContainer: {
-    width: 100,
+    width: 60,
   },
   fixedCell: {
     height: 60,
+    width: 60,
     justifyContent: "center",
     alignItems: "center",
     borderBottomWidth: 1,
     borderColor: "#F5F6F8",
+    paddingHorizontal: 4,
   },
   logo: {
-    width: 30,
-    height: 30,
+    width: 34,
+    height: 34,
     resizeMode: "contain",
+    borderRadius: 8,
+    marginBottom: 2,
+  },
+  companyName: {
+    fontSize: 9,
+    color: "#666",
+    textAlign: "center",
+    fontFamily: "Pretendard",
+    fontWeight: "500",
+    maxWidth: 90,
   },
 
   dataScrollView: {
@@ -552,12 +614,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 40,
+    paddingBottom: 100,
+  },
+  emptyIcon: {
+    width: 120,
+    height: 120,
+    marginBottom: 16,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 15,
     color: "#999",
     textAlign: "center",
     fontFamily: "Pretendard",
+    fontWeight: "500",
   },
 });

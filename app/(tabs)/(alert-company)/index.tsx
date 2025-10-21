@@ -5,6 +5,7 @@ import PresetSelect from "@/components/preset/preset-select";
 import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import { refreshWidgetManually } from "@/services/widgetShare";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -102,10 +103,19 @@ export default function AlertCompany() {
 
       // 2. Triggered 알림 조회 (조건 만족한 알림들)
       const triggeredRes = await alertService.getTriggeredAlerts(accessToken);
+      console.log("🔥 [기업 알림] getTriggeredAlerts 전체 응답:", triggeredRes);
+
+      const triggeredCompanyAlerts = triggeredRes.filter(
+        (a: any) => a.stockCode
+      );
+      console.log("🔥 [기업 알림] 기업 알림만 필터링:", triggeredCompanyAlerts);
+
       const triggeredStockCodes = new Set(
-        triggeredRes
-          .filter((a: any) => a.stockCode)
-          .map((a: any) => a.stockCode)
+        triggeredCompanyAlerts.map((a: any) => a.stockCode)
+      );
+      console.log(
+        "🔥 [기업 알림] Triggered StockCodes Set:",
+        Array.from(triggeredStockCodes)
       );
 
       const rawList = Array.isArray(res) ? res : [];
@@ -133,10 +143,29 @@ export default function AlertCompany() {
     }
   };
 
+  // 활성화된 기업 알림 데이터 새로고침 및 위젯 업데이트
+  const fetchTriggeredConditions = useCallback(async () => {
+    if (!accessToken) return;
+
+    try {
+      console.log("🔄 [기업 알림] 활성화된 알림 데이터 새로고침 시작...");
+
+      // 기업 알림 데이터 새로고침
+      await fetchAlertedCompanies();
+
+      // 위젯 강제 새로고침
+      refreshWidgetManually();
+
+      console.log("✅ [기업 알림] 모든 데이터 + 위젯 새로고침 완료");
+    } catch (err) {
+      console.error("❌ [기업 알림] 데이터 새로고침 실패:", err);
+    }
+  }, [accessToken]);
+
   useFocusEffect(
     useCallback(() => {
-      fetchAlertedCompanies();
-    }, [accessToken])
+      fetchTriggeredConditions();
+    }, [fetchTriggeredConditions])
   );
 
   /* 초기 애니메이션 설정 */
@@ -172,6 +201,9 @@ export default function AlertCompany() {
       // API 호출 후 최신 데이터 다시 조회
       await fetchAlertedCompanies();
 
+      // 위젯 즉시 새로고침
+      refreshWidgetManually();
+
       console.log(
         `${target.name} 기업 알림 ${newActive ? "활성화" : "비활성화"} 완료`
       );
@@ -200,6 +232,10 @@ export default function AlertCompany() {
     try {
       await alertService.deleteCompanyAlerts(accessToken, stockCode);
       setCompanies((prev) => prev.filter((c) => c.stockCode !== stockCode));
+
+      // 위젯 즉시 새로고침
+      refreshWidgetManually();
+
       console.log(`${target.name} 기업 알림 삭제 완료`);
     } catch (err) {
       console.error("[기업 알림 삭제 실패]:", err);
@@ -267,7 +303,7 @@ export default function AlertCompany() {
               showOnlyActive && styles.filterButtonTextActive,
             ]}
           >
-            {showOnlyActive ? "전체 보기" : "활성화된 기업만 보기"}
+            {showOnlyActive ? "전체 보기" : "현재 조건을 충족한 기업만 보기"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -294,6 +330,7 @@ export default function AlertCompany() {
           rightOpenValue={-deleteWidth}
           disableRightSwipe
           closeOnRowPress
+          contentContainerStyle={styles.listContent}
           renderItem={({ item, index }) => {
             const fadeAnim =
               fadeAnimations[item.stockCode] || new Animated.Value(1);
@@ -400,6 +437,9 @@ export default function AlertCompany() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  listContent: {
+    paddingBottom: 120,
+  },
   searchWrapper: {
     flexDirection: "row",
     alignItems: "center",
@@ -480,10 +520,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 30,
     bottom: 110,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#4CC439B3",
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    backgroundColor: "black",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -510,8 +550,8 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   emptyIcon: {
-    width: 80,
-    height: 80,
+    width: 120,
+    height: 120,
     marginBottom: 16,
   },
   emptyText: {

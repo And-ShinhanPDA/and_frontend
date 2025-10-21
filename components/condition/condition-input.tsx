@@ -23,28 +23,35 @@ export default function ConditionInput({
         placeholder={placeholder}
         keyboardType="numeric"
       />
-      {unit && <Text style={styles.unitInside}>{unit}</Text>}
+      {unit && <Text style={styles.unitOutside}>{unit}</Text>}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  inputWrapper: { flex: 1, position: "relative" },
-  inputWithUnit: {
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    paddingRight: 30,
-    fontSize: 13,
+  inputWrapper: { 
+    flex: 1, 
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
-  unitInside: {
-    position: "absolute",
-    right: 10,
-    top: "50%",
-    transform: [{ translateY: -7 }],
-    fontSize: 13,
-    color: "#555",
+  inputWithUnit: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    fontSize: 14,
+    backgroundColor: "#fff",
+    fontFamily: "Pretendard",
+    fontWeight: "500",
+  },
+  unitOutside: {
+    fontSize: 14,
+    color: "#666",
+    fontFamily: "Pretendard",
+    fontWeight: "600",
+    minWidth: 24,
   },
 });

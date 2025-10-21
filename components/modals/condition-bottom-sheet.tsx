@@ -32,14 +32,14 @@ export default function ConditionBottomSheet({
   const translateY = useRef(new Animated.Value(0)).current;
   const screenHeight = Dimensions.get("window").height;
   
-  // 최대 높이를 화면의 90%로 제한
-  const maxHeight = screenHeight * 0.9;
+  // 최대 높이를 화면의 92%로 제한
+  const maxHeight = screenHeight * 0.92;
   const sheetHeight =
     typeof height === "number" 
       ? Math.min(height, maxHeight)
       : ratio 
       ? Math.min(screenHeight * ratio, maxHeight)
-      : Math.min(700, maxHeight);
+      : Math.min(screenHeight * 0.85, maxHeight);
 
   useEffect(() => {
     if (visible) {
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   dimmed: { 
     flex: 1,
@@ -148,21 +148,22 @@ const styles = StyleSheet.create({
   },
   bottomSheet: {
     backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     width: "100%",
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: 0,
+    paddingBottom: 0,
+    overflow: "hidden",
   },
   handleBarContainer: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: "center",
-    marginHorizontal: -20,
+    backgroundColor: "#fff",
   },
   handleBar: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#D1D1D6",
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "#C7C7CC",
   },
 });

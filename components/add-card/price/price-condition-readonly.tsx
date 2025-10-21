@@ -1,13 +1,13 @@
+import { CONDITION_DESCRIPTIONS } from "@/constants/conditionDescriptions";
 import React from "react";
 import {
-  LayoutAnimation,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  UIManager,
-  View,
+    Platform,
+    StyleSheet,
+    Text,
+    UIManager,
+    View
 } from "react-native";
+import ConditionTooltip from "../../condition/condition-tooltip";
 import { PriceConditionData } from "./price-condition-content";
 
 if (
@@ -29,7 +29,10 @@ export default function PriceConditionReadonlyCard({
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.title}>가격</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>가격</Text>
+          <ConditionTooltip description={CONDITION_DESCRIPTIONS.price} />
+        </View>
       </View>
 
       <View style={styles.divider} />
@@ -89,34 +92,62 @@ export default function PriceConditionReadonlyCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    marginVertical: 10,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginVertical: 8,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  title: { fontSize: 16, fontWeight: "600" },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  title: { 
+    fontSize: 17, 
+    fontWeight: "700",
+    color: "#111",
+    fontFamily: "Pretendard",
+  },
   divider: {
     height: 1,
-    backgroundColor: "#EAEAEA",
-    marginTop: 8,
-    marginBottom: 6,
-    marginHorizontal: -12,
+    backgroundColor: "#F0F0F0",
+    marginTop: 12,
+    marginBottom: 10,
+    marginHorizontal: -16,
   },
-  section: { marginBottom: 8 },
-  sectionTitle: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
+  section: { 
+    marginBottom: 12,
+    paddingVertical: 6,
+  },
+  sectionTitle: { 
+    fontSize: 14, 
+    fontWeight: "600", 
+    marginBottom: 8,
+    color: "#666",
+    fontFamily: "Pretendard",
+  },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 4,
+    marginBottom: 6,
+    paddingVertical: 4,
   },
-  label: { fontSize: 13, color: "#333" },
-  value: { fontSize: 13, color: "#000", fontWeight: "500" },
+  label: { 
+    fontSize: 13, 
+    color: "#555",
+    fontFamily: "Pretendard",
+  },
+  value: { 
+    fontSize: 14, 
+    color: "#111", 
+    fontWeight: "600",
+    fontFamily: "Pretendard",
+  },
 });

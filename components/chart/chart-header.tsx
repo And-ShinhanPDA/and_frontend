@@ -8,8 +8,81 @@ import {
   View,
 } from "react-native";
 
+// 유틸리티 함수들
+const fmt = (n?: number) =>
+  typeof n === "number" ? Math.round(n).toLocaleString() : "-";
+const ymd = (sec?: number | string) => {
+  if (!sec) return "-";
+  try {
+    let date: Date;
+    if (typeof sec === "string") {
+      // 문자열인 경우 (예: "2025-10-21")
+      date = new Date(sec);
+    } else if (typeof sec === "number") {
+      // 숫자인 경우 (타임스탬프)
+      date = new Date(sec * 1000);
+    } else {
+      return "-";
+    }
+
+    if (isNaN(date.getTime())) return "-";
+
+    // 한국어 형식으로 포맷 (예: 2025년 10월 21일)
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    return `${year}년 ${month}월 ${day}일`;
+  } catch (e) {
+    console.log("[ChartHeader] ymd error:", e, "sec:", sec);
+    return "-";
+  }
+};
+const weekday = (sec?: number | string) => {
+  if (!sec) return "-";
+  try {
+    let date: Date;
+    if (typeof sec === "string") {
+      // 문자열인 경우 (예: "2025-10-21")
+      date = new Date(sec);
+    } else if (typeof sec === "number") {
+      // 숫자인 경우 (타임스탬프)
+      date = new Date(sec * 1000);
+    } else {
+      return "-";
+    }
+
+    if (isNaN(date.getTime())) return "-";
+    return ["일", "월", "화", "수", "목", "금", "토"][date.getDay()];
+  } catch (e) {
+    console.log("[ChartHeader] weekday error:", e, "sec:", sec);
+    return "-";
+  }
+};
+const formatTime = (sec?: number | string) => {
+  if (!sec) return "";
+  try {
+    let date: Date;
+    if (typeof sec === "string") {
+      date = new Date(sec);
+    } else if (typeof sec === "number") {
+      date = new Date(sec * 1000);
+    } else {
+      return "";
+    }
+
+    if (isNaN(date.getTime())) return "";
+
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
+  } catch (e) {
+    console.log("[ChartHeader] formatTime error:", e, "sec:", sec);
+    return "";
+  }
+};
+
 export type Candle = {
-  time: number;
+  time: number | string;
   open: number;
   high: number;
   low: number;
@@ -38,12 +111,14 @@ type ChartHeaderProps = {
   headerAlert: string | null;
   headerAlerts: any[];
   fmt: (n?: number) => string;
-  ymd: (sec?: number) => string;
-  weekday: (sec?: number) => string;
+  ymd: (sec?: number | string) => string;
+  weekday: (sec?: number | string) => string;
+  formatTime: (sec?: number | string) => string;
   diff: number;
   diffPct: number;
   isUp: boolean;
   currPrice?: number;
+  period?: string; // 1D 또는 1M
 };
 
 export default function ChartHeader({
@@ -55,12 +130,13 @@ export default function ChartHeader({
   fmt,
   ymd,
   weekday,
+  formatTime,
   diff,
   diffPct,
   isUp,
   currPrice,
+  period = "1D",
 }: ChartHeaderProps) {
-  const [showAllAlerts, setShowAllAlerts] = useState(false);
   const [showModal, setShowModal] = useState(false);
   return (
     <>
@@ -81,11 +157,16 @@ export default function ChartHeader({
       {/* 날짜, 시가/종가/고가/저가, SMA, 알림 */}
       <View style={styles.metaHeader}>
         <Text style={styles.date}>
-          {ymd(ohlc?.time)} ({weekday(ohlc?.time)})
+          {period === "1m"
+            ? `${ymd(ohlc?.time)} (${weekday(ohlc?.time)}) ${formatTime(
+                ohlc?.time
+              )}`
+            : `${ymd(ohlc?.time)} (${weekday(ohlc?.time)})`}
         </Text>
         <View style={styles.row}>
           <Text style={styles.kv}>
-            시작 <Text style={styles.bold}>{fmt(ohlc?.open)}</Text>
+            {period === "1D" ? "시가" : "시작"}{" "}
+            <Text style={styles.bold}>{fmt(ohlc?.open)}</Text>
           </Text>
           <Text style={styles.kv}>
             최고 <Text style={styles.bold}>{fmt(ohlc?.high)}</Text>
@@ -93,42 +174,49 @@ export default function ChartHeader({
         </View>
         <View style={styles.row}>
           <Text style={styles.kv}>
-            마지막 <Text style={styles.bold}>{fmt(ohlc?.close)}</Text>
+            {period === "1D" ? "종가" : "마지막"}{" "}
+            <Text style={styles.bold}>{fmt(ohlc?.close)}</Text>
           </Text>
           <Text style={styles.kv}>
             최저 <Text style={styles.bold}>{fmt(ohlc?.low)}</Text>
           </Text>
         </View>
-        <View style={[styles.row, { marginTop: 6 }]}>
-          <Text style={styles.kv}>
-            거래량 <Text style={styles.bold}>{fmt(ohlc?.volume)}</Text>
-          </Text>
-          <Text style={styles.kv}>
-            RSI{" "}
-            <Text style={styles.bold}>
-              {ohlc?.rsi14 ? ohlc.rsi14.toFixed(2) : "-"}
-            </Text>
-          </Text>
-        </View>
-        <View style={[styles.row, { marginTop: 2 }]}>
-          <Text style={styles.kv}>
-            전일대비{" "}
-            <Text
-              style={[
-                styles.bold,
-                {
-                  color: (ohlc?.diffFromPrev ?? 0) >= 0 ? "#4CC439" : "#EF5350",
-                },
-              ]}
-            >
-              {ohlc?.diffFromPrev
-                ? `${ohlc.diffFromPrev >= 0 ? "+" : ""}${fmt(
-                    ohlc.diffFromPrev
-                  )}`
-                : "-"}
-            </Text>
-          </Text>
-        </View>
+        {/* 일봉일 때만 거래량, RSI, 전일대비 표시 */}
+        {period === "1D" && (
+          <>
+            <View style={[styles.row, { marginTop: 6 }]}>
+              <Text style={styles.kv}>
+                거래량 <Text style={styles.bold}>{fmt(ohlc?.volume)}</Text>
+              </Text>
+              <Text style={styles.kv}>
+                RSI{" "}
+                <Text style={styles.bold}>
+                  {ohlc?.rsi14 ? ohlc.rsi14.toFixed(2) : "-"}
+                </Text>
+              </Text>
+            </View>
+            <View style={[styles.row, { marginTop: 2 }]}>
+              <Text style={styles.kv}>
+                전일대비{" "}
+                <Text
+                  style={[
+                    styles.bold,
+                    {
+                      color:
+                        (ohlc?.diffFromPrev ?? 0) >= 0 ? "#4CC439" : "#EF5350",
+                    },
+                  ]}
+                >
+                  {ohlc?.diffFromPrev
+                    ? `${ohlc.diffFromPrev >= 0 ? "+" : ""}${fmt(
+                        ohlc.diffFromPrev
+                      )}`
+                    : "-"}
+                </Text>
+              </Text>
+            </View>
+          </>
+        )}
         {/* SMA 값 표시 (값이 있을 때만) */}
         {(smaVals.sma5 || smaVals.sma10 || smaVals.sma20 || smaVals.sma30) && (
           <View style={[styles.row, { marginTop: 8 }]}>
@@ -199,34 +287,33 @@ export default function ChartHeader({
         )}
         {headerAlerts.length > 0 && (
           <View style={styles.alertBox}>
-            <Text style={styles.alertTitle}>
-              🔔 알림 ({headerAlerts.length}개)
-            </Text>
-            <ScrollView
-              style={styles.alertScrollView}
-              showsVerticalScrollIndicator={false}
-              nestedScrollEnabled={true}
-            >
-              {(showAllAlerts ? headerAlerts : headerAlerts.slice(0, 5)).map(
-                (alert, index) => (
-                  <View key={alert.id || index} style={styles.alertItem}>
-                    <Text style={styles.alertItemText}>
-                      {alert.alertContent || "조건 충족"} {alert.timeStr || ""}
-                    </Text>
-                  </View>
-                )
+            <View style={styles.alertTitleRow}>
+              <Text style={styles.alertTitle}>
+                알림 ({headerAlerts.length}개)
+              </Text>
+              {headerAlerts.length > 2 ? (
+                <Pressable
+                  style={styles.showMoreButton}
+                  onPress={() => setShowModal(true)}
+                >
+                  <Text style={styles.showMoreText}>더보기</Text>
+                </Pressable>
+              ) : (
+                <View style={styles.showMoreButtonPlaceholder} />
               )}
-            </ScrollView>
-            {headerAlerts.length > 5 && (
-              <Pressable
-                style={styles.showMoreButton}
-                onPress={() => setShowModal(true)}
-              >
-                <Text style={styles.showMoreText}>
-                  더보기 ({headerAlerts.length - 5}개 더)
-                </Text>
-              </Pressable>
-            )}
+            </View>
+            <View style={styles.alertContainer}>
+              {headerAlerts.slice(0, 2).map((alert, index) => (
+                <View key={alert.id || index} style={styles.alertItem}>
+                  <Text style={styles.alertItemText} numberOfLines={1}>
+                    {alert.alertContent || "조건 충족"}
+                  </Text>
+                  <Text style={styles.alertItemTime}>
+                    {alert.timeStr || ""}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
         )}
       </View>
@@ -242,7 +329,7 @@ export default function ChartHeader({
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                🔔 알림 목록 ({headerAlerts.length}개)
+                알림 목록 ({headerAlerts.length}개)
               </Text>
               <Pressable
                 style={styles.closeButton}
@@ -255,7 +342,10 @@ export default function ChartHeader({
               {headerAlerts.map((alert, index) => (
                 <View key={alert.id || index} style={styles.modalAlertItem}>
                   <Text style={styles.modalAlertText}>
-                    {alert.alertContent || "조건 충족"} {alert.timeStr || ""}
+                    {alert.alertContent || "조건 충족"}
+                  </Text>
+                  <Text style={styles.modalAlertTime}>
+                    {alert.timeStr || ""}
                   </Text>
                 </View>
               ))}
@@ -297,22 +387,29 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FFF3",
     borderWidth: 1,
     borderColor: "#CFEFCC",
-    maxHeight: 200,
+  },
+  alertTitleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+    minHeight: 24,
   },
   alertTitle: {
     color: "#2C8A2C",
     fontWeight: "800",
-    marginBottom: 8,
     fontSize: 14,
   },
-  alertScrollView: {
-    maxHeight: 120,
+  alertContainer: {
+    gap: 2,
+    minHeight: 42,
   },
   alertItem: {
-    marginBottom: 8,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E8F5E8",
+    paddingVertical: 2,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 8,
   },
   alertItemTitle: {
     color: "#1B5E20",
@@ -328,25 +425,32 @@ const styles = StyleSheet.create({
   alertItemTime: {
     color: "#666",
     fontSize: 11,
-    fontStyle: "italic",
+    flexShrink: 0,
+    marginLeft: 4,
   },
   showMoreButton: {
-    marginTop: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
     backgroundColor: "#E8F5E8",
-    borderRadius: 6,
+    borderRadius: 12,
     alignItems: "center",
+    justifyContent: "center",
+  },
+  showMoreButtonPlaceholder: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    opacity: 0,
   },
   showMoreText: {
     color: "#2C8A2C",
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
   },
   alertItemText: {
     color: "#2C2C2C",
     fontSize: 12,
     lineHeight: 16,
+    flex: 1,
   },
   modalOverlay: {
     flex: 1,
@@ -394,10 +498,21 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderLeftWidth: 3,
     borderLeftColor: "#2C8A2C",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 8,
   },
   modalAlertText: {
     color: "#2C2C2C",
     fontSize: 13,
     lineHeight: 18,
+    flex: 1,
+  },
+  modalAlertTime: {
+    color: "#666",
+    fontSize: 12,
+    flexShrink: 0,
+    marginLeft: 4,
   },
 });

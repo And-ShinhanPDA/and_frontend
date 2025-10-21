@@ -23,9 +23,7 @@ export const authService = {
       });
 
       if (res.status < 200 || res.status >= 300) {
-        throw new Error(
-          res.data?.message || `회원가입에 실패했습니다.`
-        );
+        throw new Error(res.data?.message || `회원가입에 실패했습니다.`);
       }
 
       return res.data.data;
@@ -50,6 +48,7 @@ export const authService = {
           name: string;
           accessToken: string;
           refreshTokenId: string;
+          deviceId: string;
         }>
       >(url, payload, {
         timeout: 15000,
@@ -57,9 +56,7 @@ export const authService = {
       });
 
       if (res.status < 200 || res.status >= 300) {
-        throw new Error(
-          res.data?.message || `로그인에 실패했습니다.`
-        );
+        throw new Error(res.data?.message || `로그인에 실패했습니다.`);
       }
 
       const user: User = {

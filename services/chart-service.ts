@@ -58,11 +58,12 @@ export const chartService = {
       });
 
       const rawData = res.data?.data || [];
+      console.log("[분봉 API 원본 데이터 샘플]:", rawData.slice(0, 3));
 
       // 차트용 포맷으로 변환
       const parsedData = rawData.map((d: any) => {
-        // "2024-12-11T09:30:00" 형식을 timestamp로 변환
-        const dateTime = new Date(d.dateTime);
+        // "2025-10-14T15:30:00" 형식을 timestamp로 변환
+        const dateTime = new Date(d.date);
         const timestamp = Math.floor(dateTime.getTime() / 1000);
 
         return {
@@ -72,12 +73,12 @@ export const chartService = {
           low: d.lowPrice,
           close: d.closePrice,
           volume: d.volume,
-          rsi14: d.rsi14,
           diffFromPrev: d.diffFromPrev,
         };
       });
 
       console.log(`[분봉 데이터 파싱 완료] ${parsedData.length}개`);
+      console.log("[분봉 파싱된 데이터 샘플]:", parsedData.slice(0, 3));
       return parsedData;
     } catch (err: any) {
       console.error(

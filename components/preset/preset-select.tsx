@@ -1,7 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { presetService } from "@/services/preset-service";
-import { extractIndicatorCategories } from "@/utils/parseConditions";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -18,7 +17,9 @@ import Benjamin from "../../assets/images/preset/benjamin.svg";
 import Charlie from "../../assets/images/preset/charlie.svg";
 import Jesse from "../../assets/images/preset/jesse.svg";
 import Mark from "../../assets/images/preset/mark.svg";
+import Me from "../../assets/images/preset/me.svg";
 import Peter from "../../assets/images/preset/peter.svg";
+import Poll from "../../assets/images/preset/poll.svg";
 import Warren from "../../assets/images/preset/warren.svg";
 
 const PresetDefault = require("../../assets/images/preset/preset-default-image.png");
@@ -31,6 +32,8 @@ const imageMap: { [key: string]: any } = {
   "추세 추종": PresetDefault,
   "제시 리버모어": Jesse,
   "마크 미너비니": Mark,
+  "폴 튜더 존스": Poll,
+  "마이클 버리": Me,
 };
 
 // 추천 프리셋과 유명인 프리셋에 대한 지표 설명
@@ -60,7 +63,9 @@ interface Preset {
 }
 
 const { width } = Dimensions.get("window");
-const CARD_WIDTH = (width - 40 * 2 - 14) / 2;
+const HORIZONTAL_PADDING = 24;
+const GAP = 16;
+const CARD_WIDTH = (width - HORIZONTAL_PADDING * 2 - GAP) / 2;
 
 interface PresetSelectProps {
   onClose: () => void;
@@ -125,17 +130,35 @@ export default function PresetSelect({
       return matches;
     })
     .map((preset) => {
-      // custom 카테고리는 동적으로 지표 추출, 나머지는 하드코딩된 설명 사용
-      const desc =
+      // 지표 카테고리를 태그 배열로 추출
+      const tagSet = new Set<string>();
+      if (preset.conditions) {
+        preset.conditions.forEach((c: any) => {
+          const indicator = c.indicator || "";
+          if (indicator.includes("PRICE")) tagSet.add("가격");
+          else if (indicator.includes("RATE")) tagSet.add("변동률");
+          else if (indicator.includes("TRAILING")) tagSet.add("후행");
+          else if (indicator.includes("52W")) tagSet.add("52주");
+          else if (indicator.includes("VOLUME")) tagSet.add("거래량");
+          else if (indicator.includes("SMA")) tagSet.add("SMA");
+          else if (indicator.includes("RSI")) tagSet.add("RSI");
+          else if (indicator.includes("BB")) tagSet.add("볼린저밴드");
+        });
+      }
+      const tags = Array.from(tagSet);
+
+      // 이미지 선택 (내 프리셋은 icon.png)
+      const image =
         preset.category === "custom"
-          ? extractIndicatorCategories(preset.conditions)
-          : descMap[preset.title] || `조건 ${preset.conditions.length}개`;
+          ? require("@/assets/images/icon.png")
+          : imageMap[preset.title] || PresetDefault;
 
       return {
         id: preset.presetId,
         name: preset.title,
-        desc: desc,
-        image: imageMap[preset.title] || PresetDefault,
+        desc: "", // 더 이상 사용 안 함
+        tags: tags,
+        image: image,
       };
     });
 
@@ -150,30 +173,32 @@ export default function PresetSelect({
       scaleAnimations.current[id] = new Animated.Value(1);
     }
 
+    // 더 역동적인 흔들림 애니메이션 (무한 반복)
     const singleShake = Animated.sequence([
       Animated.timing(shakeAnimations.current[id], {
-        toValue: 0.5,
-        duration: 80,
+        toValue: 1,
+        duration: 60,
         useNativeDriver: true,
       }),
       Animated.timing(shakeAnimations.current[id], {
-        toValue: -0.5,
-        duration: 160,
+        toValue: -1,
+        duration: 120,
         useNativeDriver: true,
       }),
       Animated.timing(shakeAnimations.current[id], {
-        toValue: 0.5,
-        duration: 160,
+        toValue: 1,
+        duration: 120,
         useNativeDriver: true,
       }),
       Animated.timing(shakeAnimations.current[id], {
         toValue: 0,
-        duration: 80,
+        duration: 60,
         useNativeDriver: true,
       }),
     ]);
 
-    Animated.loop(singleShake, { iterations: 4 }).start();
+    // 무한 반복
+    Animated.loop(singleShake).start();
 
     Animated.parallel([
       Animated.timing(fadeAnimations.current[id], {
@@ -248,6 +273,15 @@ export default function PresetSelect({
     }
   };
 
+  // 편집 모드 전체 해제
+  const cancelAllEditMode = () => {
+    Object.keys(editMode).forEach((key) => {
+      if (editMode[Number(key)]) {
+        handleCancelEdit(Number(key));
+      }
+    });
+  };
+
   // 일반 클릭 핸들러
   const handlePress = (id: number) => {
     // 편집 모드일 때는 동작 안함
@@ -288,6 +322,17 @@ export default function PresetSelect({
 
   return (
     <View style={styles.container}>
+      {/* 헤더 */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>프리셋 관리</Text>
+        <Text style={styles.headerSubtitle}>
+          {mode === "select"
+            ? "프리셋을 선택하여 조건을 불러오세요"
+            : "저장된 프리셋을 확인하세요"}
+        </Text>
+      </View>
+
+      {/* 탭 */}
       <View style={styles.tabContainer}>
         {(["내", "유명인", "추천"] as const).map((tab) => (
           <TouchableOpacity
@@ -304,88 +349,123 @@ export default function PresetSelect({
         ))}
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={cancelAllEditMode}
+        style={{ flex: 1 }}
       >
-        <View style={styles.grid}>
-          {currentList.map((p) => {
-            // 애니메이션 값 초기화
-            if (!shakeAnimations.current[p.id]) {
-              shakeAnimations.current[p.id] = new Animated.Value(0);
-            }
-            if (!fadeAnimations.current[p.id]) {
-              fadeAnimations.current[p.id] = new Animated.Value(0);
-            }
-            if (!scaleAnimations.current[p.id]) {
-              scaleAnimations.current[p.id] = new Animated.Value(1);
-            }
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={true}
+        >
+          {currentList.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Image
+                source={require("@/assets/images/icon.png")}
+                style={styles.emptyIcon}
+              />
+              <Text style={styles.emptyText}>
+                {category === "내"
+                  ? "저장된 프리셋이 없습니다"
+                  : "프리셋을 불러오는 중..."}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.grid}>
+              {currentList.map((p) => {
+                // 애니메이션 값 초기화
+                if (!shakeAnimations.current[p.id]) {
+                  shakeAnimations.current[p.id] = new Animated.Value(0);
+                }
+                if (!fadeAnimations.current[p.id]) {
+                  fadeAnimations.current[p.id] = new Animated.Value(0);
+                }
+                if (!scaleAnimations.current[p.id]) {
+                  scaleAnimations.current[p.id] = new Animated.Value(1);
+                }
 
-            const rotation = shakeAnimations.current[p.id].interpolate({
-              inputRange: [-1, 1],
-              outputRange: ["-1.5deg", "1.5deg"],
-            });
+                const rotation = shakeAnimations.current[p.id].interpolate({
+                  inputRange: [-1, 1],
+                  outputRange: ["-3deg", "3deg"],
+                });
 
-            return (
-              <Animated.View
-                key={p.id}
-                style={[
-                  styles.card,
-                  {
-                    transform: [
-                      { rotate: rotation },
-                      { scale: scaleAnimations.current[p.id] },
-                    ],
-                  },
-                ]}
-              >
-                <TouchableOpacity
-                  style={styles.cardTouchable}
-                  onPress={() => handlePress(p.id)}
-                  onLongPress={() => handleLongPress(p.id)}
-                  delayLongPress={400}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.imageContainer}>
-                    {typeof p.image === "number" ? (
-                      <Image
-                        source={p.image}
-                        style={{ width: 70, height: 70 }}
-                      />
-                    ) : (
-                      <p.image width={70} height={70} />
-                    )}
-                  </View>
-
-                  <View style={styles.textCenter}>
-                    <Text style={styles.name}>{p.name}</Text>
-                  </View>
-
-                  <Text style={styles.desc}>{p.desc}</Text>
-                </TouchableOpacity>
-
-                {/* 삭제 버튼 - view 모드 + 편집 모드일 때만 표시 */}
-                {mode === "view" && editMode[p.id] && (
+                return (
                   <Animated.View
+                    key={p.id}
                     style={[
-                      styles.deleteButton,
-                      { opacity: fadeAnimations.current[p.id] },
+                      styles.card,
+                      {
+                        transform: [
+                          { rotate: rotation },
+                          { scale: scaleAnimations.current[p.id] },
+                        ],
+                      },
                     ]}
                   >
                     <TouchableOpacity
-                      style={styles.deleteButtonInner}
-                      onPress={() => handleDelete(p.id)}
-                      activeOpacity={0.7}
+                      style={styles.cardTouchable}
+                      onPress={() => handlePress(p.id)}
+                      onLongPress={() => handleLongPress(p.id)}
+                      delayLongPress={400}
+                      activeOpacity={0.8}
                     >
-                      <Text style={styles.deleteButtonText}>✕</Text>
+                      <View style={styles.imageContainer}>
+                        {typeof p.image === "number" ? (
+                          <Image
+                            source={p.image}
+                            style={{ width: 140, height: 140 }}
+                          />
+                        ) : (
+                          <p.image width={140} height={140} />
+                        )}
+                      </View>
+
+                      <View style={styles.textCenter}>
+                        <Text style={styles.name}>{p.name}</Text>
+                      </View>
+
+                      {/* 지표 태그 표시 */}
+                      <View style={styles.tagContainer}>
+                        {p.tags.slice(0, 3).map((tag: string, idx: number) => (
+                          <View key={idx} style={styles.tag}>
+                            <Text style={styles.tagText}>{tag}</Text>
+                          </View>
+                        ))}
+                        {p.tags.length > 3 && (
+                          <View style={styles.tag}>
+                            <Text style={styles.tagText}>
+                              +{p.tags.length - 3}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
                     </TouchableOpacity>
+
+                    {/* 삭제 버튼 - view 모드 + 편집 모드일 때만 표시 */}
+                    {mode === "view" && editMode[p.id] && (
+                      <Animated.View
+                        style={[
+                          styles.deleteButton,
+                          { opacity: fadeAnimations.current[p.id] },
+                        ]}
+                      >
+                        <TouchableOpacity
+                          style={styles.deleteButtonInner}
+                          onPress={() => handleDelete(p.id)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.deleteButtonText}>✕</Text>
+                        </TouchableOpacity>
+                      </Animated.View>
+                    )}
                   </Animated.View>
-                )}
-              </Animated.View>
-            );
-          })}
-        </View>
-      </ScrollView>
+                );
+              })}
+            </View>
+          )}
+        </ScrollView>
+      </TouchableOpacity>
 
       <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
         <Text style={styles.closeText}>
@@ -401,114 +481,200 @@ export default function PresetSelect({
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    height: "80%",
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+    backgroundColor: "#FAFAFA",
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#111",
+    marginBottom: 6,
+    fontFamily: "Pretendard",
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    color: "#666",
+    fontWeight: "400",
+    fontFamily: "Pretendard",
   },
   tabContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 16,
+    marginTop: 20,
+    marginBottom: 20,
+    paddingHorizontal: 20,
+    gap: 8,
   },
   tab: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    marginHorizontal: 4,
-  },
-  activeTab: { backgroundColor: "#000" },
-  tabText: { fontSize: 13, color: "#555" },
-  activeTabText: { color: "#fff" },
-  scrollContent: {
-    paddingBottom: 20,
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    backgroundColor: "#FAFAFA",
     alignItems: "center",
+  },
+  activeTab: {
+    backgroundColor: "#4CC439",
+    borderColor: "#4CC439",
+  },
+  tabText: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "600",
+    fontFamily: "Pretendard",
+  },
+  activeTabText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+  scrollContent: {
+    paddingTop: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 24,
   },
   grid: {
     width: "100%",
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
+    columnGap: 16,
+    rowGap: 20,
   },
   card: {
     width: CARD_WIDTH,
     backgroundColor: "#fff",
-    borderRadius: 20,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 6,
-    elevation: 3,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
     position: "relative",
+    overflow: "visible",
   },
   cardTouchable: {
-    paddingVertical: 18,
-    paddingHorizontal: 10,
+    padding: 16,
     alignItems: "center",
+    justifyContent: "center",
     width: "100%",
+    minHeight: 200,
   },
   imageContainer: {
     position: "absolute",
-    right: 10,
-    top: 8,
-    opacity: 0.9,
-  },
-  textCenter: {
-    flex: 1,
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
-    marginBottom: 30,
+    opacity: 0.4,
+  },
+  textCenter: {
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+    zIndex: 1,
   },
   name: {
     fontSize: 14,
     fontWeight: "700",
     color: "#111",
     textAlign: "center",
+    fontFamily: "Pretendard",
+    lineHeight: 20,
   },
   desc: {
-    fontSize: 12,
-    color: "#777",
+    fontSize: 11,
+    color: "#666",
     textAlign: "center",
-    lineHeight: 18,
-    marginTop: 6,
+    lineHeight: 16,
+    fontFamily: "Pretendard",
+    fontWeight: "400",
+  },
+  tagContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+    width: "100%",
+  },
+  tag: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    backgroundColor: "#fff",
+  },
+  tagText: {
+    fontSize: 11,
+    color: "#333",
+    fontFamily: "Pretendard",
+    fontWeight: 600,
   },
   closeBtn: {
     backgroundColor: "#4CC439",
-    borderRadius: 10,
-    paddingVertical: 14,
+    borderRadius: 12,
+    paddingVertical: 16,
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 16,
+    marginHorizontal: 20,
+    marginBottom: 24,
   },
-  closeText: { color: "#fff", fontWeight: "600", fontSize: 15 },
+  closeText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 16,
+    fontFamily: "Pretendard",
+  },
   deleteButton: {
     position: "absolute",
-    top: 8,
-    right: 8,
+    top: -8,
+    right: -8,
     zIndex: 10,
   },
   deleteButtonInner: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#4CC439",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FF3B30",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 5,
+    borderWidth: 3,
+    borderColor: "#fff",
   },
   deleteButtonText: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "700",
-    lineHeight: 18,
+    lineHeight: 17,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 60,
+    minHeight: 300,
+  },
+  emptyIcon: {
+    width: 100,
+    height: 100,
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 15,
+    color: "#999",
+    textAlign: "center",
+    fontFamily: "Pretendard",
+    fontWeight: "500",
   },
 });

@@ -8,8 +8,9 @@ import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { refreshWidgetManually } from "@/services/widgetShare";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
 type HeatmapData = {
@@ -25,6 +26,10 @@ export default function HomeScreen() {
 
   const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
   const [heatmapLoading, setHeatmapLoading] = useState(true);
+
+  // 자식 컴포넌트의 새로고침 함수 참조
+  const conditionRefreshRef = useRef<(() => void) | undefined>(undefined);
+  const companyRefreshRef = useRef<(() => void) | undefined>(undefined);
 
   const fetchHeatmapData = async () => {
     if (!accessToken) {
@@ -47,10 +52,37 @@ export default function HomeScreen() {
     }
   };
 
+  // 활성화된 조건/기업 알림 데이터 새로고침 및 위젯 업데이트
+  const fetchTriggeredConditions = useCallback(async () => {
+    if (!accessToken) return;
+
+    try {
+      console.log("🔄 [홈] 활성화된 알림 데이터 새로고침 시작...");
+
+      // 히트맵 데이터도 함께 새로고침
+      await fetchHeatmapData();
+
+      // 위젯 강제 새로고침 (자식 컴포넌트들이 useFocusEffect로 자동 새로고침됨)
+      refreshWidgetManually();
+
+      console.log("✅ [홈] 모든 데이터 + 위젯 새로고침 완료");
+    } catch (err) {
+      console.error("❌ [홈] 데이터 새로고침 실패:", err);
+    }
+  }, [accessToken]);
+
   useEffect(() => {
     fetchHeatmapData();
   }, [accessToken]);
 
+  // 화면이 포커스될 때마다 데이터 새로고침 (위젯 즉시 업데이트)
+  useFocusEffect(
+    useCallback(() => {
+      fetchTriggeredConditions();
+    }, [fetchTriggeredConditions])
+  );
+
+  // 로그아웃 핸들러
   const handleLogout = async () => {
     console.log("=== 로그아웃 시작 ===");
     console.log("user 전체:", user);

@@ -1,4 +1,5 @@
 import BollingerBandConditionReadonly from "@/components/add-card/bollingerband/bollingerband-condition-readonly";
+import ChangeConditionReadonlyCard from "@/components/add-card/change/change-condition-readonly";
 import RSIConditionReadonlyCard from "@/components/add-card/rsi/rsi-condition-readonly";
 import SMAConditionReadonlyCard from "@/components/add-card/sma/sma-condition-readonly";
 import VolumeConditionReadonlyCard from "@/components/add-card/volume/volume-condition-readonly";
@@ -12,7 +13,7 @@ import { alertService } from "@/services/alert-service";
 import { presetService } from "@/services/preset-service";
 import { parseConditionsForCards } from "@/utils/parseConditions";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -43,7 +44,9 @@ export default function ConditionAlertDetail() {
   const [alertData, setAlertData] = useState<any>(null);
   const [isPresetOpen, setIsPresetOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const tabs = ["제목", "52주", "거래량", "SMA", "RSI", "볼린저 밴드"];
+  const scrollViewRef = useRef<ScrollView>(null);
+  const sectionRefs = useRef<{ [key: string]: View | null }>({});
+  const tabs = ["변동률", "52주", "거래량", "SMA", "RSI", "볼린저밴드"];
 
   // 태그 파싱
   const parsedTags = tags ? JSON.parse(tags) : [];
@@ -102,6 +105,31 @@ export default function ConditionAlertDetail() {
   const parsedConditions = alertData?.conditions
     ? parseConditionsForCards(alertData.conditions)
     : null;
+
+  // 탭 터치 시 해당 섹션으로 스크롤
+  const scrollToSection = (tabName: string) => {
+    const sectionMap: { [key: string]: string } = {
+      변동률: "change",
+      "52주": "week52",
+      거래량: "volume",
+      SMA: "sma",
+      RSI: "rsi",
+      볼린저밴드: "bollingerband",
+    };
+
+    const sectionKey = sectionMap[tabName];
+    const section = sectionRefs.current[sectionKey];
+
+    if (section && scrollViewRef.current) {
+      section.measureLayout(
+        scrollViewRef.current as any,
+        (_x, y) => {
+          scrollViewRef.current?.scrollTo({ y: y - 20, animated: true });
+        },
+        () => {}
+      );
+    }
+  };
 
   const handlePresetAdd = () => {
     showAlert({
@@ -202,7 +230,11 @@ export default function ConditionAlertDetail() {
           contentContainerStyle={styles.tabBarContent}
         >
           {tabs.map((tab, idx) => (
-            <TouchableOpacity key={idx} style={styles.tabItem}>
+            <TouchableOpacity
+              key={idx}
+              style={styles.tabItem}
+              onPress={() => scrollToSection(tab)}
+            >
               <Text style={styles.tabText}>{tab}</Text>
             </TouchableOpacity>
           ))}
@@ -211,6 +243,7 @@ export default function ConditionAlertDetail() {
       </View>
 
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContentContainer}
@@ -224,23 +257,68 @@ export default function ConditionAlertDetail() {
         )}
 
         {/* 제목 (읽기 전용) */}
-        <View style={styles.titleContainer}>
-          <Text style={styles.titleLabel}>알림 제목</Text>
-          <Text style={styles.titleValue}>{title}</Text>
+        <View
+          ref={(ref) => (sectionRefs.current["title"] = ref)}
+          collapsable={false}
+        >
+          <View style={styles.titleContainer}>
+            <Text style={styles.titleLabel}>알림 제목</Text>
+            <Text style={styles.titleValue}>{title}</Text>
+          </View>
         </View>
 
         <View style={styles.divider} />
 
         {/* 조건 카드 - 읽기 전용 */}
-        <Week52ConditionReadonlyCard conditionData={parsedConditions?.week52} />
+        <View
+          ref={(ref) => (sectionRefs.current["change"] = ref)}
+          collapsable={false}
+        >
+          <ChangeConditionReadonlyCard
+            conditionData={parsedConditions?.change}
+          />
+        </View>
 
-        <VolumeConditionReadonlyCard conditionData={parsedConditions?.volume} />
-        <SMAConditionReadonlyCard conditionData={parsedConditions?.sma} />
+        <View
+          ref={(ref) => (sectionRefs.current["week52"] = ref)}
+          collapsable={false}
+        >
+          <Week52ConditionReadonlyCard
+            conditionData={parsedConditions?.week52}
+          />
+        </View>
 
-        <RSIConditionReadonlyCard conditionData={parsedConditions?.rsi} />
-        <BollingerBandConditionReadonly
-          conditionData={parsedConditions?.bollinger}
-        />
+        <View
+          ref={(ref) => (sectionRefs.current["volume"] = ref)}
+          collapsable={false}
+        >
+          <VolumeConditionReadonlyCard
+            conditionData={parsedConditions?.volume}
+          />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["sma"] = ref)}
+          collapsable={false}
+        >
+          <SMAConditionReadonlyCard conditionData={parsedConditions?.sma} />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["rsi"] = ref)}
+          collapsable={false}
+        >
+          <RSIConditionReadonlyCard conditionData={parsedConditions?.rsi} />
+        </View>
+
+        <View
+          ref={(ref) => (sectionRefs.current["bollingerband"] = ref)}
+          collapsable={false}
+        >
+          <BollingerBandConditionReadonly
+            conditionData={parsedConditions?.bollinger}
+          />
+        </View>
       </ScrollView>
 
       {/* 프리셋 */}

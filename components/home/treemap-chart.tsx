@@ -4,11 +4,14 @@ import {
   treemapSquarify as d3TreemapSquarify,
   hierarchy,
 } from "d3-hierarchy";
+import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
+  Image,
   LayoutChangeEvent,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -20,6 +23,7 @@ type CompanyNode = {
   value: number; // treemap 크기 계산용 (0이면 0.5로 보정)
   percent: number;
   actualCount?: number; // 실제 알림 개수 (표시용)
+  stockCode: string; // 라우팅용 stockCode
 };
 type RootNode = { children: CompanyNode[] };
 
@@ -67,6 +71,7 @@ const BlinkingDot = () => {
 export default function TreemapChart({ data, loading }: TreemapChartProps) {
   const [cardWidth, setCardWidth] = useState(0);
   const CARD_HEIGHT = 400;
+  const router = useRouter();
 
   // 카드 패딩 20*2 = 40 반영해서 SVG 가로 계산
   const handleLayout = (e: LayoutChangeEvent) => {
@@ -85,11 +90,15 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
         // 그대로 사용하면 됨
         const percentChange = item.priceRate;
 
+        // 최소 크기 보장: 모든 상자가 텍스트를 표시할 수 있도록 최소 5로 설정
+        const adjustedValue = Math.max(item.alertCount, 5);
+
         return {
           name: getCompanyName(item.stockCode),
-          value: item.alertCount, // 실제 알림 개수 사용
+          value: adjustedValue, // 최소값 보장된 값 사용
           percent: percentChange,
           actualCount: item.alertCount, // 실제 알림 개수 (표시용)
+          stockCode: item.stockCode, // 라우팅용
         };
       });
 
@@ -151,6 +160,25 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
     return [text.slice(0, mid), text.slice(mid)];
   };
 
+  // 상자 클릭 핸들러
+  const handleBoxPress = (stockCode: string, companyName: string) => {
+    console.log(`📊 [히트맵] ${companyName} (${stockCode}) 클릭`);
+    
+    // 기업 알림 목록 화면으로 먼저 이동
+    router.replace("/(tabs)/(alert-company)");
+    
+    // 약간의 딜레이 후 기업 상세 화면으로 push
+    setTimeout(() => {
+      router.push({
+        pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+        params: { 
+          id: stockCode,
+          name: companyName,
+        },
+      });
+    }, 100);
+  };
+
   let leaves: any[] = [];
   if (cardWidth > 0 && companies.length > 0) {
     try {
@@ -179,7 +207,7 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
   return (
     <View>
       <View style={styles.titleContainer}>
-        <Text style={styles.cardTitle}>한 눈에 보기</Text>
+        <Text style={styles.cardTitle}>내 알림들 한 눈에 보기</Text>
       </View>
       <View style={styles.card} onLayout={handleLayout}>
         {loading ? (
@@ -189,11 +217,16 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
           </View>
         ) : companies.length === 0 ? (
           <View style={styles.emptyContainer}>
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={styles.emptyIcon}
+            />
             <Text style={styles.emptyText}>히트맵 데이터가 없습니다</Text>
           </View>
         ) : cardWidth > 0 ? (
-          <Svg width={cardWidth} height={CARD_HEIGHT} pointerEvents="none">
-            {leaves.map((leaf, i) => {
+          <>
+            <Svg width={cardWidth} height={CARD_HEIGHT} pointerEvents="none">
+              {leaves.map((leaf, i) => {
               const { x0, y0, x1, y1 } = leaf;
               const w = x1 - x0;
               const h = y1 - y0;
@@ -357,9 +390,71 @@ export default function TreemapChart({ data, loading }: TreemapChartProps) {
                 </React.Fragment>
               );
             })}
-          </Svg>
+            </Svg>
+
+            {/* 클릭 가능한 투명 레이어 */}
+            {leaves.map((leaf, i) => {
+              const { x0, y0, x1, y1 } = leaf;
+              const w = x1 - x0;
+              const h = y1 - y0;
+              const company = leaf.data as CompanyNode;
+
+              return (
+                <Pressable
+                  key={`pressable-${i}`}
+                  style={{
+                    position: "absolute",
+                    left: x0,
+                    top: y0,
+                    width: w,
+                    height: h,
+                  }}
+                  onPress={() => handleBoxPress(company.stockCode, company.name)}
+                >
+                  {/* 투명한 터치 영역 */}
+                </Pressable>
+              );
+            })}
+          </>
         ) : null}
       </View>
+
+      {/* 색상 범례 */}
+      {!loading && companies.length > 0 && (
+        <View style={styles.legendContainer}>
+          <Text style={styles.legendTitle}>변동률 색상 가이드</Text>
+          <View style={styles.legendGrid}>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendBox, { backgroundColor: "#F63C3C" }]} />
+              <Text style={styles.legendText}>+3% 이상</Text>
+            </View>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendBox, { backgroundColor: "#9F373A" }]} />
+              <Text style={styles.legendText}>+1% ~ +3%</Text>
+            </View>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendBox, { backgroundColor: "#6B3439" }]} />
+              <Text style={styles.legendText}>+0.3% ~ +1%</Text>
+            </View>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendBox, { backgroundColor: "#32373C" }]} />
+              <Text style={styles.legendText}>-0.3% ~ +0.3%</Text>
+            </View>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendBox, { backgroundColor: "#263D53" }]} />
+              <Text style={styles.legendText}>-1% ~ -0.3%</Text>
+            </View>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendBox, { backgroundColor: "#1F4D75" }]} />
+              <Text style={styles.legendText}>-3% ~ -1%</Text>
+            </View>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendBox, { backgroundColor: "#018DFF" }]} />
+              <Text style={styles.legendText}>-3% 이하</Text>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -379,6 +474,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     marginBottom: 24,
     minHeight: 400,
+    position: "relative",
   },
   cardTitle: {
     fontSize: 16,
@@ -408,10 +504,59 @@ const styles = StyleSheet.create({
     height: 360,
     justifyContent: "center",
     alignItems: "center",
+    paddingVertical: 10,
+  },
+  emptyIcon: {
+    width: 80,
+    height: 80,
   },
   emptyText: {
     fontSize: 14,
-    color: "#9CA3AF",
+    color: "#999",
     fontFamily: "Pretendard",
+    textAlign: "center",
+    paddingVertical: 20,
+  },
+  legendContainer: {
+    backgroundColor: "#FAFAFA",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 0,
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+  },
+  legendTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#111",
+    fontFamily: "Pretendard",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  legendGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  legendRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "48%",
+    marginBottom: 6,
+  },
+  legendBox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    marginRight: 8,
+    borderWidth: 0.5,
+    borderColor: "rgba(0,0,0,0.1)",
+  },
+  legendText: {
+    fontSize: 12,
+    color: "#555",
+    fontFamily: "Pretendard",
+    fontWeight: "500",
   },
 });

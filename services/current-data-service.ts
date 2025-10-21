@@ -1,4 +1,4 @@
-import axios from "axios";
+import { apiClient } from "./api-client";
 
 const BASE_URL = process.env.EXPO_PUBLIC_CHART_URL;
 
@@ -63,8 +63,8 @@ export const currentDataService = {
       console.log(`📡 현재 데이터 조회 시작: ${stockCode}`);
 
       const [dailyRes, minuteRes] = await Promise.all([
-        axios.get(`${BASE_URL}/redis/get?key=daily:${stockCode}`),
-        axios.get(`${BASE_URL}/redis/get?key=minute:${stockCode}`),
+        apiClient.get(`${BASE_URL}/redis/get?key=daily:${stockCode}`),
+        apiClient.get(`${BASE_URL}/redis/get?key=minute:${stockCode}`),
       ]);
 
       const dailyData: DailyData = dailyRes.data;
@@ -107,7 +107,7 @@ export const currentDataService = {
   // 현재가만 조회
   async getCurrentPrice(stockCode: string): Promise<number> {
     try {
-      const res = await axios.get(
+      const res = await apiClient.get(
         `${BASE_URL}/redis/get?key=minute:${stockCode}`
       );
       return res.data.price;
@@ -120,7 +120,7 @@ export const currentDataService = {
   // SMA 값들만 조회
   async getSMAValues(stockCode: string) {
     try {
-      const res = await axios.get(
+      const res = await apiClient.get(
         `${BASE_URL}/redis/get?key=daily:${stockCode}`
       );
       const data: DailyData = res.data;
@@ -143,7 +143,7 @@ export const currentDataService = {
   // RSI 값 조회
   async getRSIValue(stockCode: string): Promise<number> {
     try {
-      const res = await axios.get(
+      const res = await apiClient.get(
         `${BASE_URL}/redis/get?key=daily:${stockCode}`
       );
       return res.data.rsi14;
@@ -156,7 +156,7 @@ export const currentDataService = {
   // 볼린저밴드 값 조회
   async getBollingerBandValues(stockCode: string) {
     try {
-      const res = await axios.get(
+      const res = await apiClient.get(
         `${BASE_URL}/redis/get?key=daily:${stockCode}`
       );
       const data: DailyData = res.data;
@@ -175,7 +175,7 @@ export const currentDataService = {
   // 52주 고가/저가 대비 비율 조회
   async get52WeekValues(stockCode: string) {
     try {
-      const res = await axios.get(
+      const res = await apiClient.get(
         `${BASE_URL}/redis/get?key=minute:${stockCode}`
       );
       const data: MinuteData = res.data;
@@ -195,8 +195,8 @@ export const currentDataService = {
   async getVolumeValues(stockCode: string) {
     try {
       const [dailyRes, minuteRes] = await Promise.all([
-        axios.get(`${BASE_URL}/redis/get?key=daily:${stockCode}`),
-        axios.get(`${BASE_URL}/redis/get?key=minute:${stockCode}`),
+        apiClient.get(`${BASE_URL}/redis/get?key=daily:${stockCode}`),
+        apiClient.get(`${BASE_URL}/redis/get?key=minute:${stockCode}`),
       ]);
 
       const dailyData: DailyData = dailyRes.data;

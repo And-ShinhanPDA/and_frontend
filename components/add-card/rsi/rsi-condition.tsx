@@ -1,16 +1,19 @@
+import { CONDITION_DESCRIPTIONS } from "@/constants/conditionDescriptions";
 import React, { useEffect, useState } from "react";
 import {
-  LayoutAnimation,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  UIManager,
-  View,
+    LayoutAnimation,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    UIManager,
+    View,
 } from "react-native";
 import AddIcon from "../../../assets/images/add.svg";
+import ChevronDown from "../../../assets/images/ChevronDown.svg";
 import EditIcon from "../../../assets/images/edit.svg";
+import ConditionTooltip from "../../condition/condition-tooltip";
 import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
 import RSIConditionContent from "./rsi-condition-content";
 
@@ -90,17 +93,33 @@ export default function RSIConditionCard({
       <Pressable onPress={hasCondition ? toggleExpand : undefined}>
         <View style={styles.card}>
           <View style={styles.header}>
-            <Text style={styles.title}>RSI</Text>
-            <TouchableOpacity onPress={() => setIsOpen(true)}>
-              {hasCondition ? (
-                <EditIcon width={18} height={18} />
-              ) : (
-                <AddIcon width={30} height={30} />
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>RSI</Text>
+              <ConditionTooltip description={CONDITION_DESCRIPTIONS.rsi} />
+            </View>
+            <View style={styles.rightButtons}>
+              {hasCondition && (
+                <View
+                  style={[
+                    styles.chevronWrapper,
+                    expanded && { transform: [{ rotate: "180deg" }] },
+                  ]}
+                >
+                  <ChevronDown width={18} height={18} />
+                </View>
               )}
-            </TouchableOpacity>
+              <TouchableOpacity onPress={() => setIsOpen(true)}>
+                {hasCondition ? (
+                  <EditIcon width={18} height={18} />
+                ) : (
+                  <AddIcon width={30} height={30} />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
 
-          {expanded && conditionData && (
+          {expanded && conditionData && 
+           (conditionData.overbought || conditionData.oversold) && (
             <>
               <View style={styles.divider} />
 
@@ -141,34 +160,71 @@ export default function RSIConditionCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginVertical: 10,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginVertical: 8,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  title: { fontSize: 16, fontWeight: "600" },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  title: { 
+    fontSize: 17, 
+    fontWeight: "700",
+    color: "#111",
+    fontFamily: "Pretendard",
+  },
+  rightButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 20,
+  },
+  chevronWrapper: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
   divider: {
     height: 1,
-    backgroundColor: "#EAEAEA",
-    marginTop: 8,
-    marginBottom: 6,
-    marginHorizontal: -12,
+    backgroundColor: "#F0F0F0",
+    marginTop: 12,
+    marginBottom: 10,
+    marginHorizontal: -16,
   },
-  section: { marginBottom: 8 },
-  sectionTitle: { fontSize: 14, fontWeight: "600", marginBottom: 4 },
-  desc: { fontSize: 13, color: "#666", marginLeft: 4 },
+  section: { 
+    marginBottom: 12,
+    paddingVertical: 6,
+  },
+  sectionTitle: { 
+    fontSize: 14, 
+    fontWeight: "600", 
+    marginBottom: 8,
+    color: "#666",
+    fontFamily: "Pretendard",
+  },
+  desc: { 
+    fontSize: 13, 
+    color: "#555",
+    marginLeft: 4,
+    fontFamily: "Pretendard",
+  },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 4,
+    marginBottom: 6,
+    paddingVertical: 4,
   },
-  label: { fontSize: 13, color: "#333" },
+  label: { 
+    fontSize: 13, 
+    color: "#555",
+    fontFamily: "Pretendard",
+  },
 });

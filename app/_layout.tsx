@@ -1,13 +1,13 @@
 // app/_layout.tsx
 import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Linking, View } from "react-native";
 import "react-native-reanimated";
 
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-// import { setWidgetViewType } from "@/services/widgetShare"; // ✅ 위젯 관련 주석처리
-// import messaging from "@react-native-firebase/messaging"; // ✅ 임시 주석처리
+import notifee from "@notifee/react-native";
+import messaging from "@react-native-firebase/messaging";
 import {
   DarkTheme,
   DefaultTheme,
@@ -16,15 +16,15 @@ import {
 import Constants from "expo-constants";
 import * as Device from "expo-device";
 import { useFonts } from "expo-font";
-// import * as Linking from "expo-linking"; // ✅ 위젯 관련 주석처리
+import { useRouter } from "expo-router";
 import { useEffect } from "react";
 
 SplashScreen.preventAutoHideAsync();
 
 // ✅ 앱이 background/quit(종료) 상태인 경우 메시지를 받기 위함
-// messaging().setBackgroundMessageHandler(async (remoteMessage: any) => {
-//   console.log("[Background Message] ", remoteMessage);
-// });
+messaging().setBackgroundMessageHandler(async (remoteMessage: any) => {
+  console.log("[Background Message] ", remoteMessage);
+});
 
 // ✅ FCM 권한 요청 및 토큰 생성
 const requestUserPermission = async () => {
@@ -67,6 +67,160 @@ const requestUserPermission = async () => {
 
 function RouterGate() {
   const { isReady, isLoggedIn } = useAuth();
+  const router = useRouter();
+
+  // 위젯 딥링크 핸들러 설정
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const handleDeepLink = (event: { url: string }) => {
+      const { url } = event;
+      console.log("📲 [Deep Link] URL 수신:", url);
+
+      // myapp://alert-company-alertDetail?id=123&stockCode=005930&name=삼성전자
+      // myapp://alert-condition-companyList?id=123&name=조건명
+      
+      try {
+        const urlObj = new URL(url);
+        const hostname = urlObj.hostname;
+        const searchParams = new URLSearchParams(urlObj.search);
+        
+        console.log("📲 [Deep Link] Parsed:", { hostname, params: Object.fromEntries(searchParams) });
+
+        if (hostname === "alert-company-alertDetail") {
+          const alertId = searchParams.get("id");
+          const stockCode = searchParams.get("stockCode");
+          const name = searchParams.get("name");
+          
+          if (alertId && stockCode) {
+            console.log(`📲 [Deep Link] 기업 알림 상세로 이동: ${name} (${stockCode})`);
+            
+            // 네비게이션 스택 구성: 기업 알림 목록 → 기업 상세 → 알림 상세
+            // 1. 먼저 기업 알림 목록 화면으로 이동
+            router.replace("/(tabs)/(alert-company)");
+            
+            // 2. 약간의 딜레이 후 기업 상세 화면을 push
+            setTimeout(() => {
+              router.push({
+                pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+                params: { 
+                  id: stockCode,
+                  name: name || "", // 기업명 전달
+                },
+              });
+              
+              // 3. 그 다음 알림 상세 화면을 push
+              setTimeout(() => {
+                router.push({
+                  pathname: "/(tabs)/(alert-company)/(alert-company-alertDetail)/[id]",
+                  params: { 
+                    id: alertId,
+                    stockCode: stockCode,
+                    companyName: name || "",
+                  },
+                });
+              }, 100);
+            }, 100);
+          }
+        } else if (hostname === "alert-condition-companyList") {
+          const id = searchParams.get("id");
+          const name = searchParams.get("name");
+          
+          if (id) {
+            console.log(`📲 [Deep Link] 조건 검색 상세로 이동: ${name} (${id})`);
+            router.push({
+              pathname: "/(tabs)/(alert-condition)/(alert-condition-companyList)/[id]",
+              params: { id, name: name || "", tags: "[]" },
+            });
+          }
+        }
+      } catch (error) {
+        console.error("📲 [Deep Link] URL 파싱 에러:", error);
+      }
+    };
+
+    // 앱 실행 중 딥링크 수신
+    const subscription = Linking.addEventListener("url", handleDeepLink);
+
+    // 앱이 종료된 상태에서 딥링크로 열린 경우
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        console.log("📲 [Deep Link] 앱 실행 시 초기 URL:", url);
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isLoggedIn]);
+
+  // Foreground 알림 핸들러 설정
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    // 앱이 foreground 상태일 때 알림 수신
+    const unsubscribeForeground = messaging().onMessage(async (remoteMessage) => {
+      console.log("📱 [Notification] 포어그라운드 알림 수신:", remoteMessage);
+
+      try {
+        // notifee를 사용하여 시스템 알림 표시
+        await notifee.displayNotification({
+          title: remoteMessage.notification?.title || "알림",
+          body: remoteMessage.notification?.body || "",
+          android: {
+            channelId: "default",
+            smallIcon: "ic_launcher",
+            pressAction: {
+              id: "default",
+            },
+          },
+          ios: {
+            foregroundPresentationOptions: {
+              alert: true,
+              badge: true,
+              sound: true,
+            },
+          },
+        });
+        console.log("✅ [Notification] 포어그라운드 알림 표시 완료");
+      } catch (error) {
+        console.error("❌ [Notification] 포어그라운드 알림 표시 실패:", error);
+      }
+    });
+
+    return () => {
+      unsubscribeForeground();
+    };
+  }, [isLoggedIn]);
+
+  // 알림 터치 핸들러 설정
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    // 백그라운드 상태에서 알림 터치 시
+    const unsubscribeBackground = messaging().onNotificationOpenedApp((remoteMessage) => {
+      console.log("📱 [Notification] 알림 터치됨 (Background):", remoteMessage);
+      router.push("/(tabs)/(alert-history)");
+    });
+
+    // 앱이 종료된 상태에서 알림 터치로 열린 경우
+    messaging()
+      .getInitialNotification()
+      .then((remoteMessage) => {
+        if (remoteMessage) {
+          console.log("📱 [Notification] 알림 터치로 앱 실행됨 (Quit state):", remoteMessage);
+          // 약간의 딜레이 후 이동 (앱 초기화 대기)
+          setTimeout(() => {
+            router.push("/(tabs)/(alert-history)");
+          }, 1000);
+        }
+      });
+
+    return () => {
+      unsubscribeBackground();
+    };
+  }, [isLoggedIn]);
 
   // 로딩 중
   if (!isReady) {
@@ -106,6 +260,27 @@ export default function RootLayout() {
   // ✅ iOS 권한 요청 및 FCM 토큰 받기
   useEffect(() => {
     requestUserPermission();
+  }, []);
+
+  // ✅ Notifee 초기화 (foreground 알림용)
+  useEffect(() => {
+    const initNotifee = async () => {
+      try {
+        // Android 채널 생성
+        await notifee.createChannel({
+          id: "default",
+          name: "기본 알림",
+          importance: 4, // High importance
+          sound: "default",
+        });
+        
+        console.log("✅ [Notifee] 채널 초기화 완료");
+      } catch (error) {
+        console.error("❌ [Notifee] 초기화 실패:", error);
+      }
+    };
+
+    initNotifee();
   }, []);
 
   // ✅ 앱이 foreground(실행) 상태인 경우 메시지를 받기 위함

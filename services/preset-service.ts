@@ -1,5 +1,5 @@
 import { getErrorMessage } from "@/utils/errorHandler";
-import axios from "axios";
+import { apiClient } from "./api-client";
 
 const BASE_URL = process.env.EXPO_PUBLIC_ALERT_URL;
 
@@ -9,11 +9,7 @@ export const presetService = {
     const url = `${BASE_URL}/api/presets`;
 
     try {
-      const res = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
+      const res = await apiClient.get(url, {
       });
 
       return res.data;
@@ -27,8 +23,7 @@ export const presetService = {
     const url = `${BASE_URL}/api/presets/${presetId}`;
 
     try {
-      const res = await axios.get(url, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+      const res = await apiClient.get(url, {
       });
 
       return res.data;
@@ -42,8 +37,7 @@ export const presetService = {
     const url = `${BASE_URL}/api/presets`;
 
     try {
-      const res = await axios.post(url, payload, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+      const res = await apiClient.post(url, payload, {
       });
 
       return res.data;
@@ -57,8 +51,7 @@ export const presetService = {
     const url = `${BASE_URL}/api/presets/${presetId}`;
 
     try {
-      const res = await axios.put(url, payload, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+      const res = await apiClient.put(url, payload, {
       });
 
       return res.data;
@@ -72,8 +65,7 @@ export const presetService = {
     const url = `${BASE_URL}/api/presets/${presetId}`;
 
     try {
-      const res = await axios.delete(url, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+      const res = await apiClient.delete(url, {
       });
 
       return res.data;

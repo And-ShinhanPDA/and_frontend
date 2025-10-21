@@ -2,8 +2,10 @@ import { CustomBottomTab } from "@/components/bottom/bottom";
 import CustomHeader from "@/components/header/header";
 import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
+import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import { refreshWidgetManually } from "@/services/widgetShare";
 import { getIndicatorCategoriesArray } from "@/utils/parseConditions";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -69,6 +71,10 @@ export default function CompanyAlertDetail() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const { accessToken, signOut, user } = useAuth();
 
+  // stockCode(id)로 기업명 찾기
+  const company = COMPANIES.find((c) => c.code === id);
+  const displayCompanyName = name || company?.name || "기업 이름";
+
   // 로그아웃 핸들러
   const handleLogout = async () => {
     try {
@@ -114,14 +120,27 @@ export default function CompanyAlertDetail() {
       const triggeredRes = await alertService.getTriggeredAlerts(accessToken, [
         id,
       ]);
+      console.log(
+        `🔥 [기업 상세 ${id}] getTriggeredAlerts 응답:`,
+        triggeredRes
+      );
+
       const triggeredAlertIds = new Set(
         triggeredRes.map((a: any) => String(a.alertId))
+      );
+      console.log(
+        `🔥 [기업 상세 ${id}] Triggered AlertIds:`,
+        Array.from(triggeredAlertIds)
       );
 
       if (res?.data && Array.isArray(res.data)) {
         // TODO: 실제 구조에 맞게 변환 필요
         const formatted = res.data.map((a: any) => {
           const alertId = String(a.alertId ?? a.id ?? "0");
+          const isTriggered = triggeredAlertIds.has(alertId);
+          console.log(
+            `🔥 [기업 상세 알림 ${alertId}] enabled=${a.enabled}, isTriggered=${isTriggered}`
+          );
           return {
             id: alertId,
             name: a.title ?? "알림 이름 없음",
@@ -204,6 +223,9 @@ export default function CompanyAlertDetail() {
       );
 
       console.log(`${name} 알림 ${newState ? "활성화" : "비활성화"} 성공`, res);
+
+      // 위젯 즉시 새로고침
+      refreshWidgetManually();
     } catch (err) {
       console.error("[알림 토글 실패]:", err);
     }
@@ -217,6 +239,9 @@ export default function CompanyAlertDetail() {
       console.log("[알림 삭제 성공]:", res);
 
       setAlerts((prev) => prev.filter((c) => c.id !== alertId));
+
+      // 위젯 즉시 새로고침
+      refreshWidgetManually();
     } catch (err) {
       console.error("[알림 삭제 실패]:", err);
     }
@@ -275,7 +300,7 @@ export default function CompanyAlertDetail() {
     <View style={styles.container}>
       {/* 헤더 */}
       <CustomHeader
-        title={name ?? "기업 이름"}
+        title={displayCompanyName}
         showBackButton={true}
         rightButtons="preset-and-mypage"
         onPresetPress={() => setIsPresetOpen(true)}
@@ -298,7 +323,7 @@ export default function CompanyAlertDetail() {
               showOnlyActive && styles.filterButtonTextActive,
             ]}
           >
-            {showOnlyActive ? "전체 보기" : "활성화된 알림만 보기"}
+            {showOnlyActive ? "전체 보기" : "현재 활성화 된 알림만 보기"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -314,6 +339,7 @@ export default function CompanyAlertDetail() {
         rightOpenValue={-deleteWidth}
         disableRightSwipe
         closeOnRowPress
+        contentContainerStyle={styles.listContent}
         ListHeaderComponent={<FixedPriceRow />}
         renderItem={({ item, index }) => {
           const fadeAnim = fadeAnimations[item.id] || new Animated.Value(1);
@@ -423,6 +449,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
+  listContent: {
+    paddingBottom: 120,
+  },
 
   /* 필터 버튼 */
   filterButtonContainer: {
@@ -507,10 +536,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 30,
     bottom: 110,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#4CC439B3",
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    backgroundColor: "black",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",

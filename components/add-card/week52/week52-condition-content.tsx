@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
-  LayoutAnimation,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    LayoutAnimation,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import ConditionSection from "@/components/condition/condition-section";
@@ -83,9 +83,24 @@ export default function Week52ConditionContent({
   };
 
   return (
-    <ScrollView style={styles.wrapper}>
-      <View style={styles.container}>
-        <Text style={styles.sectionTitle}>52주</Text>
+    <View style={styles.wrapper}>
+      <View style={styles.header}>
+        <Text style={styles.sectionTitle}>52주 설정</Text>
+        <Text style={styles.sectionSubtitle}>
+          52주 최고가/최저가 기준 조건을 설정하세요
+        </Text>
+      </View>
+
+      <ScrollView 
+        style={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+        bounces={true}
+        scrollEventThrottle={16}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContentContainer}
+      >
+        <View style={styles.container}>
 
         {/* 최고가 경보 */}
         <ConditionSection
@@ -160,10 +175,11 @@ export default function Week52ConditionContent({
             )
           }
         />
-      </View>
+        </View>
+      </ScrollView>
 
-      {/* 하단 버튼 */}
-      <View style={styles.footerFixed}>
+      {/* 하단 버튼 - 고정 */}
+      <View style={styles.footer}>
         <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
           <Text style={styles.resetText}>초기화</Text>
         </TouchableOpacity>
@@ -175,14 +191,46 @@ export default function Week52ConditionContent({
           <Text style={styles.confirmText}>확인</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: { flex: 1, backgroundColor: "#fff" },
-  container: { paddingHorizontal: 16, paddingVertical: 10 },
-  sectionTitle: { fontSize: 15, fontWeight: "600", marginBottom: 10 },
+  wrapper: { 
+    flex: 1, 
+    backgroundColor: "#fff",
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+    backgroundColor: "#FAFAFA",
+  },
+  sectionTitle: { 
+    fontSize: 18, 
+    fontWeight: "700", 
+    color: "#111",
+    marginBottom: 6,
+    fontFamily: "Pretendard",
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    color: "#666",
+    fontWeight: "400",
+    fontFamily: "Pretendard",
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  scrollContentContainer: {
+    paddingBottom: 20,
+  },
+  container: { 
+    paddingHorizontal: 20, 
+    paddingVertical: 16,
+  },
   rowContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -191,46 +239,60 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     fontSize: 14,
-    backgroundColor: "#fff",
+    backgroundColor: "#FAFAFA",
+    fontFamily: "Pretendard",
   },
   unit: {
-    marginLeft: 6,
-    fontSize: 13,
-    color: "#555",
+    marginLeft: 10,
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "600",
+    fontFamily: "Pretendard",
   },
-  footerFixed: {
+  footer: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingTop: 16,
+    paddingBottom: 24,
     backgroundColor: "#fff",
     borderTopWidth: 1,
-    borderTopColor: "#EAEAEA",
-    marginTop: 10,
+    borderTopColor: "#F0F0F0",
   },
   resetButton: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 10,
-    paddingVertical: 13,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    paddingVertical: 15,
     alignItems: "center",
     marginRight: 8,
+    backgroundColor: "#FAFAFA",
   },
-  resetText: { fontSize: 15, color: "#333", fontWeight: "500" },
+  resetText: { 
+    fontSize: 15, 
+    color: "#333", 
+    fontWeight: "600",
+    fontFamily: "Pretendard",
+  },
   confirmButton: {
     flex: 1,
     backgroundColor: "#4CC439",
-    borderRadius: 10,
-    paddingVertical: 13,
+    borderRadius: 12,
+    paddingVertical: 15,
     alignItems: "center",
     marginLeft: 8,
   },
-  confirmText: { fontSize: 15, color: "#fff", fontWeight: "600" },
+  confirmText: { 
+    fontSize: 15, 
+    color: "#fff", 
+    fontWeight: "700",
+    fontFamily: "Pretendard",
+  },
 });

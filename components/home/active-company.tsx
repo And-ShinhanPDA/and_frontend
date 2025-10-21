@@ -3,16 +3,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
 import { currentDataService } from "@/services/current-data-service";
 import { saveActivatedCompanies } from "@/services/widgetShare";
-import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Image,
-  ImageSourcePropType,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
+    Animated,
+    Image,
+    ImageSourcePropType,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 type CompanyAlert = {
   id: number;
@@ -127,7 +127,7 @@ export default function ActivatedCompanyCard() {
           }
 
           return {
-            id: Number(stockCode),
+            id: data.alert.alertId || Number(stockCode), // alertId를 id로 사용
             name: matched?.name || stockCode,
             price: currentPrice
               ? `${Math.round(currentPrice).toLocaleString()}원`
@@ -140,6 +140,7 @@ export default function ActivatedCompanyCard() {
             iconName, // 예: "logo_1_삼성전자"
             stockCode, // 위젯에서 이미지 찾는데 사용
             title: data.alert.title, // 위젯용 알림 제목
+            alertId: data.alert.alertId, // 위젯 딥링크용 alertId 추가
           };
         }
       );
@@ -156,10 +157,17 @@ export default function ActivatedCompanyCard() {
   useEffect(() => {
     fetchTriggeredAlerts();
   }, []);
+
+  // 홈 화면 포커스 시마다 위젯 데이터 즉시 업데이트
+  useFocusEffect(
+    useCallback(() => {
+      fetchTriggeredAlerts();
+    }, [accessToken])
+  );
   return (
     <View>
       <View style={styles.titleContainer}>
-        <Text style={styles.cardTitle}>활성화 된 기업 알림</Text>
+        <Text style={styles.cardTitle}>현재 조건을 충족한 기업 알림</Text>
         <BlinkingDot />
       </View>
 
@@ -172,7 +180,7 @@ export default function ActivatedCompanyCard() {
               resizeMode="contain"
             />
             <Text style={styles.emptyText}>
-              현재 활성화된 기업 알림이 없습니다
+              현재 조건을 충족한 기업 알림이 없습니다
             </Text>
           </View>
         ) : (
@@ -185,7 +193,7 @@ export default function ActivatedCompanyCard() {
                   router.push({
                     pathname:
                       "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
-                    params: { id: item.stockCode, name: item.name },
+                    params: { id: item.stockCode || "", name: item.name },
                   })
                 }
               >
@@ -234,18 +242,18 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 20,
+    paddingVertical: 10,
   },
   emptyIcon: {
     width: 80,
     height: 80,
-    marginBottom: 16,
   },
   emptyText: {
     fontSize: 14,
     color: "#999",
     fontFamily: "Pretendard",
     textAlign: "center",
+    paddingVertical: 20,
   },
   cardTitle: {
     fontSize: 16,

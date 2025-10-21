@@ -4,6 +4,8 @@ import ConditionBottomSheet from "@/components/modals/condition-bottom-sheet";
 import PresetSelect from "@/components/preset/preset-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
+import { refreshWidgetManually } from "@/services/widgetShare";
+import { getIndicatorCategoriesArray } from "@/utils/parseConditions";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -26,6 +28,7 @@ type AlertCondition = {
   enabled: boolean;
   tags: string[];
   isTriggered?: boolean; // 조건 만족하여 활성화된 상태
+  activeCompanyCount?: number; // 활성화된 기업 수
 };
 
 // 깜빡이는 점 컴포넌트
@@ -102,10 +105,38 @@ export default function AlertCondition() {
 
       // 2. Triggered 알림 조회 (조건 만족한 알림들)
       const triggeredRes = await alertService.getTriggeredAlerts(accessToken);
+      console.log("🔥 [조건 알림] getTriggeredAlerts 응답:", triggeredRes);
+
+      const triggeredConditionAlerts = triggeredRes.filter(
+        (a: any) => !a.stockCode
+      );
+      console.log(
+        "🔥 [조건 알림] 조건 알림만 필터링:",
+        triggeredConditionAlerts
+      );
+
       const triggeredAlertIds = new Set(
-        triggeredRes
-          .filter((a: any) => !a.stockCode)
-          .map((a: any) => String(a.alertId))
+        triggeredConditionAlerts.map((a: any) => String(a.alertId))
+      );
+      console.log(
+        "🔥 [조건 알림] Triggered AlertIds Set:",
+        Array.from(triggeredAlertIds)
+      );
+
+      // 3. 조건별 활성화된 기업 수 조회
+      const triggeredConditionData =
+        await alertService.getTriggeredConditionAlerts(accessToken);
+      console.log(
+        "🔥 [조건 알림] getTriggeredConditionAlerts 응답:",
+        triggeredConditionData
+      );
+
+      // 조건명으로 activeCompanyCount 매핑
+      const activeCountMap = new Map(
+        triggeredConditionData.map((item) => [
+          item.conditionName,
+          item.activeCompanyCount,
+        ])
       );
 
       const rawList = Array.isArray(res?.data) ? res.data : [];
@@ -120,31 +151,26 @@ export default function AlertCondition() {
 
         const formatted: AlertCondition[] = conditionAlerts.map(
           (alert: any) => {
-            // 조건에서 태그 추출
-            const tags: string[] = [];
-            if (alert.conditions) {
-              alert.conditions.forEach((condition: any) => {
-                if (condition.indicator) {
-                  if (condition.indicator.includes("SMA")) tags.push("SMA");
-                  if (condition.indicator.includes("RSI")) tags.push("RSI");
-                  if (condition.indicator.includes("VOLUME"))
-                    tags.push("거래량");
-                  if (condition.indicator.includes("52W")) tags.push("52주");
-                  if (condition.indicator.includes("BOLLINGER"))
-                    tags.push("볼린저밴드");
-                  if (condition.indicator.includes("PRICE")) tags.push("가격");
-                }
-              });
-            }
+            // 조건에서 태그 추출 - getIndicatorCategoriesArray 사용
+            const tags = alert.conditions
+              ? getIndicatorCategoriesArray(alert.conditions)
+              : [];
 
             const alertId = String(alert.id || alert.alertId);
+
+            const isTriggered = triggeredAlertIds.has(alertId);
+            const activeCount = activeCountMap.get(alert.title) || 0;
+            console.log(
+              `🔥 [조건 알림 ${alertId}] enabled=${alert.isActive}, isTriggered=${isTriggered}, activeCount=${activeCount}`
+            );
 
             return {
               id: alertId,
               name: alert.title || "조건 알림",
               enabled: alert.isActive || false,
-              tags: [...new Set(tags)], // 중복 제거
-              isTriggered: triggeredAlertIds.has(alertId), // 조건 만족 여부
+              tags: tags, // 중복 제거는 getIndicatorCategoriesArray에서 처리됨
+              isTriggered: isTriggered, // 조건 만족 여부
+              activeCompanyCount: activeCount, // 활성화된 기업 수
             };
           }
         );
@@ -157,13 +183,32 @@ export default function AlertCondition() {
     }
   };
 
+  // 활성화된 조건 알림 데이터 새로고침 및 위젯 업데이트
+  const fetchTriggeredConditions = useCallback(async () => {
+    if (!accessToken) return;
+
+    try {
+      console.log("🔄 [조건 검색] 활성화된 알림 데이터 새로고침 시작...");
+
+      // 조건 알림 데이터 새로고침
+      await fetchConditionAlerts();
+
+      // 위젯 강제 새로고침
+      refreshWidgetManually();
+
+      console.log("✅ [조건 검색] 모든 데이터 + 위젯 새로고침 완료");
+    } catch (err) {
+      console.error("❌ [조건 검색] 데이터 새로고침 실패:", err);
+    }
+  }, [accessToken]);
+
   useFocusEffect(
     useCallback(() => {
       console.log(
         "🎯 [useFocusEffect] 조건 알림 목록 화면 포커스 - 데이터 새로고침"
       );
-      fetchConditionAlerts();
-    }, [accessToken])
+      fetchTriggeredConditions();
+    }, [fetchTriggeredConditions])
   );
 
   // 초기 애니메이션 설정
@@ -192,6 +237,9 @@ export default function AlertCondition() {
       // API 호출 후 최신 데이터 다시 조회
       await fetchConditionAlerts();
 
+      // 위젯 즉시 새로고침
+      refreshWidgetManually();
+
       console.log(
         `${target.name} 조건 알림 ${newActive ? "활성화" : "비활성화"} 완료`
       );
@@ -213,6 +261,10 @@ export default function AlertCondition() {
     try {
       await alertService.deleteAlert(accessToken, id);
       setAlerts((prev) => prev.filter((c) => c.id !== id));
+
+      // 위젯 즉시 새로고침
+      refreshWidgetManually();
+
       console.log(`${target.name} 조건 알림 삭제 완료`);
     } catch (err) {
       console.error("[조건 알림 삭제 실패]:", err);
@@ -280,7 +332,7 @@ export default function AlertCondition() {
               showOnlyActive && styles.filterButtonTextActive,
             ]}
           >
-            {showOnlyActive ? "전체 보기" : "활성화된 조건만 보기"}
+            {showOnlyActive ? "전체 보기" : "현재 충족 중인 조건만 보기"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -298,7 +350,11 @@ export default function AlertCondition() {
           data={alerts
             .filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
             .filter((c) =>
-              showOnlyActive ? c.enabled && c.isTriggered : true
+              showOnlyActive
+                ? c.enabled &&
+                  c.activeCompanyCount !== undefined &&
+                  c.activeCompanyCount > 0
+                : true
             )}
           showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.id}
@@ -307,6 +363,7 @@ export default function AlertCondition() {
           rightOpenValue={-deleteWidth}
           disableRightSwipe
           closeOnRowPress
+          contentContainerStyle={styles.listContent}
           renderItem={({ item, index }) => {
             const fadeAnim = fadeAnimations[item.id] || new Animated.Value(1);
             const filtered = alerts.filter((c) =>
@@ -336,7 +393,9 @@ export default function AlertCondition() {
                 >
                   <View style={styles.itemText}>
                     <View style={styles.nameContainer}>
-                      {item.enabled && item.isTriggered && <BlinkingDot />}
+                      {item.enabled &&
+                        item.activeCompanyCount !== undefined &&
+                        item.activeCompanyCount > 0 && <BlinkingDot />}
                       <Text style={styles.name}>{item.name}</Text>
                     </View>
 
@@ -418,6 +477,9 @@ export default function AlertCondition() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  listContent: {
+    paddingBottom: 120,
+  },
   searchWrapper: {
     flexDirection: "row",
     alignItems: "center",
@@ -492,10 +554,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 30,
     bottom: 110,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#4CC439B3",
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    backgroundColor: "black",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -540,8 +602,8 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   emptyIcon: {
-    width: 80,
-    height: 80,
+    width: 120,
+    height: 120,
     marginBottom: 16,
   },
   emptyText: {

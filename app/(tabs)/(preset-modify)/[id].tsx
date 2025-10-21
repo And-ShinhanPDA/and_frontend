@@ -18,6 +18,7 @@ import VolumeConditionCard from "@/components/add-card/volume/volume-condition";
 import Week52ConditionCard from "@/components/add-card/week52/week52-condition";
 import CustomHeader from "@/components/header/header";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCustomAlert } from "@/hooks/use-custom-alert";
 import { presetService } from "@/services/preset-service";
 
 // 프리셋 조건을 각 카드 형식으로 변환 (컴포넌트 외부에 정의)
@@ -126,6 +127,7 @@ export default function PresetModify() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { accessToken } = useAuth();
+  const { showAlert, AlertComponent } = useCustomAlert();
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -177,14 +179,28 @@ export default function PresetModify() {
             setPresetConditions(parsed);
             setDataLoaded(true); // 로드 완료 표시
           } else {
-            alert("프리셋을 찾을 수 없습니다.");
-            router.back();
+            showAlert({
+              message: "프리셋을 찾을 수 없습니다.",
+              buttons: [
+                {
+                  text: "확인",
+                  onPress: () => router.back(),
+                },
+              ],
+            });
           }
         }
       } catch (error) {
         console.error("프리셋 조회 실패:", error);
-        alert("프리셋 정보를 불러오는데 실패했습니다.");
-        router.back();
+        showAlert({
+          message: "프리셋 정보를 불러오는데 실패했습니다.",
+          buttons: [
+            {
+              text: "확인",
+              onPress: () => router.back(),
+            },
+          ],
+        });
       } finally {
         setLoading(false);
       }
@@ -197,12 +213,18 @@ export default function PresetModify() {
   const handleSave = async () => {
     try {
       if (!accessToken) {
-        alert("로그인이 필요합니다.");
+        showAlert({
+          message: "로그인이 필요합니다.",
+          buttons: [{ text: "확인" }],
+        });
         return;
       }
 
       if (!title.trim()) {
-        alert("프리셋 제목을 입력해주세요.");
+        showAlert({
+          message: "프리셋 제목을 입력해주세요.",
+          buttons: [{ text: "확인" }],
+        });
         return;
       }
 
@@ -215,7 +237,10 @@ export default function PresetModify() {
         );
 
       if (mergedConditions.length === 0) {
-        alert("최소 1개 이상의 조건을 설정해주세요.");
+        showAlert({
+          message: "최소 1개 이상의 조건을 설정해주세요.",
+          buttons: [{ text: "확인" }],
+        });
         return;
       }
 
@@ -233,11 +258,21 @@ export default function PresetModify() {
       );
       console.log("[프리셋 수정 성공]:", res);
 
-      alert("프리셋이 수정되었습니다.");
-      router.back();
+      showAlert({
+        message: "프리셋이 수정되었습니다.",
+        buttons: [
+          {
+            text: "확인",
+            onPress: () => router.back(),
+          },
+        ],
+      });
     } catch (error: any) {
       console.error("[프리셋 수정 실패]:", error);
-      alert(error.response?.data?.message || "프리셋 수정에 실패했습니다.");
+      showAlert({
+        message: error.response?.data?.message || "프리셋 수정에 실패했습니다.",
+        buttons: [{ text: "확인" }],
+      });
     }
   };
 
@@ -260,13 +295,19 @@ export default function PresetModify() {
         showsVerticalScrollIndicator={false}
       >
         {/* 제목 입력 */}
-        <TextInput
-          style={styles.titleInput}
-          placeholder="프리셋 제목을 입력하세요"
-          placeholderTextColor="#A4A4A4"
-          value={title}
-          onChangeText={setTitle}
-        />
+        <View style={styles.titleCard}>
+          <View style={styles.titleHeader}>
+            <Text style={styles.titleLabel}>제목</Text>
+          </View>
+          <View style={styles.titleDivider} />
+          <TextInput
+            style={styles.titleInput}
+            placeholder="프리셋 제목을 입력하세요"
+            placeholderTextColor="#A4A4A4"
+            value={title}
+            onChangeText={setTitle}
+          />
+        </View>
 
         <View style={styles.divider} />
 
@@ -305,6 +346,9 @@ export default function PresetModify() {
           <Text style={styles.saveText}>저장</Text>
         </TouchableOpacity>
       </View>
+
+      {/* 커스텀 Alert */}
+      <AlertComponent />
     </View>
   );
 }
@@ -326,17 +370,39 @@ const styles = StyleSheet.create({
     color: "#666",
     fontFamily: "Pretendard",
   },
-  titleInput: {
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    fontSize: 15,
-    color: "#333",
+  titleCard: {
     backgroundColor: "#fff",
-    marginVertical: 10,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginVertical: 8,
+  },
+  titleHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  titleLabel: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#111",
     fontFamily: "Pretendard",
+  },
+  titleDivider: {
+    height: 1,
+    backgroundColor: "#F0F0F0",
+    marginTop: 12,
+    marginBottom: 10,
+    marginHorizontal: -16,
+  },
+  titleInput: {
+    fontSize: 15,
+    color: "#111",
+    backgroundColor: "#fff",
+    fontFamily: "Pretendard",
+    paddingVertical: 4,
   },
   divider: {
     height: 7,

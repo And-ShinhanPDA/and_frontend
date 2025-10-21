@@ -2,12 +2,12 @@ import ConditionSection from "@/components/condition/condition-section";
 import { RSI_SECTION_DESCRIPTIONS } from "@/components/condition/constants";
 import React, { useEffect, useState } from "react";
 import {
-  LayoutAnimation,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    LayoutAnimation,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 export default function RSIConditionContent({
@@ -43,9 +43,24 @@ export default function RSIConditionContent({
   };
 
   return (
-    <ScrollView style={styles.wrapper}>
-      <View style={styles.container}>
-        <Text style={styles.sectionTitle}>RSI</Text>
+    <View style={styles.wrapper}>
+      <View style={styles.header}>
+        <Text style={styles.sectionTitle}>RSI 설정</Text>
+        <Text style={styles.sectionSubtitle}>
+          과매수/과매도 조건을 설정하세요
+        </Text>
+      </View>
+
+      <ScrollView 
+        style={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+        bounces={true}
+        scrollEventThrottle={16}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContentContainer}
+      >
+        <View style={styles.container}>
 
         {/* RSI 과매수 */}
         <ConditionSection
@@ -70,7 +85,8 @@ export default function RSIConditionContent({
           onAdd={() => {}}
           renderRow={() => null}
         />
-      </View>
+        </View>
+      </ScrollView>
 
       <View style={styles.footer}>
         <TouchableOpacity
@@ -89,41 +105,84 @@ export default function RSIConditionContent({
           <Text style={styles.confirmText}>확인</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: { flex: 1, backgroundColor: "#fff" },
-  container: { paddingHorizontal: 16, paddingVertical: 10 },
-  sectionTitle: { fontSize: 15, fontWeight: "600", marginBottom: 10 },
+  wrapper: { 
+    flex: 1, 
+    backgroundColor: "#fff",
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+    backgroundColor: "#FAFAFA",
+  },
+  sectionTitle: { 
+    fontSize: 18, 
+    fontWeight: "700", 
+    color: "#111",
+    marginBottom: 6,
+    fontFamily: "Pretendard",
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    color: "#666",
+    fontWeight: "400",
+    fontFamily: "Pretendard",
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  scrollContentContainer: {
+    paddingBottom: 20,
+  },
+  container: { 
+    paddingHorizontal: 20, 
+    paddingVertical: 16,
+  },
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingTop: 16,
+    paddingBottom: 24,
     backgroundColor: "#fff",
     borderTopWidth: 1,
-    borderTopColor: "#EAEAEA",
-    marginTop: 10,
+    borderTopColor: "#F0F0F0",
   },
   resetButton: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 10,
-    paddingVertical: 13,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 12,
+    paddingVertical: 15,
     alignItems: "center",
     marginRight: 8,
+    backgroundColor: "#FAFAFA",
   },
-  resetText: { fontSize: 15, color: "#333", fontWeight: "500" },
+  resetText: { 
+    fontSize: 15, 
+    color: "#333", 
+    fontWeight: "600",
+    fontFamily: "Pretendard",
+  },
   confirmButton: {
     flex: 1,
     backgroundColor: "#4CC439",
-    borderRadius: 10,
-    paddingVertical: 13,
+    borderRadius: 12,
+    paddingVertical: 15,
     alignItems: "center",
     marginLeft: 8,
   },
-  confirmText: { fontSize: 15, color: "#fff", fontWeight: "600" },
+  confirmText: { 
+    fontSize: 15, 
+    color: "#fff", 
+    fontWeight: "700",
+    fontFamily: "Pretendard",
+  },
 });
