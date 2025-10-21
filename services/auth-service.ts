@@ -88,10 +88,35 @@ export const authService = {
   },
 
   // 로그아웃
-  // 로그아웃 API 바뀌어서 다시 바꿔야할듯 (deviceID넣어야할듯)
-  // async logout(accessToken: string, refreshTokenId: string): Promise<void> {
-  //   await axios.delete(`${BASE_URL}/api/auth/logout/${refreshTokenId}`, {
-  //     headers: { Authorization: `Bearer ${accessToken}` },
-  //   });
-  // },
+  async logout(
+    accessToken: string,
+    refreshTokenId: string,
+    deviceId: string
+  ): Promise<void> {
+    const url = `${BASE_URL}/api/auth/logout`;
+
+    const requestBody = {
+      deviceId,
+      refreshTokenId,
+    };
+
+    try {
+      const res = await axios.delete<AuthResponse<string>>(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        data: requestBody,
+        timeout: 15000,
+        validateStatus: (status) => status >= 200 && status < 500,
+      });
+
+      if (res.status < 200 || res.status >= 300) {
+        throw new Error(res.data?.message || `로그아웃에 실패했습니다.`);
+      }
+    } catch (err: any) {
+      const errorMsg = getErrorMessage(err);
+      throw new Error(errorMsg);
+    }
+  },
 };

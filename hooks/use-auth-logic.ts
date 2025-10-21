@@ -1,5 +1,6 @@
 import { authService } from "@/services/auth-service";
 import { SignInPayload, SignUpPayload, User } from "@/types/auth";
+import { getDeviceId } from "@/utils/deviceInfo";
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -44,61 +45,75 @@ export function useAuthLogic() {
   }, []);
 
   // 로그인
-  const signIn = useCallback(async ({ email, password }: SignInPayload) => {
-    const { user, accessToken, refreshTokenId } = await authService.signIn({
-      email,
-      password,
-    });
+  const signIn = useCallback(
+    async ({ email, password, deviceId }: SignInPayload) => {
+      const { user, accessToken, refreshTokenId } = await authService.signIn({
+        email,
+        password,
+        deviceId,
+      });
 
-    console.log("=== 로그인 성공 ===");
-    console.log("로그인한 user:", user);
+      console.log("=== 로그인 성공 ===");
+      console.log("로그인한 user:", user);
 
-    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, String(accessToken));
-    await SecureStore.setItemAsync(REFRESH_ID_KEY, String(refreshTokenId));
-    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+      await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, String(accessToken));
+      await SecureStore.setItemAsync(REFRESH_ID_KEY, String(refreshTokenId));
+      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
 
-    setAccessToken(accessToken);
-    setRefreshTokenId(refreshTokenId);
-    setUser(user);
-  }, []);
+      setAccessToken(accessToken);
+      setRefreshTokenId(refreshTokenId);
+      setUser(user);
+    },
+    []
+  );
 
   // 회원가입
   const signUp = useCallback(
     async ({ name, email, password, fcmToken, deviceId }: SignUpPayload) => {
-      console.log("🔄 [useAuthLogic] signUp 호출:", { name, email, fcmToken, deviceId });
-      const user = await authService.signUp({ 
-        name, 
-        email, 
-        password, 
-        fcmToken, 
-        deviceId 
+      console.log("[useAuthLogic] signUp 호출:", {
+        name,
+        email,
+        fcmToken,
+        deviceId,
+      });
+      const user = await authService.signUp({
+        name,
+        email,
+        password,
+        fcmToken,
+        deviceId,
       });
       setUser(user);
     },
     []
   );
 
-  // 토큰 리프레시
+  // 토큰 갱신
   const refreshAccessToken = useCallback(async () => {
+    if (!accessToken || !refreshTokenId) {
+      console.log(
+        "[Auth] 토큰 갱신 불가: accessToken 또는 refreshTokenId 없음"
+      );
+      return false;
+    }
+
     try {
-      if (!accessToken || !refreshTokenId) {
-        throw new Error("토큰 정보가 없습니다.");
-      }
+      console.log("[Auth] 토큰 갱신 시도");
+      const newAccessToken = await authService.refresh(
+        accessToken,
+        refreshTokenId
+      );
 
-      console.log("🔄 [Auth] 토큰 갱신 시작...");
-      const newAccessToken = await authService.refresh(accessToken, refreshTokenId);
-
-      // 새 토큰 저장
       await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, newAccessToken);
       setAccessToken(newAccessToken);
 
-      console.log("✅ [Auth] 토큰 갱신 완료");
-      return newAccessToken;
+      console.log("[Auth] 토큰 갱신 성공");
+      return true;
     } catch (error) {
-      console.error("❌ [Auth] 토큰 갱신 실패:", error);
-      // 리프레시 실패 시 로그아웃
+      console.error("[Auth] 토큰 갱신 실패:", error);
+      // 토큰 갱신 실패 시 로그아웃 처리
       await signOut();
-      throw error;
+      return false;
     }
   }, [accessToken, refreshTokenId]);
 
@@ -106,7 +121,9 @@ export function useAuthLogic() {
   const signOut = useCallback(async () => {
     try {
       if (accessToken && refreshTokenId) {
-        // await authService.logout(accessToken, refreshTokenId);
+        const deviceId = await getDeviceId();
+        await authService.logout(accessToken, refreshTokenId, deviceId);
+        console.log("로그아웃 API 호출 성공");
       }
     } catch (error) {
       console.error("로그아웃 API 호출 실패:", error);
@@ -132,6 +149,15 @@ export function useAuthLogic() {
       signOut,
       refreshAccessToken,
     }),
-    [isReady, user, accessToken, refreshTokenId, signIn, signUp, signOut, refreshAccessToken]
+    [
+      isReady,
+      user,
+      accessToken,
+      refreshTokenId,
+      signIn,
+      signUp,
+      signOut,
+      refreshAccessToken,
+    ]
   );
 }
