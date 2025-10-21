@@ -14,6 +14,7 @@ import React, {
     useState,
 } from "react";
 import {
+    ActivityIndicator,
     FlatList,
     Image,
     Modal,
@@ -51,6 +52,7 @@ export default function AlertHistory() {
   const [showOnlyCondition, setShowOnlyCondition] = useState(false);
   const { accessToken, signOut, user } = useAuth();
   const [alertsByDate, setAlertsByDate] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const scrollViewRef = useRef<FlatList>(null);
   const [highlightedAlertId, setHighlightedAlertId] = useState<string | null>(
@@ -174,6 +176,7 @@ export default function AlertHistory() {
         if (!accessToken) return;
 
         try {
+          setLoading(true);
           const formattedStart = startDate
             ? startDate.toISOString().split("T")[0]
             : undefined;
@@ -234,6 +237,8 @@ export default function AlertHistory() {
           console.log(logMessage);
         } catch (err) {
           console.error("알림 이력 조회 실패:", err);
+        } finally {
+          setLoading(false);
         }
       };
 
@@ -299,6 +304,14 @@ export default function AlertHistory() {
 
   return (
     <View style={styles.container}>
+      {/* 로딩 오버레이 */}
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#4CC439" />
+          <Text style={styles.loadingText}>로딩 중...</Text>
+        </View>
+      )}
+
       <CustomHeader
         title="알림 히스토리"
         showBackButton={false}
@@ -365,7 +378,13 @@ export default function AlertHistory() {
                 !showOnlyCondition && styles.conditionFilterButtonActive,
                 pressed && styles.conditionFilterButtonPressed,
               ]}
-              onPress={() => setShowOnlyCondition(!showOnlyCondition)}
+              onPress={() => {
+                setLoading(true);
+                setTimeout(() => {
+                  setShowOnlyCondition(!showOnlyCondition);
+                  setLoading(false);
+                }, 100);
+              }}
             >
               <Text
                 style={[
@@ -806,6 +825,25 @@ const styles = StyleSheet.create({
     fontFamily: "Pretendard",
     fontWeight: "500",
     textAlign: "center",
+  },
+
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#fff",
+    fontWeight: "600",
+    fontFamily: "Pretendard",
   },
 
   // 하이라이트 스타일
