@@ -1,14 +1,14 @@
 import { CONDITION_DESCRIPTIONS } from "@/constants/conditionDescriptions";
 import React, { useEffect, useState } from "react";
 import {
-    LayoutAnimation,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    UIManager,
-    View,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  UIManager,
+  View,
 } from "react-native";
 import AddIcon from "../../../assets/images/add.svg";
 import ChevronDown from "../../../assets/images/ChevronDown.svg";
@@ -48,10 +48,20 @@ export default function Week52ConditionCard({
   const handleConfirm = (data: any) => {
     console.log("52주 조건 입력:", data);
     setConditionData(data);
-    setHasCondition(true);
+
+    // 데이터가 비어있는지 확인 (문자열로 변환 후 trim 확인)
+    const hasData =
+      data.highAlert ||
+      (data.highProximity?.value &&
+        String(data.highProximity.value).trim() !== "") ||
+      data.lowAlert ||
+      (data.lowProximity?.value &&
+        String(data.lowProximity.value).trim() !== "");
+
+    setHasCondition(hasData);
     setIsOpen(false);
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded(true);
+    setExpanded(hasData);
   };
 
   const toggleExpand = () => {
@@ -140,49 +150,52 @@ export default function Week52ConditionCard({
             </View>
           </View>
 
-          {expanded && conditionData && 
-           (conditionData.highAlert || conditionData.highProximity?.value || 
-            conditionData.lowAlert || conditionData.lowProximity?.value) && (
-            <>
-              <View style={styles.divider} />
+          {expanded &&
+            conditionData &&
+            (conditionData.highAlert ||
+              conditionData.highProximity?.value ||
+              conditionData.lowAlert ||
+              conditionData.lowProximity?.value) && (
+              <>
+                <View style={styles.divider} />
 
-              {/* 최고가 경보 */}
-              {conditionData.highAlert && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>52주 최고가 경보</Text>
-                  <Text style={styles.desc}>최고가 갱신</Text>
-                </View>
-              )}
+                {/* 최고가 경보 */}
+                {conditionData.highAlert && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>52주 최고가 경보</Text>
+                    <Text style={styles.desc}>최고가 갱신</Text>
+                  </View>
+                )}
 
-              {/* 최고가 근접 */}
-              {conditionData.highProximity?.value && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>52주 최고가 근접</Text>
-                  <Text style={styles.desc}>
-                    근접 기준 {conditionData.highProximity.value}%
-                  </Text>
-                </View>
-              )}
+                {/* 최고가 근접 */}
+                {conditionData.highProximity?.value && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>52주 최고가 근접</Text>
+                    <Text style={styles.desc}>
+                      근접 기준 {conditionData.highProximity.value}%
+                    </Text>
+                  </View>
+                )}
 
-              {/* 최저가 경보 */}
-              {conditionData.lowAlert && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>52주 최저가 경보</Text>
-                  <Text style={styles.desc}>최저가 갱신</Text>
-                </View>
-              )}
+                {/* 최저가 경보 */}
+                {conditionData.lowAlert && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>52주 최저가 경보</Text>
+                    <Text style={styles.desc}>최저가 갱신</Text>
+                  </View>
+                )}
 
-              {/* 최저가 근접 */}
-              {conditionData.lowProximity?.value && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>52주 최저가 근접</Text>
-                  <Text style={styles.desc}>
-                    근접 기준 {conditionData.lowProximity.value}%
-                  </Text>
-                </View>
-              )}
-            </>
-          )}
+                {/* 최저가 근접 */}
+                {conditionData.lowProximity?.value && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>52주 최저가 근접</Text>
+                    <Text style={styles.desc}>
+                      근접 기준 {conditionData.lowProximity.value}%
+                    </Text>
+                  </View>
+                )}
+              </>
+            )}
         </View>
       </Pressable>
 
@@ -219,8 +232,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  title: { 
-    fontSize: 17, 
+  title: {
+    fontSize: 17,
     fontWeight: "700",
     color: "#111",
     fontFamily: "Pretendard",
@@ -241,19 +254,19 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginHorizontal: -16,
   },
-  section: { 
+  section: {
     marginBottom: 12,
     paddingVertical: 6,
   },
-  sectionTitle: { 
-    fontSize: 14, 
-    fontWeight: "600", 
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
     marginBottom: 8,
     color: "#666",
     fontFamily: "Pretendard",
   },
-  desc: { 
-    fontSize: 13, 
+  desc: {
+    fontSize: 13,
     color: "#555",
     marginLeft: 4,
     fontFamily: "Pretendard",

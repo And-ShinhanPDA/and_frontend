@@ -1,14 +1,14 @@
 import { CONDITION_DESCRIPTIONS } from "@/constants/conditionDescriptions";
 import React, { useEffect, useState } from "react";
 import {
-    LayoutAnimation,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    UIManager,
-    View,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  UIManager,
+  View,
 } from "react-native";
 import AddIcon from "../../../assets/images/add.svg";
 import ChevronDown from "../../../assets/images/ChevronDown.svg";
@@ -54,10 +54,14 @@ export default function BollingerBandConditionCard({
   const handleConfirm = (data: { upper: boolean; lower: boolean }) => {
     console.log("볼린저밴드 조건 입력:", data);
     setConditionData(data);
-    setHasCondition(true);
+
+    // 데이터가 비어있는지 확인
+    const hasData = data.upper || data.lower;
+
+    setHasCondition(hasData);
     setIsOpen(false);
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded(true);
+    setExpanded(hasData);
   };
 
   useEffect(() => {
@@ -99,7 +103,9 @@ export default function BollingerBandConditionCard({
           <View style={styles.header}>
             <View style={styles.titleRow}>
               <Text style={styles.title}>볼린저밴드</Text>
-              <ConditionTooltip description={CONDITION_DESCRIPTIONS.bollingerband} />
+              <ConditionTooltip
+                description={CONDITION_DESCRIPTIONS.bollingerband}
+              />
             </View>
             <View style={styles.rightButtons}>
               {hasCondition && (
@@ -122,28 +128,33 @@ export default function BollingerBandConditionCard({
             </View>
           </View>
 
-          {expanded && conditionData && 
-           (conditionData.upper || conditionData.lower) && (
-            <>
-              <View style={styles.divider} />
-              {conditionData.upper && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
-                    볼린저 밴드 강세 신호 경고
-                  </Text>
-                  <Text style={styles.desc}>상단 볼린저 밴드 (20, 2) 상회</Text>
-                </View>
-              )}
-              {conditionData.lower && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
-                    볼린저 밴드 약세 신호 경고
-                  </Text>
-                  <Text style={styles.desc}>하단 볼린저 밴드 (20, 2) 하회</Text>
-                </View>
-              )}
-            </>
-          )}
+          {expanded &&
+            conditionData &&
+            (conditionData.upper || conditionData.lower) && (
+              <>
+                <View style={styles.divider} />
+                {conditionData.upper && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>
+                      볼린저 밴드 강세 신호 경고
+                    </Text>
+                    <Text style={styles.desc}>
+                      상단 볼린저 밴드 (20, 2) 상회
+                    </Text>
+                  </View>
+                )}
+                {conditionData.lower && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>
+                      볼린저 밴드 약세 신호 경고
+                    </Text>
+                    <Text style={styles.desc}>
+                      하단 볼린저 밴드 (20, 2) 하회
+                    </Text>
+                  </View>
+                )}
+              </>
+            )}
         </View>
       </Pressable>
 
@@ -180,8 +191,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  title: { 
-    fontSize: 17, 
+  title: {
+    fontSize: 17,
     fontWeight: "700",
     color: "#111",
     fontFamily: "Pretendard",
@@ -202,19 +213,19 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginHorizontal: -16,
   },
-  section: { 
+  section: {
     marginBottom: 12,
     paddingVertical: 6,
   },
-  sectionTitle: { 
-    fontSize: 14, 
-    fontWeight: "600", 
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
     marginBottom: 8,
     color: "#666",
     fontFamily: "Pretendard",
   },
-  desc: { 
-    fontSize: 13, 
+  desc: {
+    fontSize: 13,
     color: "#555",
     marginLeft: 4,
     fontFamily: "Pretendard",

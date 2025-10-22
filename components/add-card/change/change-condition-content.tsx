@@ -98,11 +98,23 @@ export default function ChangeConditionContent({
   };
 
   const handleConfirm = () => {
+    // 실제 값이 있는지 확인 (토글 상태와 무관하게)
+    const hasDailyData = dailyChanges.some(
+      (v) => String(v.amount).trim() !== ""
+    );
+    const hasBaseData = baseChanges.some((v) => String(v.amount).trim() !== "");
+
+    // 값이 있으면 토글 자동으로 켜기 (모든 경우에)
+    setToggles({
+      daily: hasDailyData,
+      base: hasBaseData,
+    });
+
     onConfirm({
-      dailyChanges: toggles.daily
+      dailyChanges: hasDailyData
         ? dailyChanges.map(({ direction, amount }) => ({ direction, amount }))
         : [],
-      baseChanges: toggles.base
+      baseChanges: hasBaseData
         ? baseChanges.map(({ direction, amount }) => ({ direction, amount }))
         : [],
     });
@@ -129,7 +141,7 @@ export default function ChangeConditionContent({
         </Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollContent}
         showsVerticalScrollIndicator={true}
         bounces={true}
@@ -139,108 +151,115 @@ export default function ChangeConditionContent({
         contentContainerStyle={styles.scrollContentContainer}
       >
         <View style={styles.container}>
-
-        {/* 시가 기준 */}
-        <ConditionSection
-          title="시가 기준 변동률"
-          description="시가 대비 상승 / 하락 시 알림"
-          value={toggles.daily}
-          onToggle={() => toggle("daily")}
-          rows={dailyChanges}
-          hasFilled={dailyChanges.some((v) => String(v.amount).trim() !== "")}
-          onAdd={() => {}}
-          renderRow={(r) =>
-            toggles.daily && (
-              <View key={r.id} style={styles.rowContainer}>
-                <Text
-                  style={[
-                    styles.compareBadge,
-                    r.direction === "+" ? styles.plusBadge : styles.minusBadge,
-                  ]}
-                >
-                  {r.direction}
-                </Text>
-                <ConditionInput
-                  value={r.amount}
-                  placeholder={`시가 대비 ${
-                    r.direction === "+" ? "상승" : "하락"
-                  }률`}
-                  unit="%"
-                  onChange={(v) =>
-                    setDailyChanges((prev) =>
-                      prev.map((p) => (p.id === r.id ? { ...p, amount: v } : p))
-                    )
-                  }
-                />
-                {String(r.amount).trim() !== "" && (
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() =>
+          {/* 시가 기준 */}
+          <ConditionSection
+            title="시가 기준 변동률"
+            description="시가 대비 상승 / 하락 시 알림"
+            value={toggles.daily}
+            onToggle={() => toggle("daily")}
+            rows={dailyChanges}
+            hasFilled={dailyChanges.some((v) => String(v.amount).trim() !== "")}
+            onAdd={() => {}}
+            renderRow={(r) =>
+              toggles.daily && (
+                <View key={r.id} style={styles.rowContainer}>
+                  <Text
+                    style={[
+                      styles.compareBadge,
+                      r.direction === "+"
+                        ? styles.plusBadge
+                        : styles.minusBadge,
+                    ]}
+                  >
+                    {r.direction}
+                  </Text>
+                  <ConditionInput
+                    value={r.amount}
+                    placeholder={`시가 대비 ${
+                      r.direction === "+" ? "상승" : "하락"
+                    }률`}
+                    unit="%"
+                    onChange={(v) =>
                       setDailyChanges((prev) =>
                         prev.map((p) =>
-                          p.id === r.id ? { ...p, amount: "" } : p
+                          p.id === r.id ? { ...p, amount: v } : p
                         )
                       )
                     }
-                  >
-                    <ConditionMinus width={18} height={18} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            )
-          }
-        />
+                  />
+                  {String(r.amount).trim() !== "" && (
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() =>
+                        setDailyChanges((prev) =>
+                          prev.map((p) =>
+                            p.id === r.id ? { ...p, amount: "" } : p
+                          )
+                        )
+                      }
+                    >
+                      <ConditionMinus width={18} height={18} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )
+            }
+          />
 
-        {/* 현재가 기준 */}
-        <ConditionSection
-          title="현재가 기준 변동률"
-          description="현재가 대비 상승 / 하락 시 알림"
-          value={toggles.base}
-          onToggle={() => toggle("base")}
-          rows={baseChanges}
-          hasFilled={baseChanges.some((v) => String(v.amount).trim() !== "")}
-          onAdd={() => {}}
-          renderRow={(r) =>
-            toggles.base && (
-              <View key={r.id} style={styles.rowContainer}>
-                <Text
-                  style={[
-                    styles.compareBadge,
-                    r.direction === "+" ? styles.plusBadge : styles.minusBadge,
-                  ]}
-                >
-                  {r.direction}
-                </Text>
-                <ConditionInput
-                  value={r.amount}
-                  placeholder={`현재가 대비 ${
-                    r.direction === "+" ? "상승" : "하락"
-                  }률`}
-                  unit="%"
-                  onChange={(v) =>
-                    setBaseChanges((prev) =>
-                      prev.map((p) => (p.id === r.id ? { ...p, amount: v } : p))
-                    )
-                  }
-                />
-                {String(r.amount).trim() !== "" && (
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() =>
+          {/* 현재가 기준 */}
+          <ConditionSection
+            title="현재가 기준 변동률"
+            description="현재가 대비 상승 / 하락 시 알림"
+            value={toggles.base}
+            onToggle={() => toggle("base")}
+            rows={baseChanges}
+            hasFilled={baseChanges.some((v) => String(v.amount).trim() !== "")}
+            onAdd={() => {}}
+            renderRow={(r) =>
+              toggles.base && (
+                <View key={r.id} style={styles.rowContainer}>
+                  <Text
+                    style={[
+                      styles.compareBadge,
+                      r.direction === "+"
+                        ? styles.plusBadge
+                        : styles.minusBadge,
+                    ]}
+                  >
+                    {r.direction}
+                  </Text>
+                  <ConditionInput
+                    value={r.amount}
+                    placeholder={`현재가 대비 ${
+                      r.direction === "+" ? "상승" : "하락"
+                    }률`}
+                    unit="%"
+                    onChange={(v) =>
                       setBaseChanges((prev) =>
                         prev.map((p) =>
-                          p.id === r.id ? { ...p, amount: "" } : p
+                          p.id === r.id ? { ...p, amount: v } : p
                         )
                       )
                     }
-                  >
-                    <ConditionMinus width={18} height={18} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            )
-          }
-        />
+                  />
+                  {String(r.amount).trim() !== "" && (
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() =>
+                        setBaseChanges((prev) =>
+                          prev.map((p) =>
+                            p.id === r.id ? { ...p, amount: "" } : p
+                          )
+                        )
+                      }
+                    >
+                      <ConditionMinus width={18} height={18} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )
+            }
+          />
         </View>
       </ScrollView>
 
@@ -258,8 +277,8 @@ export default function ChangeConditionContent({
 }
 
 const styles = StyleSheet.create({
-  wrapper: { 
-    flex: 1, 
+  wrapper: {
+    flex: 1,
     backgroundColor: "#fff",
   },
   header: {
@@ -270,9 +289,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F0F0F0",
     backgroundColor: "#FAFAFA",
   },
-  sectionTitle: { 
-    fontSize: 18, 
-    fontWeight: "700", 
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
     color: "#111",
     marginBottom: 6,
     fontFamily: "Pretendard",
@@ -289,8 +308,8 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     paddingBottom: 20,
   },
-  container: { 
-    paddingHorizontal: 20, 
+  container: {
+    paddingHorizontal: 20,
     paddingVertical: 16,
   },
   rowContainer: {
@@ -320,7 +339,7 @@ const styles = StyleSheet.create({
     borderColor: "#FF3B30",
     backgroundColor: "#FEF2F2",
   },
-  removeButton: { 
+  removeButton: {
     marginLeft: 10,
     padding: 4,
   },
@@ -344,9 +363,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
     backgroundColor: "#FAFAFA",
   },
-  resetText: { 
-    fontSize: 15, 
-    color: "#333", 
+  resetText: {
+    fontSize: 15,
+    color: "#333",
     fontWeight: "600",
     fontFamily: "Pretendard",
   },
@@ -358,9 +377,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginLeft: 8,
   },
-  confirmText: { 
-    fontSize: 15, 
-    color: "#fff", 
+  confirmText: {
+    fontSize: 15,
+    color: "#fff",
     fontWeight: "700",
     fontFamily: "Pretendard",
   },

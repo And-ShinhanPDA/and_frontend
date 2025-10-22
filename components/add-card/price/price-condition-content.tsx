@@ -127,14 +127,28 @@ export default function PriceConditionContent({
   };
 
   const handleConfirm = () => {
+    // 실제 값이 있는지 확인 (토글 상태와 무관하게)
+    const hasLimitData = limits.some((v) => String(v.amount).trim() !== "");
+    const hasOpenData = openChanges.some((v) => String(v.amount).trim() !== "");
+    const hasCurrentData = currentChanges.some(
+      (v) => String(v.amount).trim() !== ""
+    );
+
+    // 값이 있으면 토글 자동으로 켜기 (모든 경우에)
+    setToggles({
+      limit: hasLimitData,
+      open: hasOpenData,
+      current: hasCurrentData,
+    });
+
     onConfirm({
-      limits: toggles.limit
+      limits: hasLimitData
         ? limits.map(({ comparison, amount }) => ({ comparison, amount }))
         : [],
-      openChanges: toggles.open
+      openChanges: hasOpenData
         ? openChanges.map(({ direction, amount }) => ({ direction, amount }))
         : [],
-      currentChanges: toggles.current
+      currentChanges: hasCurrentData
         ? currentChanges.map(({ direction, amount }) => ({ direction, amount }))
         : [],
     });
@@ -165,7 +179,7 @@ export default function PriceConditionContent({
         </Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollContent}
         showsVerticalScrollIndicator={true}
         bounces={true}
@@ -175,155 +189,166 @@ export default function PriceConditionContent({
         contentContainerStyle={styles.scrollContentContainer}
       >
         <View style={styles.container}>
-
-        {/* 가격 제한 */}
-        <ConditionSection
-          title="가격 제한"
-          description="특정 금액 이상 / 이하일 때 알림"
-          value={toggles.limit}
-          onToggle={() => toggle("limit")}
-          rows={limits}
-          hasFilled={limits.some((v) => String(v.amount).trim() !== "")}
-          onAdd={() => {}}
-          renderRow={(r) =>
-            toggles.limit && (
-              <View key={r.id} style={styles.rowContainer}>
-                <Text
-                  style={[
-                    styles.compareBadge,
-                    r.comparison === "이상"
-                      ? styles.plusBadge
-                      : styles.minusBadge,
-                  ]}
-                >
-                  {r.comparison}
-                </Text>
-                <ConditionInput
-                  value={r.amount}
-                  placeholder="금액 입력"
-                  unit="원"
-                  onChange={(v) =>
-                    setLimits((prev) =>
-                      prev.map((p) => (p.id === r.id ? { ...p, amount: v } : p))
-                    )
-                  }
-                />
-                {String(r.amount).trim() !== "" && (
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() =>
+          {/* 가격 제한 */}
+          <ConditionSection
+            title="가격 제한"
+            description="특정 금액 이상 / 이하일 때 알림"
+            value={toggles.limit}
+            onToggle={() => toggle("limit")}
+            rows={limits}
+            hasFilled={limits.some((v) => String(v.amount).trim() !== "")}
+            onAdd={() => {}}
+            renderRow={(r) =>
+              toggles.limit && (
+                <View key={r.id} style={styles.rowContainer}>
+                  <Text
+                    style={[
+                      styles.compareBadge,
+                      r.comparison === "이상"
+                        ? styles.plusBadge
+                        : styles.minusBadge,
+                    ]}
+                  >
+                    {r.comparison}
+                  </Text>
+                  <ConditionInput
+                    value={r.amount}
+                    placeholder="금액 입력"
+                    unit="원"
+                    onChange={(v) =>
                       setLimits((prev) =>
                         prev.map((p) =>
-                          p.id === r.id ? { ...p, amount: "" } : p
+                          p.id === r.id ? { ...p, amount: v } : p
                         )
                       )
                     }
-                  >
-                    <ConditionMinus width={18} height={18} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            )
-          }
-        />
+                  />
+                  {String(r.amount).trim() !== "" && (
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() =>
+                        setLimits((prev) =>
+                          prev.map((p) =>
+                            p.id === r.id ? { ...p, amount: "" } : p
+                          )
+                        )
+                      }
+                    >
+                      <ConditionMinus width={18} height={18} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )
+            }
+          />
 
-        {/* 시가 기준 */}
-        <ConditionSection
-          title="가격 변경 (시가)"
-          description="시가 대비 상승 / 하락 시 알림"
-          value={toggles.open}
-          onToggle={() => toggle("open")}
-          rows={openChanges}
-          hasFilled={openChanges.some((v) => String(v.amount).trim() !== "")}
-          onAdd={() => {}}
-          renderRow={(r) =>
-            toggles.open && (
-              <View key={r.id} style={styles.rowContainer}>
-                <Text
-                  style={[
-                    styles.compareBadgePM,
-                    r.direction === "+" ? styles.plusBadge : styles.minusBadge,
-                  ]}
-                >
-                  {r.direction}
-                </Text>
-                <ConditionInput
-                  value={r.amount}
-                  placeholder="금액 입력"
-                  unit="원"
-                  onChange={(v) =>
-                    setOpenChanges((prev) =>
-                      prev.map((p) => (p.id === r.id ? { ...p, amount: v } : p))
-                    )
-                  }
-                />
-                {String(r.amount).trim() !== "" && (
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() =>
+          {/* 시가 기준 */}
+          <ConditionSection
+            title="가격 변경 (시가)"
+            description="시가 대비 상승 / 하락 시 알림"
+            value={toggles.open}
+            onToggle={() => toggle("open")}
+            rows={openChanges}
+            hasFilled={openChanges.some((v) => String(v.amount).trim() !== "")}
+            onAdd={() => {}}
+            renderRow={(r) =>
+              toggles.open && (
+                <View key={r.id} style={styles.rowContainer}>
+                  <Text
+                    style={[
+                      styles.compareBadgePM,
+                      r.direction === "+"
+                        ? styles.plusBadge
+                        : styles.minusBadge,
+                    ]}
+                  >
+                    {r.direction}
+                  </Text>
+                  <ConditionInput
+                    value={r.amount}
+                    placeholder="금액 입력"
+                    unit="원"
+                    onChange={(v) =>
                       setOpenChanges((prev) =>
                         prev.map((p) =>
-                          p.id === r.id ? { ...p, amount: "" } : p
+                          p.id === r.id ? { ...p, amount: v } : p
                         )
                       )
                     }
-                  >
-                    <ConditionMinus width={18} height={18} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            )
-          }
-        />
+                  />
+                  {String(r.amount).trim() !== "" && (
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() =>
+                        setOpenChanges((prev) =>
+                          prev.map((p) =>
+                            p.id === r.id ? { ...p, amount: "" } : p
+                          )
+                        )
+                      }
+                    >
+                      <ConditionMinus width={18} height={18} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )
+            }
+          />
 
-        {/* 현재가 기준 */}
-        <ConditionSection
-          title="가격 변경 (현재가)"
-          description="현재가 대비 상승 / 하락 시 알림"
-          value={toggles.current}
-          onToggle={() => toggle("current")}
-          rows={currentChanges}
-          hasFilled={currentChanges.some((v) => String(v.amount).trim() !== "")}
-          onAdd={() => {}}
-          renderRow={(r) =>
-            toggles.current && (
-              <View key={r.id} style={styles.rowContainer}>
-                <Text
-                  style={[
-                    styles.compareBadgePM,
-                    r.direction === "+" ? styles.plusBadge : styles.minusBadge,
-                  ]}
-                >
-                  {r.direction}
-                </Text>
-                <ConditionInput
-                  value={r.amount}
-                  placeholder="금액 입력"
-                  unit="원"
-                  onChange={(v) =>
-                    setCurrentChanges((prev) =>
-                      prev.map((p) => (p.id === r.id ? { ...p, amount: v } : p))
-                    )
-                  }
-                />
-                {String(r.amount).trim() !== "" && (
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() =>
+          {/* 현재가 기준 */}
+          <ConditionSection
+            title="가격 변경 (현재가)"
+            description="현재가 대비 상승 / 하락 시 알림"
+            value={toggles.current}
+            onToggle={() => toggle("current")}
+            rows={currentChanges}
+            hasFilled={currentChanges.some(
+              (v) => String(v.amount).trim() !== ""
+            )}
+            onAdd={() => {}}
+            renderRow={(r) =>
+              toggles.current && (
+                <View key={r.id} style={styles.rowContainer}>
+                  <Text
+                    style={[
+                      styles.compareBadgePM,
+                      r.direction === "+"
+                        ? styles.plusBadge
+                        : styles.minusBadge,
+                    ]}
+                  >
+                    {r.direction}
+                  </Text>
+                  <ConditionInput
+                    value={r.amount}
+                    placeholder="금액 입력"
+                    unit="원"
+                    onChange={(v) =>
                       setCurrentChanges((prev) =>
                         prev.map((p) =>
-                          p.id === r.id ? { ...p, amount: "" } : p
+                          p.id === r.id ? { ...p, amount: v } : p
                         )
                       )
                     }
-                  >
-                    <ConditionMinus width={18} height={18} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            )
-          }
-        />
+                  />
+                  {String(r.amount).trim() !== "" && (
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() =>
+                        setCurrentChanges((prev) =>
+                          prev.map((p) =>
+                            p.id === r.id ? { ...p, amount: "" } : p
+                          )
+                        )
+                      }
+                    >
+                      <ConditionMinus width={18} height={18} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )
+            }
+          />
         </View>
       </ScrollView>
 
@@ -341,8 +366,8 @@ export default function PriceConditionContent({
 }
 
 const styles = StyleSheet.create({
-  wrapper: { 
-    flex: 1, 
+  wrapper: {
+    flex: 1,
     backgroundColor: "#fff",
   },
   header: {
@@ -353,9 +378,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F0F0F0",
     backgroundColor: "#FAFAFA",
   },
-  sectionTitle: { 
-    fontSize: 18, 
-    fontWeight: "700", 
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
     color: "#111",
     marginBottom: 6,
     fontFamily: "Pretendard",
@@ -372,8 +397,8 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     paddingBottom: 20,
   },
-  container: { 
-    paddingHorizontal: 20, 
+  container: {
+    paddingHorizontal: 20,
     paddingVertical: 16,
   },
   rowContainer: {
@@ -416,7 +441,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEF2F2",
   },
 
-  removeButton: { 
+  removeButton: {
     marginLeft: 10,
     padding: 4,
   },
@@ -440,9 +465,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
     backgroundColor: "#FAFAFA",
   },
-  resetText: { 
-    fontSize: 15, 
-    color: "#333", 
+  resetText: {
+    fontSize: 15,
+    color: "#333",
     fontWeight: "600",
     fontFamily: "Pretendard",
   },
@@ -454,9 +479,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginLeft: 8,
   },
-  confirmText: { 
-    fontSize: 15, 
-    color: "#fff", 
+  confirmText: {
+    fontSize: 15,
+    color: "#fff",
     fontWeight: "700",
     fontFamily: "Pretendard",
   },

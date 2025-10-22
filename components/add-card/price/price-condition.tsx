@@ -1,14 +1,14 @@
 import { CONDITION_DESCRIPTIONS } from "@/constants/conditionDescriptions";
 import React, { useEffect, useState } from "react";
 import {
-    LayoutAnimation,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    UIManager,
-    View,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  UIManager,
+  View,
 } from "react-native";
 import AddIcon from "../../../assets/images/add.svg";
 import ChevronDown from "../../../assets/images/ChevronDown.svg";
@@ -16,7 +16,7 @@ import EditIcon from "../../../assets/images/edit.svg";
 import ConditionTooltip from "../../condition/condition-tooltip";
 import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
 import PriceConditionContent, {
-    PriceConditionData,
+  PriceConditionData,
 } from "./price-condition-content";
 
 if (
@@ -146,65 +146,68 @@ export default function PriceConditionCard({
             </View>
           </View>
 
-          {expanded && conditionData && 
-           (conditionData.limits?.length > 0 || conditionData.changes?.length > 0) && (
-            <>
-              <View style={styles.divider} />
+          {expanded &&
+            conditionData &&
+            (conditionData.limits?.length > 0 ||
+              conditionData.openChanges?.length > 0 ||
+              conditionData.currentChanges?.length > 0) && (
+              <>
+                <View style={styles.divider} />
 
-              {/* 가격 제한 */}
-              {!!conditionData.limits?.length && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>가격 제한</Text>
-                  {conditionData.limits.map((r, i) => (
-                    <View key={`limit-${i}`} style={styles.row}>
-                      <Text style={styles.label}>
-                        현재가 {r.comparison}일 때
-                      </Text>
-                      <Text style={styles.value}>
-                        {r.amount ? `${r.amount}원` : "-"}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
+                {/* 가격 제한 */}
+                {!!conditionData.limits?.length && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>가격 제한</Text>
+                    {conditionData.limits.map((r, i) => (
+                      <View key={`limit-${i}`} style={styles.row}>
+                        <Text style={styles.label}>
+                          현재가 {r.comparison}일 때
+                        </Text>
+                        <Text style={styles.value}>
+                          {r.amount ? `${r.amount}원` : "-"}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
 
-              {/* 시가 기준 */}
-              {!!conditionData.openChanges?.length && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>가격 변경 (시가)</Text>
-                  {conditionData.openChanges.map((r, i) => (
-                    <View key={`open-${i}`} style={styles.row}>
-                      <Text style={styles.label}>
-                        시가 대비 {r.direction === "+" ? "상승" : "하락"} 금액
-                        이상
-                      </Text>
-                      <Text style={styles.value}>
-                        {r.amount ? `${r.amount}원` : "-"}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
+                {/* 시가 기준 */}
+                {!!conditionData.openChanges?.length && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>가격 변경 (시가)</Text>
+                    {conditionData.openChanges.map((r, i) => (
+                      <View key={`open-${i}`} style={styles.row}>
+                        <Text style={styles.label}>
+                          시가 대비 {r.direction === "+" ? "상승" : "하락"} 금액
+                          이상
+                        </Text>
+                        <Text style={styles.value}>
+                          {r.amount ? `${r.amount}원` : "-"}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
 
-              {/* 현재가 기준 */}
-              {!!conditionData.currentChanges?.length && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>가격 변경 (현재가)</Text>
-                  {conditionData.currentChanges.map((r, i) => (
-                    <View key={`curr-${i}`} style={styles.row}>
-                      <Text style={styles.label}>
-                        현재가 기준 {r.direction === "+" ? "상승" : "하락"} 금액
-                        이상
-                      </Text>
-                      <Text style={styles.value}>
-                        {r.amount ? `${r.amount}원` : "-"}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </>
-          )}
+                {/* 현재가 기준 */}
+                {!!conditionData.currentChanges?.length && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>가격 변경 (현재가)</Text>
+                    {conditionData.currentChanges.map((r, i) => (
+                      <View key={`curr-${i}`} style={styles.row}>
+                        <Text style={styles.label}>
+                          현재가 기준 {r.direction === "+" ? "상승" : "하락"}{" "}
+                          금액 이상
+                        </Text>
+                        <Text style={styles.value}>
+                          {r.amount ? `${r.amount}원` : "-"}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </>
+            )}
         </View>
       </Pressable>
 
@@ -241,8 +244,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  title: { 
-    fontSize: 17, 
+  title: {
+    fontSize: 17,
     fontWeight: "700",
     color: "#111",
     fontFamily: "Pretendard",
@@ -263,13 +266,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginHorizontal: -16,
   },
-  section: { 
+  section: {
     marginBottom: 12,
     paddingVertical: 6,
   },
-  sectionTitle: { 
-    fontSize: 14, 
-    fontWeight: "600", 
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
     marginBottom: 8,
     color: "#666",
     fontFamily: "Pretendard",
@@ -281,14 +284,14 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     paddingVertical: 4,
   },
-  label: { 
-    fontSize: 13, 
+  label: {
+    fontSize: 13,
     color: "#555",
     fontFamily: "Pretendard",
   },
-  value: { 
-    fontSize: 14, 
-    color: "#111", 
+  value: {
+    fontSize: 14,
+    color: "#111",
     fontWeight: "600",
     fontFamily: "Pretendard",
   },

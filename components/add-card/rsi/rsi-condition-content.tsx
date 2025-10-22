@@ -2,12 +2,12 @@ import ConditionSection from "@/components/condition/condition-section";
 import { RSI_SECTION_DESCRIPTIONS } from "@/components/condition/constants";
 import React, { useEffect, useState } from "react";
 import {
-    LayoutAnimation,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  LayoutAnimation,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function RSIConditionContent({
@@ -51,7 +51,7 @@ export default function RSIConditionContent({
         </Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollContent}
         showsVerticalScrollIndicator={true}
         bounces={true}
@@ -61,30 +61,29 @@ export default function RSIConditionContent({
         contentContainerStyle={styles.scrollContentContainer}
       >
         <View style={styles.container}>
+          {/* RSI 과매수 */}
+          <ConditionSection
+            title="RSI 과매수 경고"
+            description={RSI_SECTION_DESCRIPTIONS.OVERBOUGHT}
+            value={toggles.overbought}
+            onToggle={() => toggle("overbought")}
+            rows={[]}
+            hasFilled={false}
+            onAdd={() => {}}
+            renderRow={() => null}
+          />
 
-        {/* RSI 과매수 */}
-        <ConditionSection
-          title="RSI 과매수 경고"
-          description={RSI_SECTION_DESCRIPTIONS.OVERBOUGHT}
-          value={toggles.overbought}
-          onToggle={() => toggle("overbought")}
-          rows={[]}
-          hasFilled={false}
-          onAdd={() => {}}
-          renderRow={() => null}
-        />
-
-        {/* RSI 과매도 */}
-        <ConditionSection
-          title="RSI 과매도 경고"
-          description={RSI_SECTION_DESCRIPTIONS.OVERSOLD}
-          value={toggles.oversold}
-          onToggle={() => toggle("oversold")}
-          rows={[]}
-          hasFilled={false}
-          onAdd={() => {}}
-          renderRow={() => null}
-        />
+          {/* RSI 과매도 */}
+          <ConditionSection
+            title="RSI 과매도 경고"
+            description={RSI_SECTION_DESCRIPTIONS.OVERSOLD}
+            value={toggles.oversold}
+            onToggle={() => toggle("oversold")}
+            rows={[]}
+            hasFilled={false}
+            onAdd={() => {}}
+            renderRow={() => null}
+          />
         </View>
       </ScrollView>
 
@@ -110,8 +109,8 @@ export default function RSIConditionContent({
 }
 
 const styles = StyleSheet.create({
-  wrapper: { 
-    flex: 1, 
+  wrapper: {
+    flex: 1,
     backgroundColor: "#fff",
   },
   header: {
@@ -122,9 +121,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F0F0F0",
     backgroundColor: "#FAFAFA",
   },
-  sectionTitle: { 
-    fontSize: 18, 
-    fontWeight: "700", 
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
     color: "#111",
     marginBottom: 6,
     fontFamily: "Pretendard",
@@ -141,8 +140,8 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     paddingBottom: 20,
   },
-  container: { 
-    paddingHorizontal: 20, 
+  container: {
+    paddingHorizontal: 20,
     paddingVertical: 16,
   },
   footer: {
@@ -165,9 +164,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
     backgroundColor: "#FAFAFA",
   },
-  resetText: { 
-    fontSize: 15, 
-    color: "#333", 
+  resetText: {
+    fontSize: 15,
+    color: "#333",
     fontWeight: "600",
     fontFamily: "Pretendard",
   },
@@ -179,9 +178,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginLeft: 8,
   },
-  confirmText: { 
-    fontSize: 15, 
-    color: "#fff", 
+  confirmText: {
+    fontSize: 15,
+    color: "#fff",
     fontWeight: "700",
     fontFamily: "Pretendard",
   },

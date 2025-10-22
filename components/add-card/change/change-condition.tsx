@@ -1,14 +1,14 @@
 import { CONDITION_DESCRIPTIONS } from "@/constants/conditionDescriptions";
 import React, { useEffect, useState } from "react";
 import {
-    LayoutAnimation,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    UIManager,
-    View,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  UIManager,
+  View,
 } from "react-native";
 import AddIcon from "../../../assets/images/add.svg";
 import ChevronDown from "../../../assets/images/ChevronDown.svg";
@@ -16,7 +16,7 @@ import EditIcon from "../../../assets/images/edit.svg";
 import ConditionTooltip from "../../condition/condition-tooltip";
 import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
 import ChangeConditionContent, {
-    ChangeConditionData,
+  ChangeConditionData,
 } from "./change-condition-content";
 
 if (
@@ -50,10 +50,18 @@ export default function ChangeConditionCard({
 
   const handleConfirm = (data: ChangeConditionData) => {
     setConditionData(data);
-    setHasCondition(true);
+
+    // 데이터가 비어있는지 확인 (문자열로 변환 후 trim 확인)
+    const hasData =
+      (data.dailyChanges &&
+        data.dailyChanges.some((c) => String(c.amount).trim() !== "")) ||
+      (data.baseChanges &&
+        data.baseChanges.some((c) => String(c.amount).trim() !== ""));
+
+    setHasCondition(hasData);
     setIsOpen(false);
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded(true);
+    setExpanded(hasData);
   };
 
   useEffect(() => {
@@ -132,47 +140,50 @@ export default function ChangeConditionCard({
             </View>
           </View>
 
-          {expanded && conditionData && 
-           (conditionData.dailyChanges?.length > 0 || conditionData.baseChanges?.length > 0) && (
-            <>
-              <View style={styles.divider} />
+          {expanded &&
+            conditionData &&
+            (conditionData.dailyChanges?.length > 0 ||
+              conditionData.baseChanges?.length > 0) && (
+              <>
+                <View style={styles.divider} />
 
-              {/* 오늘 시가 기준 */}
-              {!!conditionData.dailyChanges?.length && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>오늘 시가 기준</Text>
-                  {conditionData.dailyChanges.map((r, i) => (
-                    <View key={`daily-${i}`} style={styles.row}>
-                      <Text style={styles.label}>
-                        시가 대비 {r.direction === "+" ? "상승" : "하락"}률 이상
-                      </Text>
-                      <Text style={styles.value}>
-                        {r.amount ? `${r.amount}%` : "-"}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
+                {/* 오늘 시가 기준 */}
+                {!!conditionData.dailyChanges?.length && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>오늘 시가 기준</Text>
+                    {conditionData.dailyChanges.map((r, i) => (
+                      <View key={`daily-${i}`} style={styles.row}>
+                        <Text style={styles.label}>
+                          시가 대비 {r.direction === "+" ? "상승" : "하락"}률
+                          이상
+                        </Text>
+                        <Text style={styles.value}>
+                          {r.amount ? `${r.amount}%` : "-"}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
 
-              {/* 현재가 기준 */}
-              {!!conditionData.baseChanges?.length && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>현재가 기준</Text>
-                  {conditionData.baseChanges.map((r, i) => (
-                    <View key={`base-${i}`} style={styles.row}>
-                      <Text style={styles.label}>
-                        현재가 대비 {r.direction === "+" ? "상승" : "하락"}률
-                        이상
-                      </Text>
-                      <Text style={styles.value}>
-                        {r.amount ? `${r.amount}%` : "-"}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </>
-          )}
+                {/* 현재가 기준 */}
+                {!!conditionData.baseChanges?.length && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>현재가 기준</Text>
+                    {conditionData.baseChanges.map((r, i) => (
+                      <View key={`base-${i}`} style={styles.row}>
+                        <Text style={styles.label}>
+                          현재가 대비 {r.direction === "+" ? "상승" : "하락"}률
+                          이상
+                        </Text>
+                        <Text style={styles.value}>
+                          {r.amount ? `${r.amount}%` : "-"}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </>
+            )}
         </View>
       </Pressable>
 
@@ -209,8 +220,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  title: { 
-    fontSize: 17, 
+  title: {
+    fontSize: 17,
     fontWeight: "700",
     color: "#111",
     fontFamily: "Pretendard",
@@ -231,13 +242,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginHorizontal: -16,
   },
-  section: { 
+  section: {
     marginBottom: 12,
     paddingVertical: 6,
   },
-  sectionTitle: { 
-    fontSize: 14, 
-    fontWeight: "600", 
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
     marginBottom: 8,
     color: "#666",
     fontFamily: "Pretendard",
@@ -249,14 +260,14 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     paddingVertical: 4,
   },
-  label: { 
-    fontSize: 13, 
+  label: {
+    fontSize: 13,
     color: "#555",
     fontFamily: "Pretendard",
   },
-  value: { 
-    fontSize: 14, 
-    color: "#111", 
+  value: {
+    fontSize: 14,
+    color: "#111",
     fontWeight: "600",
     fontFamily: "Pretendard",
   },

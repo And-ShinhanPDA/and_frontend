@@ -3,7 +3,6 @@ import CustomHeader from "@/components/header/header";
 import { COMPANIES } from "@/constants/companies";
 import { useAuth } from "@/contexts/AuthContext";
 import { alertService } from "@/services/alert-service";
-import { refreshWidgetManually } from "@/services/widgetShare";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -38,11 +37,13 @@ type AlertHistoryItem = {
 };
 
 type AlertItem = {
+  id?: number;
   company: string;
   time: string;
   title: string;
   desc: string;
   stockCode?: string;
+  alertId?: string;
 };
 
 export default function AlertHistory() {
@@ -59,11 +60,17 @@ export default function AlertHistory() {
   const [highlightedAlertId, setHighlightedAlertId] = useState<string | null>(
     null
   );
+  // alertId -> 조건 이름 매핑 캐시
+  const [alertNameCache, setAlertNameCache] = useState<Record<string, string>>(
+    {}
+  );
 
-  const { highlightAlertId, highlightCompany } = useLocalSearchParams<{
-    highlightAlertId?: string;
-    highlightCompany?: string;
-  }>();
+  const { highlightAlertId, highlightCompany, highlightHistoryId } =
+    useLocalSearchParams<{
+      highlightAlertId?: string;
+      highlightCompany?: string;
+      highlightHistoryId?: string;
+    }>();
 
   useEffect(() => {
     if (highlightCompany) {
@@ -76,38 +83,56 @@ export default function AlertHistory() {
 
   // 특정 알림 ID로 스크롤하는 함수
   const scrollToAlert = useCallback(
-    (alertId: string) => {
-      if (!scrollViewRef.current || !alertsByDate.length) return;
+    (searchId: string, searchType: "id" | "alertId" = "id") => {
+      if (!scrollViewRef.current || !alertsByDate.length) {
+        console.log("[히스토리] 스크롤 조건 불만족:", {
+          hasScrollRef: !!scrollViewRef.current,
+          alertsLength: alertsByDate.length,
+        });
+        return;
+      }
 
       const allAlerts = alertsByDate.flatMap((group) => group.items);
+      console.log(
+        "[히스토리] 전체 알림:",
+        allAlerts.length,
+        "개, 찾을",
+        searchType + ":",
+        searchId
+      );
 
+      // searchType에 따라 id 또는 alertId로 검색
       const targetAlert = allAlerts.find((alert) => {
-        // title에서 알림 ID 추출
-        const titleMatch = alert?.title?.match(/알림 (\d+)/);
-        const alertIdFromTitle = titleMatch ? titleMatch[1] : null;
-        return alertIdFromTitle === alertId;
+        if (searchType === "id") {
+          return String(alert?.id) === String(searchId);
+        } else {
+          return String(alert?.alertId) === String(searchId);
+        }
       });
 
+      console.log(
+        "[히스토리] 찾은 알림:",
+        targetAlert
+          ? `있음 (id: ${targetAlert.id}, alertId: ${targetAlert.alertId})`
+          : "없음"
+      );
+
       if (targetAlert) {
-        console.log(`[히스토리] 알림 ID ${alertId}로 스크롤 시도`);
-        setHighlightedAlertId(alertId); // 하이라이트할 알림 ID 설정
+        console.log(`[히스토리] ${searchType} ${searchId}로 스크롤 시도`);
+        setHighlightedAlertId(String(targetAlert.id)); // 히스토리 ID로 하이라이트 설정
 
         // 해당 알림이 포함된 그룹 찾기
         const targetGroup = alertsByDate.find((group) =>
-          group.items.some((item: any) => {
-            const titleMatch = item?.title?.match(/알림 (\d+)/);
-            const alertIdFromTitle = titleMatch ? titleMatch[1] : null;
-            return alertIdFromTitle === alertId;
-          })
+          group.items.some(
+            (item: any) => String(item?.id) === String(targetAlert.id)
+          )
         );
 
         if (targetGroup) {
           const groupIndex = alertsByDate.indexOf(targetGroup);
-          const itemIndex = targetGroup.items.findIndex((item: any) => {
-            const titleMatch = item?.title?.match(/알림 (\d+)/);
-            const alertIdFromTitle = titleMatch ? titleMatch[1] : null;
-            return alertIdFromTitle === alertId;
-          });
+          const itemIndex = targetGroup.items.findIndex(
+            (item: any) => String(item?.id) === String(targetAlert.id)
+          );
 
           setTimeout(() => {
             try {
@@ -133,7 +158,7 @@ export default function AlertHistory() {
               });
 
               console.log(
-                `[히스토리] 알림 ID ${alertId}로 정확히 스크롤 (그룹: ${groupIndex}, 아이템: ${itemIndex}, offset: ${offsetY})`
+                `[히스토리] ${searchType} ${searchId}로 정확히 스크롤 (그룹: ${groupIndex}, 아이템: ${itemIndex}, offset: ${offsetY})`
               );
             } catch (error) {
               console.log(`[히스토리] 스크롤 실패:`, error);
@@ -145,20 +170,35 @@ export default function AlertHistory() {
     [alertsByDate]
   );
 
-  // highlightAlertId가 있을 때 스크롤 실행
+  // highlightHistoryId 또는 highlightAlertId가 있을 때 스크롤 실행
   useEffect(() => {
-    if (highlightAlertId && alertsByDate.length > 0) {
-      scrollToAlert(highlightAlertId);
+    if (alertsByDate.length > 0) {
+      // highlightHistoryId가 있으면 우선 사용 (히스토리 고유 ID)
+      if (highlightHistoryId) {
+        scrollToAlert(highlightHistoryId, "id");
 
-      // 5초 후 하이라이트 자동 해제
-      const timer = setTimeout(() => {
-        setHighlightedAlertId(null);
-        console.log(`[히스토리] 하이라이트 자동 해제`);
-      }, 5000);
+        // 5초 후 하이라이트 자동 해제
+        const timer = setTimeout(() => {
+          setHighlightedAlertId(null);
+          console.log(`[히스토리] 하이라이트 자동 해제`);
+        }, 5000);
 
-      return () => clearTimeout(timer);
+        return () => clearTimeout(timer);
+      }
+      // highlightAlertId가 있으면 alertId로 검색 (같은 조건의 첫 번째 항목)
+      else if (highlightAlertId) {
+        scrollToAlert(highlightAlertId, "alertId");
+
+        // 5초 후 하이라이트 자동 해제
+        const timer = setTimeout(() => {
+          setHighlightedAlertId(null);
+          console.log(`[히스토리] 하이라이트 자동 해제`);
+        }, 5000);
+
+        return () => clearTimeout(timer);
+      }
     }
-  }, [highlightAlertId, alertsByDate, scrollToAlert]);
+  }, [highlightHistoryId, highlightAlertId, alertsByDate, scrollToAlert]);
 
   // 로그아웃 핸들러
   const handleLogout = async () => {
@@ -177,9 +217,6 @@ export default function AlertHistory() {
         if (!accessToken) return;
 
         try {
-          console.log("🔄 [알림 히스토리] 화면 포커스 - 위젯 새로고침");
-          refreshWidgetManually(); // 위젯 새로고침
-
           setLoading(true);
           const formattedStart = startDate
             ? startDate.toISOString().split("T")[0]
@@ -200,6 +237,40 @@ export default function AlertHistory() {
             formattedEnd
           );
 
+          // alertId들을 수집하여 조건 이름 가져오기
+          const uniqueAlertIds = Array.from(
+            new Set(result.map((item) => item.alertId))
+          );
+          const newCache: Record<string, string> = { ...alertNameCache };
+
+          // 캐시에 없는 alertId만 조회
+          const uncachedAlertIds = uniqueAlertIds.filter((id) => !newCache[id]);
+
+          if (uncachedAlertIds.length > 0) {
+            console.log(
+              `[히스토리] ${uncachedAlertIds.length}개의 조건 이름 조회 중...`
+            );
+
+            // 각 alertId에 대해 상세 정보 조회
+            await Promise.all(
+              uncachedAlertIds.map(async (alertId) => {
+                try {
+                  const detail = await alertService.getAlertDetail(
+                    accessToken,
+                    alertId
+                  );
+                  newCache[alertId] = detail.data?.title || `알림 ${alertId}`;
+                } catch (err) {
+                  console.error(`alertId ${alertId} 조회 실패:`, err);
+                  newCache[alertId] = `알림 ${alertId}`;
+                }
+              })
+            );
+
+            setAlertNameCache(newCache);
+            console.log(`[히스토리] 조건 이름 캐시 업데이트 완료`);
+          }
+
           // ✅ 날짜별 그룹화
           const grouped: Record<string, any[]> = {};
           result.forEach((item) => {
@@ -219,13 +290,33 @@ export default function AlertHistory() {
               companyId = foundCompany?.id || item.stockCode;
             }
 
-            grouped[date].push({
+            // 캐시된 조건 이름 사용
+            const conditionName =
+              newCache[item.alertId] || `알림 ${item.alertId}`;
+
+            const alertData = {
+              id: item.id, // 히스토리 항목 고유 ID
               company: companyId,
               time: item.createdAt.split("T")[1].slice(0, 5),
-              title: `알림 ${item.id}`,
+              title: conditionName,
               desc: item.indicatorSnapshot || "조건 충족",
               stockCode: item.stockCode,
-            });
+              alertId: item.alertId, // 조건 알림 ID
+            };
+
+            // 디버깅: 첫 3개 알림의 ID 출력
+            if (grouped[date].length < 3) {
+              console.log(
+                "[히스토리 로드] id:",
+                item.id,
+                "alertId:",
+                item.alertId,
+                "조건명:",
+                conditionName
+              );
+            }
+
+            grouped[date].push(alertData);
           });
 
           const groupedArray = Object.entries(grouped).map(([date, items]) => ({
@@ -247,7 +338,7 @@ export default function AlertHistory() {
       };
 
       fetchAlertHistory();
-    }, [selectedCompany, startDate, endDate, accessToken])
+    }, [selectedCompany, startDate, endDate, accessToken, alertNameCache])
   );
 
   // 날짜 & 기업 & 조건 필터링
@@ -311,11 +402,10 @@ export default function AlertHistory() {
       {/* 로딩 오버레이 */}
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#4CC439" />
+          <ActivityIndicator size="large" color="#4CC53A" />
           <Text style={styles.loadingText}>로딩 중...</Text>
         </View>
       )}
-
       <CustomHeader
         title="알림 히스토리"
         showBackButton={false}
@@ -408,7 +498,7 @@ export default function AlertHistory() {
           <FlatList
             ref={scrollViewRef}
             data={filteredAlerts}
-            keyExtractor={(item) => item.date}
+            keyExtractor={(item, index) => `${item.date}-${index}`}
             contentContainerStyle={{ paddingBottom: 120, flexGrow: 1 }}
             showsVerticalScrollIndicator={false}
             removeClippedSubviews={false}
@@ -426,22 +516,20 @@ export default function AlertHistory() {
                     COMPANIES.find((c) => c.id === alert.company)?.name ??
                     alert.company;
 
-                  // 하이라이트된 알림인지 확인
-                  const titleMatch = alert?.title?.match(/알림 (\d+)/);
-                  const alertIdFromTitle = titleMatch ? titleMatch[1] : null;
-                  const isHighlighted = highlightedAlertId === alertIdFromTitle;
+                  // 하이라이트된 알림인지 확인 (id 필드 직접 사용, 타입 통일)
+                  const isHighlighted =
+                    String(highlightedAlertId) === String(alert.id);
 
                   // 조건검색 알림인지 확인
                   const isConditionSearch = alert.stockCode === "조건검색";
 
                   return (
                     <Pressable
-                      key={index}
+                      key={`${alert.id || alert.alertId || index}-${index}`}
                       onPress={() => {
                         if (isConditionSearch) {
                           router.push("/(tabs)/(alert-condition)");
                         } else if (alert.stockCode) {
-                          // 기업 알림 - 차트 화면으로 이동
                           router.push({
                             pathname: "/(tabs)/(chart)/[chartId]",
                             params: {
@@ -453,86 +541,83 @@ export default function AlertHistory() {
                           });
                         }
                       }}
+                      style={[
+                        styles.timelineRow,
+                        isHighlighted &&
+                          !isConditionSearch &&
+                          styles.highlightedRow,
+                      ]}
                     >
-                      <View
-                        style={[
-                          styles.timelineRow,
-                          isHighlighted &&
-                            !isConditionSearch &&
-                            styles.highlightedRow,
-                        ]}
-                      >
-                        <View style={styles.timeline}>
-                          {index === 0 ? (
+                      <View style={styles.timeline}>
+                        {index === 0 ? (
+                          <View
+                            style={
+                              isConditionSearch
+                                ? styles.conditionSearchOuterCircle
+                                : styles.outerCircle
+                            }
+                          >
                             <View
                               style={
                                 isConditionSearch
-                                  ? styles.conditionSearchOuterCircle
-                                  : styles.outerCircle
-                              }
-                            >
-                              <View
-                                style={
-                                  isConditionSearch
-                                    ? styles.conditionSearchInnerDot
-                                    : styles.innerDot
-                                }
-                              />
-                            </View>
-                          ) : (
-                            <View
-                              style={
-                                isConditionSearch
-                                  ? styles.conditionSearchSingleCircle
-                                  : styles.singleCircle
+                                  ? styles.conditionSearchInnerDot
+                                  : styles.innerDot
                               }
                             />
-                          )}
-                          {index !== item.items.length - 1 && (
-                            <View
-                              style={
-                                isConditionSearch
-                                  ? styles.conditionSearchLine
-                                  : styles.line
-                              }
-                            />
-                          )}
-                        </View>
-
-                        <View style={styles.alertContent}>
-                          <View style={styles.alertHeader}>
-                            <Text
-                              style={[
-                                styles.alertTitle,
-                                isHighlighted &&
-                                  !isConditionSearch &&
-                                  styles.highlightedTitle,
-                              ]}
-                            >
-                              {companyName} | {alert.title}
-                            </Text>
-                            <Text
-                              style={[
-                                styles.alertTime,
-                                isHighlighted &&
-                                  !isConditionSearch &&
-                                  styles.highlightedTime,
-                              ]}
-                            >
-                              {alert.time}
-                            </Text>
                           </View>
+                        ) : (
+                          <View
+                            style={
+                              isConditionSearch
+                                ? styles.conditionSearchSingleCircle
+                                : styles.singleCircle
+                            }
+                          />
+                        )}
+                        {index !== item.items.length - 1 && (
+                          <View
+                            style={
+                              isConditionSearch
+                                ? styles.conditionSearchLine
+                                : styles.line
+                            }
+                          />
+                        )}
+                      </View>
+
+                      <View style={styles.alertContent}>
+                        <View style={styles.alertHeader}>
                           <Text
                             style={[
-                              styles.alertDesc,
+                              styles.alertTitle,
                               isHighlighted &&
                                 !isConditionSearch &&
-                                styles.highlightedDesc,
+                                styles.highlightedTitle,
                             ]}
                           >
-                            {alert.desc}
+                            {companyName} | {alert.title}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.alertTime,
+                              isHighlighted &&
+                                !isConditionSearch &&
+                                styles.highlightedTime,
+                            ]}
+                          >
+                            {alert.time}
                           </Text>
                         </View>
+                        <Text
+                          style={[
+                            styles.alertDesc,
+                            isHighlighted &&
+                              !isConditionSearch &&
+                              styles.highlightedDesc,
+                          ]}
+                        >
+                          {alert.desc}
+                        </Text>
                       </View>
                     </Pressable>
                   );
@@ -541,10 +626,10 @@ export default function AlertHistory() {
             )}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Image
-                  source={require("@/assets/images/icon.png")}
+                {/* <Image
+                  //source={require("@/assets/images/empty.png")}
                   style={styles.emptyIcon}
-                />
+                /> */}
                 <Text style={styles.emptyText}>알림 히스토리가 없습니다.</Text>
               </View>
             }
@@ -811,7 +896,6 @@ const styles = StyleSheet.create({
   alertTime: { fontSize: 13, color: "#999" },
   alertDesc: { fontSize: 13, color: "#555", marginTop: 3, lineHeight: 18 },
   noAlert: { textAlign: "center", color: "#aaa", marginTop: 30 },
-
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
@@ -850,7 +934,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontFamily: "Pretendard",
   },
-
   // 하이라이트 스타일
   highlightedRow: {
     backgroundColor: "#E8F5E9", // 연한 초록색 배경

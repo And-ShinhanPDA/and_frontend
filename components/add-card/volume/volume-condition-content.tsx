@@ -52,17 +52,25 @@ export default function VolumeConditionContent({
   };
 
   const handleConfirmPress = () => {
+    // 실제 값이 있는지 확인 (토글 상태와 무관하게)
+    const hasAvgRiseData = String(avgRiseValue).trim() !== "";
+    const hasAvgDropData = String(avgDropValue).trim() !== "";
+    const hasSpikeData = toggles.spike;
+    const hasDropData = toggles.drop;
+
+    // 값이 있으면 토글 자동으로 켜기 (모든 경우에)
+    setToggles({
+      avgRise: hasAvgRiseData,
+      avgDrop: hasAvgDropData,
+      spike: hasSpikeData,
+      drop: hasDropData,
+    });
+
     onConfirm({
-      avgRise:
-        toggles.avgRise && String(avgRiseValue).trim() !== ""
-          ? avgRiseValue
-          : null,
-      avgDrop:
-        toggles.avgDrop && String(avgDropValue).trim() !== ""
-          ? avgDropValue
-          : null,
-      spike: toggles.spike,
-      drop: toggles.drop,
+      avgRise: hasAvgRiseData ? avgRiseValue : null,
+      avgDrop: hasAvgDropData ? avgDropValue : null,
+      spike: hasSpikeData,
+      drop: hasDropData,
     });
   };
 
@@ -75,7 +83,7 @@ export default function VolumeConditionContent({
         </Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollContent}
         showsVerticalScrollIndicator={true}
         bounces={true}
@@ -85,80 +93,79 @@ export default function VolumeConditionContent({
         contentContainerStyle={styles.scrollContentContainer}
       >
         <View style={styles.container}>
+          {/* 평균 거래량 대비 상승 */}
+          <ConditionSection
+            title="평균 거래량 대비 상승"
+            description={VOLUME_SECTION_DESCRIPTIONS.AVG_CHANGE}
+            value={toggles.avgRise}
+            onToggle={() => toggle("avgRise")}
+            rows={[{}]}
+            hasFilled={String(avgRiseValue).trim() !== ""}
+            onAdd={() => {}}
+            renderRow={() =>
+              toggles.avgRise && (
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="상승 비율을 입력해주세요 (%)"
+                    keyboardType="numeric"
+                    value={avgRiseValue}
+                    onChangeText={setAvgRiseValue}
+                  />
+                  <Text style={styles.unit}>%</Text>
+                </View>
+              )
+            }
+          />
 
-        {/* 평균 거래량 대비 상승 */}
-        <ConditionSection
-          title="평균 거래량 대비 상승"
-          description={VOLUME_SECTION_DESCRIPTIONS.AVG_CHANGE}
-          value={toggles.avgRise}
-          onToggle={() => toggle("avgRise")}
-          rows={[{}]}
-          hasFilled={String(avgRiseValue).trim() !== ""}
-          onAdd={() => {}}
-          renderRow={() =>
-            toggles.avgRise && (
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="상승 비율을 입력해주세요 (%)"
-                  keyboardType="numeric"
-                  value={avgRiseValue}
-                  onChangeText={setAvgRiseValue}
-                />
-                <Text style={styles.unit}>%</Text>
-              </View>
-            )
-          }
-        />
+          {/* 평균 거래량 대비 하락 */}
+          <ConditionSection
+            title="평균 거래량 대비 하락"
+            description={VOLUME_SECTION_DESCRIPTIONS.AVG_CHANGE}
+            value={toggles.avgDrop}
+            onToggle={() => toggle("avgDrop")}
+            rows={[{}]}
+            hasFilled={String(avgDropValue).trim() !== ""}
+            onAdd={() => {}}
+            renderRow={() =>
+              toggles.avgDrop && (
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="하락 비율을 입력해주세요 (%)"
+                    keyboardType="numeric"
+                    value={avgDropValue}
+                    onChangeText={setAvgDropValue}
+                  />
+                  <Text style={styles.unit}>%</Text>
+                </View>
+              )
+            }
+          />
 
-        {/* 평균 거래량 대비 하락 */}
-        <ConditionSection
-          title="평균 거래량 대비 하락"
-          description={VOLUME_SECTION_DESCRIPTIONS.AVG_CHANGE}
-          value={toggles.avgDrop}
-          onToggle={() => toggle("avgDrop")}
-          rows={[{}]}
-          hasFilled={String(avgDropValue).trim() !== ""}
-          onAdd={() => {}}
-          renderRow={() =>
-            toggles.avgDrop && (
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="하락 비율을 입력해주세요 (%)"
-                  keyboardType="numeric"
-                  value={avgDropValue}
-                  onChangeText={setAvgDropValue}
-                />
-                <Text style={styles.unit}>%</Text>
-              </View>
-            )
-          }
-        />
+          {/* 거래량 급증 경고 */}
+          <ConditionSection
+            title="거래량 급증 경고"
+            description={VOLUME_SECTION_DESCRIPTIONS.SPIKE}
+            value={toggles.spike}
+            onToggle={() => toggle("spike")}
+            rows={[]}
+            hasFilled={false}
+            onAdd={() => {}}
+            renderRow={() => null}
+          />
 
-        {/* 거래량 급증 경고 */}
-        <ConditionSection
-          title="거래량 급증 경고"
-          description={VOLUME_SECTION_DESCRIPTIONS.SPIKE}
-          value={toggles.spike}
-          onToggle={() => toggle("spike")}
-          rows={[]}
-          hasFilled={false}
-          onAdd={() => {}}
-          renderRow={() => null}
-        />
-
-        {/* 거래량 감소 경고 */}
-        <ConditionSection
-          title="거래량 감소 경고"
-          description={VOLUME_SECTION_DESCRIPTIONS.DROP}
-          value={toggles.drop}
-          onToggle={() => toggle("drop")}
-          rows={[]}
-          hasFilled={false}
-          onAdd={() => {}}
-          renderRow={() => null}
-        />
+          {/* 거래량 감소 경고 */}
+          <ConditionSection
+            title="거래량 감소 경고"
+            description={VOLUME_SECTION_DESCRIPTIONS.DROP}
+            value={toggles.drop}
+            onToggle={() => toggle("drop")}
+            rows={[]}
+            hasFilled={false}
+            onAdd={() => {}}
+            renderRow={() => null}
+          />
         </View>
       </ScrollView>
 
@@ -191,8 +198,8 @@ export default function VolumeConditionContent({
 }
 
 const styles = StyleSheet.create({
-  wrapper: { 
-    flex: 1, 
+  wrapper: {
+    flex: 1,
     backgroundColor: "#fff",
   },
   header: {
@@ -203,9 +210,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F0F0F0",
     backgroundColor: "#FAFAFA",
   },
-  sectionTitle: { 
-    fontSize: 18, 
-    fontWeight: "700", 
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
     color: "#111",
     marginBottom: 6,
     fontFamily: "Pretendard",
@@ -222,8 +229,8 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     paddingBottom: 20,
   },
-  container: { 
-    paddingHorizontal: 20, 
+  container: {
+    paddingHorizontal: 20,
     paddingVertical: 16,
   },
   inputRow: {
@@ -243,9 +250,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAFAFA",
     fontFamily: "Pretendard",
   },
-  unit: { 
-    marginLeft: 10, 
-    fontSize: 14, 
+  unit: {
+    marginLeft: 10,
+    fontSize: 14,
     color: "#666",
     fontWeight: "600",
     fontFamily: "Pretendard",
@@ -270,9 +277,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
     backgroundColor: "#FAFAFA",
   },
-  resetText: { 
-    fontSize: 15, 
-    color: "#333", 
+  resetText: {
+    fontSize: 15,
+    color: "#333",
     fontWeight: "600",
     fontFamily: "Pretendard",
   },
@@ -284,9 +291,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginLeft: 8,
   },
-  confirmText: { 
-    fontSize: 15, 
-    color: "#fff", 
+  confirmText: {
+    fontSize: 15,
+    color: "#fff",
     fontWeight: "700",
     fontFamily: "Pretendard",
   },

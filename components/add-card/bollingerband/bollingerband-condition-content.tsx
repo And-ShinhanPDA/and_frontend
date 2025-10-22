@@ -2,12 +2,12 @@ import ConditionSection from "@/components/condition/condition-section";
 import { BOLLINGER_SECTION_DESCRIPTIONS } from "@/components/condition/constants";
 import React, { useEffect, useState } from "react";
 import {
-    LayoutAnimation,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  LayoutAnimation,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function BollingerBandConditionContent({
@@ -51,7 +51,7 @@ export default function BollingerBandConditionContent({
         </Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollContent}
         showsVerticalScrollIndicator={true}
         bounces={true}
@@ -61,28 +61,27 @@ export default function BollingerBandConditionContent({
         contentContainerStyle={styles.scrollContentContainer}
       >
         <View style={styles.container}>
+          <ConditionSection
+            title="볼린저 밴드 강세 신호 경고"
+            description={BOLLINGER_SECTION_DESCRIPTIONS.UPPER}
+            value={toggles.upper}
+            onToggle={() => toggle("upper")}
+            rows={[]}
+            hasFilled={false}
+            onAdd={() => {}}
+            renderRow={() => null}
+          />
 
-        <ConditionSection
-          title="볼린저 밴드 강세 신호 경고"
-          description={BOLLINGER_SECTION_DESCRIPTIONS.UPPER}
-          value={toggles.upper}
-          onToggle={() => toggle("upper")}
-          rows={[]}
-          hasFilled={false}
-          onAdd={() => {}}
-          renderRow={() => null}
-        />
-
-        <ConditionSection
-          title="볼린저 밴드 하락 신호 경고"
-          description={BOLLINGER_SECTION_DESCRIPTIONS.LOWER}
-          value={toggles.lower}
-          onToggle={() => toggle("lower")}
-          rows={[]}
-          hasFilled={false}
-          onAdd={() => {}}
-          renderRow={() => null}
-        />
+          <ConditionSection
+            title="볼린저 밴드 하락 신호 경고"
+            description={BOLLINGER_SECTION_DESCRIPTIONS.LOWER}
+            value={toggles.lower}
+            onToggle={() => toggle("lower")}
+            rows={[]}
+            hasFilled={false}
+            onAdd={() => {}}
+            renderRow={() => null}
+          />
         </View>
       </ScrollView>
 
@@ -106,8 +105,8 @@ export default function BollingerBandConditionContent({
 }
 
 const styles = StyleSheet.create({
-  wrapper: { 
-    flex: 1, 
+  wrapper: {
+    flex: 1,
     backgroundColor: "#fff",
   },
   header: {
@@ -118,9 +117,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F0F0F0",
     backgroundColor: "#FAFAFA",
   },
-  sectionTitle: { 
-    fontSize: 18, 
-    fontWeight: "700", 
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
     color: "#111",
     marginBottom: 6,
     fontFamily: "Pretendard",
@@ -137,8 +136,8 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     paddingBottom: 20,
   },
-  container: { 
-    paddingHorizontal: 20, 
+  container: {
+    paddingHorizontal: 20,
     paddingVertical: 16,
   },
   footer: {
@@ -161,9 +160,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
     backgroundColor: "#FAFAFA",
   },
-  resetText: { 
-    fontSize: 15, 
-    color: "#333", 
+  resetText: {
+    fontSize: 15,
+    color: "#333",
     fontWeight: "600",
     fontFamily: "Pretendard",
   },
@@ -175,9 +174,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginLeft: 8,
   },
-  confirmText: { 
-    fontSize: 15, 
-    color: "#fff", 
+  confirmText: {
+    fontSize: 15,
+    color: "#fff",
     fontWeight: "700",
     fontFamily: "Pretendard",
   },

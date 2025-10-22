@@ -56,18 +56,27 @@ export default function Week52ConditionContent({
     setSectionToggles((prev) => ({ ...prev, [key]: !prev[key] }));
   };
   const handleConfirmPress = () => {
+    // 실제 값이 있는지 확인 (토글 상태와 무관하게)
+    const hasHighAlertData = sectionToggles.highAlert;
+    const hasHighProximityData = String(highProximity.value).trim() !== "";
+    const hasLowAlertData = sectionToggles.lowAlert;
+    const hasLowProximityData = String(lowProximity.value).trim() !== "";
+
+    // 값이 있으면 토글 자동으로 켜기 (모든 경우에)
+    setSectionToggles({
+      highAlert: hasHighAlertData,
+      highProximity: hasHighProximityData,
+      lowAlert: hasLowAlertData,
+      lowProximity: hasLowProximityData,
+    });
+
     onConfirm({
-      highAlert: sectionToggles.highAlert,
-      lowAlert: sectionToggles.lowAlert,
-      highProximity:
-        sectionToggles.highProximity &&
-        String(highProximity.value).trim() !== ""
-          ? { value: highProximity.value }
-          : null,
-      lowProximity:
-        sectionToggles.lowProximity && String(lowProximity.value).trim() !== ""
-          ? { value: lowProximity.value }
-          : null,
+      highAlert: hasHighAlertData,
+      lowAlert: hasLowAlertData,
+      highProximity: hasHighProximityData
+        ? { value: highProximity.value }
+        : null,
+      lowProximity: hasLowProximityData ? { value: lowProximity.value } : null,
     });
   };
 
@@ -91,7 +100,7 @@ export default function Week52ConditionContent({
         </Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollContent}
         showsVerticalScrollIndicator={true}
         bounces={true}
@@ -101,80 +110,79 @@ export default function Week52ConditionContent({
         contentContainerStyle={styles.scrollContentContainer}
       >
         <View style={styles.container}>
+          {/* 최고가 경보 */}
+          <ConditionSection
+            title="52주 최고가 경보"
+            description={WEEK52_SECTION_DESCRIPTIONS.HIGH_ALERT}
+            value={sectionToggles.highAlert}
+            onToggle={() => toggleSection("highAlert")}
+            rows={[]}
+            hasFilled={false}
+            onAdd={() => {}}
+            renderRow={() => null}
+          />
 
-        {/* 최고가 경보 */}
-        <ConditionSection
-          title="52주 최고가 경보"
-          description={WEEK52_SECTION_DESCRIPTIONS.HIGH_ALERT}
-          value={sectionToggles.highAlert}
-          onToggle={() => toggleSection("highAlert")}
-          rows={[]}
-          hasFilled={false}
-          onAdd={() => {}}
-          renderRow={() => null}
-        />
+          {/* 최고가 근접 */}
+          <ConditionSection
+            title="52주 최고가 근접 여부"
+            description={WEEK52_SECTION_DESCRIPTIONS.HIGH_PROXIMITY}
+            value={sectionToggles.highProximity}
+            onToggle={() => toggleSection("highProximity")}
+            rows={[{}]}
+            hasFilled={String(highProximity.value).trim() !== ""}
+            onAdd={() => {}}
+            renderRow={() =>
+              sectionToggles.highProximity && (
+                <View style={styles.rowContainer}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="근접 비율을 입력해주세요"
+                    keyboardType="numeric"
+                    value={highProximity.value}
+                    onChangeText={(v) => setHighProximity({ value: v })}
+                  />
+                  <Text style={styles.unit}>%</Text>
+                </View>
+              )
+            }
+          />
 
-        {/* 최고가 근접 */}
-        <ConditionSection
-          title="52주 최고가 근접 여부"
-          description={WEEK52_SECTION_DESCRIPTIONS.HIGH_PROXIMITY}
-          value={sectionToggles.highProximity}
-          onToggle={() => toggleSection("highProximity")}
-          rows={[{}]}
-          hasFilled={String(highProximity.value).trim() !== ""}
-          onAdd={() => {}}
-          renderRow={() =>
-            sectionToggles.highProximity && (
-              <View style={styles.rowContainer}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="근접 비율을 입력해주세요"
-                  keyboardType="numeric"
-                  value={highProximity.value}
-                  onChangeText={(v) => setHighProximity({ value: v })}
-                />
-                <Text style={styles.unit}>%</Text>
-              </View>
-            )
-          }
-        />
+          {/* 최저가 경보 */}
+          <ConditionSection
+            title="52주 최저가 경보"
+            description={WEEK52_SECTION_DESCRIPTIONS.LOW_ALERT}
+            value={sectionToggles.lowAlert}
+            onToggle={() => toggleSection("lowAlert")}
+            rows={[]}
+            hasFilled={false}
+            onAdd={() => {}}
+            renderRow={() => null}
+          />
 
-        {/* 최저가 경보 */}
-        <ConditionSection
-          title="52주 최저가 경보"
-          description={WEEK52_SECTION_DESCRIPTIONS.LOW_ALERT}
-          value={sectionToggles.lowAlert}
-          onToggle={() => toggleSection("lowAlert")}
-          rows={[]}
-          hasFilled={false}
-          onAdd={() => {}}
-          renderRow={() => null}
-        />
-
-        {/* 최저가 근접 */}
-        <ConditionSection
-          title="52주 최저가 근접 여부"
-          description={WEEK52_SECTION_DESCRIPTIONS.LOW_PROXIMITY}
-          value={sectionToggles.lowProximity}
-          onToggle={() => toggleSection("lowProximity")}
-          rows={[{}]}
-          hasFilled={String(lowProximity.value).trim() !== ""}
-          onAdd={() => {}}
-          renderRow={() =>
-            sectionToggles.lowProximity && (
-              <View style={styles.rowContainer}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="근접 비율을 입력해주세요"
-                  keyboardType="numeric"
-                  value={lowProximity.value}
-                  onChangeText={(v) => setLowProximity({ value: v })}
-                />
-                <Text style={styles.unit}>%</Text>
-              </View>
-            )
-          }
-        />
+          {/* 최저가 근접 */}
+          <ConditionSection
+            title="52주 최저가 근접 여부"
+            description={WEEK52_SECTION_DESCRIPTIONS.LOW_PROXIMITY}
+            value={sectionToggles.lowProximity}
+            onToggle={() => toggleSection("lowProximity")}
+            rows={[{}]}
+            hasFilled={String(lowProximity.value).trim() !== ""}
+            onAdd={() => {}}
+            renderRow={() =>
+              sectionToggles.lowProximity && (
+                <View style={styles.rowContainer}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="근접 비율을 입력해주세요"
+                    keyboardType="numeric"
+                    value={lowProximity.value}
+                    onChangeText={(v) => setLowProximity({ value: v })}
+                  />
+                  <Text style={styles.unit}>%</Text>
+                </View>
+              )
+            }
+          />
         </View>
       </ScrollView>
 
@@ -196,8 +204,8 @@ export default function Week52ConditionContent({
 }
 
 const styles = StyleSheet.create({
-  wrapper: { 
-    flex: 1, 
+  wrapper: {
+    flex: 1,
     backgroundColor: "#fff",
   },
   header: {
@@ -208,9 +216,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F0F0F0",
     backgroundColor: "#FAFAFA",
   },
-  sectionTitle: { 
-    fontSize: 18, 
-    fontWeight: "700", 
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
     color: "#111",
     marginBottom: 6,
     fontFamily: "Pretendard",
@@ -227,8 +235,8 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     paddingBottom: 20,
   },
-  container: { 
-    paddingHorizontal: 20, 
+  container: {
+    paddingHorizontal: 20,
     paddingVertical: 16,
   },
   rowContainer: {
@@ -275,9 +283,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
     backgroundColor: "#FAFAFA",
   },
-  resetText: { 
-    fontSize: 15, 
-    color: "#333", 
+  resetText: {
+    fontSize: 15,
+    color: "#333",
     fontWeight: "600",
     fontFamily: "Pretendard",
   },
@@ -289,9 +297,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginLeft: 8,
   },
-  confirmText: { 
-    fontSize: 15, 
-    color: "#fff", 
+  confirmText: {
+    fontSize: 15,
+    color: "#fff",
     fontWeight: "700",
     fontFamily: "Pretendard",
   },

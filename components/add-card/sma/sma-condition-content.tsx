@@ -86,11 +86,23 @@ export default function SMAConditionContent({
   };
 
   const handleConfirmPress = () => {
-    const apiTarget = toggles.target ? toApiState(target) : null;
+    // 실제 값이 있는지 확인 (토글 상태와 무관하게)
+    const hasTargetData = target?.value?.trim?.() !== "";
+    const hasShortCrossData = toggles.shortCross;
+    const hasLongCrossData = toggles.longCross;
+    const apiTarget = hasTargetData ? toApiState(target) : null;
+
+    // 값이 있으면 토글 자동으로 켜기
+    setToggles({
+      target: hasTargetData,
+      shortCross: hasShortCrossData,
+      longCross: hasLongCrossData,
+    });
+
     onConfirm({
       target: apiTarget,
-      shortCross: toggles.shortCross,
-      longCross: toggles.longCross,
+      shortCross: hasShortCrossData,
+      longCross: hasLongCrossData,
     });
   };
 
@@ -108,7 +120,7 @@ export default function SMAConditionContent({
         </Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollContent}
         showsVerticalScrollIndicator={true}
         bounces={true}
@@ -118,111 +130,112 @@ export default function SMAConditionContent({
         contentContainerStyle={styles.scrollContentContainer}
       >
         <View style={styles.container}>
+          {/* SMA 목표 가격 알림 */}
+          <ConditionSection
+            title="SMA 목표 가격 알림"
+            description={SMA_SECTION_DESCRIPTIONS.TARGET}
+            value={toggles.target}
+            onToggle={() => toggle("target")}
+            rows={[{}]}
+            hasFilled={!!target?.value?.trim?.()}
+            onAdd={() => {}}
+            renderRow={() =>
+              toggles.target && (
+                <View style={styles.rowContainer}>
+                  <View style={styles.inputWrapper}>
+                    <TextInput
+                      style={styles.input}
+                      value={target.value}
+                      onChangeText={(v) =>
+                        setTarget((t) => ({ ...t, value: v }))
+                      }
+                      placeholder="목표가를 입력해주세요"
+                      keyboardType="numeric"
+                    />
+                    <Text style={styles.unit}>원</Text>
+                  </View>
 
-        {/* SMA 목표 가격 알림 */}
-        <ConditionSection
-          title="SMA 목표 가격 알림"
-          description={SMA_SECTION_DESCRIPTIONS.TARGET}
-          value={toggles.target}
-          onToggle={() => toggle("target")}
-          rows={[{}]}
-          hasFilled={!!target?.value?.trim?.()}
-          onAdd={() => {}}
-          renderRow={() =>
-            toggles.target && (
-              <View style={styles.rowContainer}>
-                <View style={styles.inputWrapper}>
-                  <TextInput
-                    style={styles.input}
-                    value={target.value}
-                    onChangeText={(v) => setTarget((t) => ({ ...t, value: v }))}
-                    placeholder="목표가를 입력해주세요"
-                    keyboardType="numeric"
-                  />
-                  <Text style={styles.unit}>원</Text>
-                </View>
+                  <View style={styles.dropdownWrapper}>
+                    <TouchableOpacity
+                      style={styles.dropdownButton}
+                      onPress={() => setDropdownVisible((v) => !v)}
+                    >
+                      <Text style={styles.optionText}>{target.period}</Text>
+                      <ChevronDown width={12} height={12} />
+                    </TouchableOpacity>
 
-                <View style={styles.dropdownWrapper}>
-                  <TouchableOpacity
-                    style={styles.dropdownButton}
-                    onPress={() => setDropdownVisible((v) => !v)}
-                  >
-                    <Text style={styles.optionText}>{target.period}</Text>
-                    <ChevronDown width={12} height={12} />
-                  </TouchableOpacity>
-
-                  {dropdownVisible && (
-                    <View style={styles.dropdownMenu}>
-                      {[
-                        "5일",
-                        "10일",
-                        "20일",
-                        "30일",
-                        "50일",
-                        "100일",
-                        "200일",
-                      ].map((opt) => (
-                        <TouchableOpacity
-                          key={opt}
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            setTarget((t) => ({ ...t, period: opt }));
-                            setDropdownVisible(false);
-                          }}
-                        >
-                          <Text
-                            style={[
-                              styles.dropdownText,
-                              opt === target.period && styles.selectedText,
-                            ]}
+                    {dropdownVisible && (
+                      <View style={styles.dropdownMenu}>
+                        {[
+                          "5일",
+                          "10일",
+                          "20일",
+                          "30일",
+                          "50일",
+                          "100일",
+                          "200일",
+                        ].map((opt) => (
+                          <TouchableOpacity
+                            key={opt}
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              setTarget((t) => ({ ...t, period: opt }));
+                              setDropdownVisible(false);
+                            }}
                           >
-                            {opt}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
+                            <Text
+                              style={[
+                                styles.dropdownText,
+                                opt === target.period && styles.selectedText,
+                              ]}
+                            >
+                              {opt}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.compareButton}
+                    onPress={() =>
+                      setTarget((t) => ({
+                        ...t,
+                        compare: t.compare === "이상" ? "이하" : "이상",
+                      }))
+                    }
+                  >
+                    <Text style={styles.compareText}>{target.compare}</Text>
+                  </TouchableOpacity>
                 </View>
+              )
+            }
+          />
 
-                <TouchableOpacity
-                  style={styles.compareButton}
-                  onPress={() =>
-                    setTarget((t) => ({
-                      ...t,
-                      compare: t.compare === "이상" ? "이하" : "이상",
-                    }))
-                  }
-                >
-                  <Text style={styles.compareText}>{target.compare}</Text>
-                </TouchableOpacity>
-              </View>
-            )
-          }
-        />
+          {/* 단기선이 장기선을 돌파 */}
+          <ConditionSection
+            title="단기선이 장기선을 돌파"
+            description={SMA_SECTION_DESCRIPTIONS.SHORTCROSS}
+            value={toggles.shortCross}
+            onToggle={() => toggle("shortCross")}
+            rows={[]}
+            hasFilled={false}
+            onAdd={() => {}}
+            renderRow={() => null}
+          />
 
-        {/* 단기선이 장기선을 돌파 */}
-        <ConditionSection
-          title="단기선이 장기선을 돌파"
-          description={SMA_SECTION_DESCRIPTIONS.SHORTCROSS}
-          value={toggles.shortCross}
-          onToggle={() => toggle("shortCross")}
-          rows={[]}
-          hasFilled={false}
-          onAdd={() => {}}
-          renderRow={() => null}
-        />
-
-        {/* 장기선이 단기선을 누름 */}
-        <ConditionSection
-          title="장기선이 단기선을 누름"
-          description={SMA_SECTION_DESCRIPTIONS.LONGCROSS}
-          value={toggles.longCross}
-          onToggle={() => toggle("longCross")}
-          rows={[]}
-          hasFilled={false}
-          onAdd={() => {}}
-          renderRow={() => null}
-        />
+          {/* 장기선이 단기선을 누름 */}
+          <ConditionSection
+            title="장기선이 단기선을 누름"
+            description={SMA_SECTION_DESCRIPTIONS.LONGCROSS}
+            value={toggles.longCross}
+            onToggle={() => toggle("longCross")}
+            rows={[]}
+            hasFilled={false}
+            onAdd={() => {}}
+            renderRow={() => null}
+          />
         </View>
       </ScrollView>
 
@@ -243,8 +256,8 @@ export default function SMAConditionContent({
 }
 
 const styles = StyleSheet.create({
-  wrapper: { 
-    flex: 1, 
+  wrapper: {
+    flex: 1,
     backgroundColor: "#fff",
   },
   header: {
@@ -255,9 +268,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F0F0F0",
     backgroundColor: "#FAFAFA",
   },
-  sectionTitle: { 
-    fontSize: 18, 
-    fontWeight: "700", 
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
     color: "#111",
     marginBottom: 6,
     fontFamily: "Pretendard",
@@ -274,8 +287,8 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     paddingBottom: 20,
   },
-  container: { 
-    paddingHorizontal: 20, 
+  container: {
+    paddingHorizontal: 20,
     paddingVertical: 16,
   },
   rowContainer: {
@@ -317,9 +330,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     minWidth: 90,
   },
-  optionText: { 
-    fontSize: 13, 
-    color: "#333", 
+  optionText: {
+    fontSize: 13,
+    color: "#333",
     marginRight: 6,
     fontFamily: "Pretendard",
     fontWeight: "500",
@@ -337,18 +350,18 @@ const styles = StyleSheet.create({
     elevation: 16,
     overflow: "hidden",
   },
-  dropdownItem: { 
-    paddingHorizontal: 12, 
+  dropdownItem: {
+    paddingHorizontal: 12,
     paddingVertical: 12,
   },
-  dropdownText: { 
-    fontSize: 13, 
+  dropdownText: {
+    fontSize: 13,
     color: "#333",
     fontFamily: "Pretendard",
     fontWeight: "500",
   },
-  selectedText: { 
-    color: "#4CC439", 
+  selectedText: {
+    color: "#4CC439",
     fontWeight: "700",
   },
   compareButton: {
@@ -360,8 +373,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     minWidth: 50,
   },
-  compareText: { 
-    fontSize: 13, 
+  compareText: {
+    fontSize: 13,
     color: "#333",
     fontFamily: "Pretendard",
     fontWeight: "500",
@@ -387,9 +400,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
     backgroundColor: "#FAFAFA",
   },
-  resetText: { 
-    fontSize: 15, 
-    color: "#333", 
+  resetText: {
+    fontSize: 15,
+    color: "#333",
     fontWeight: "600",
     fontFamily: "Pretendard",
   },
@@ -401,9 +414,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginLeft: 8,
   },
-  confirmText: { 
-    fontSize: 15, 
-    color: "#fff", 
+  confirmText: {
+    fontSize: 15,
+    color: "#fff",
     fontWeight: "700",
     fontFamily: "Pretendard",
   },

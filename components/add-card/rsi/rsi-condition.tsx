@@ -1,14 +1,14 @@
 import { CONDITION_DESCRIPTIONS } from "@/constants/conditionDescriptions";
 import React, { useEffect, useState } from "react";
 import {
-    LayoutAnimation,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    UIManager,
-    View,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  UIManager,
+  View,
 } from "react-native";
 import AddIcon from "../../../assets/images/add.svg";
 import ChevronDown from "../../../assets/images/ChevronDown.svg";
@@ -54,11 +54,14 @@ export default function RSIConditionCard({
   const handleConfirm = (data: { overbought: boolean; oversold: boolean }) => {
     console.log("RSI 조건 입력:", data);
     setConditionData(data);
-    setHasCondition(true);
-    setIsOpen(false);
 
+    // 데이터가 비어있는지 확인
+    const hasData = data.overbought || data.oversold;
+
+    setHasCondition(hasData);
+    setIsOpen(false);
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded(true);
+    setExpanded(hasData);
   };
 
   useEffect(() => {
@@ -118,28 +121,29 @@ export default function RSIConditionCard({
             </View>
           </View>
 
-          {expanded && conditionData && 
-           (conditionData.overbought || conditionData.oversold) && (
-            <>
-              <View style={styles.divider} />
+          {expanded &&
+            conditionData &&
+            (conditionData.overbought || conditionData.oversold) && (
+              <>
+                <View style={styles.divider} />
 
-              {/* 과매수 */}
-              {conditionData.overbought && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>RSI 과매수 경고</Text>
-                  <Text style={styles.desc}>RSI ≥ 70</Text>
-                </View>
-              )}
+                {/* 과매수 */}
+                {conditionData.overbought && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>RSI 과매수 경고</Text>
+                    <Text style={styles.desc}>RSI ≥ 70</Text>
+                  </View>
+                )}
 
-              {/* 과매도 */}
-              {conditionData.oversold && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>RSI 과매도 경고</Text>
-                  <Text style={styles.desc}>RSI ≤ 30</Text>
-                </View>
-              )}
-            </>
-          )}
+                {/* 과매도 */}
+                {conditionData.oversold && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>RSI 과매도 경고</Text>
+                    <Text style={styles.desc}>RSI ≤ 30</Text>
+                  </View>
+                )}
+              </>
+            )}
         </View>
       </Pressable>
 
@@ -176,8 +180,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  title: { 
-    fontSize: 17, 
+  title: {
+    fontSize: 17,
     fontWeight: "700",
     color: "#111",
     fontFamily: "Pretendard",
@@ -198,19 +202,19 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginHorizontal: -16,
   },
-  section: { 
+  section: {
     marginBottom: 12,
     paddingVertical: 6,
   },
-  sectionTitle: { 
-    fontSize: 14, 
-    fontWeight: "600", 
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
     marginBottom: 8,
     color: "#666",
     fontFamily: "Pretendard",
   },
-  desc: { 
-    fontSize: 13, 
+  desc: {
+    fontSize: 13,
     color: "#555",
     marginLeft: 4,
     fontFamily: "Pretendard",
@@ -222,8 +226,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     paddingVertical: 4,
   },
-  label: { 
-    fontSize: 13, 
+  label: {
+    fontSize: 13,
     color: "#555",
     fontFamily: "Pretendard",
   },

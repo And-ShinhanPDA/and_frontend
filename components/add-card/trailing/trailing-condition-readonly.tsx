@@ -84,8 +84,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  title: { 
-    fontSize: 17, 
+  title: {
+    fontSize: 17,
     fontWeight: "700",
     color: "#111",
     fontFamily: "Pretendard",
@@ -97,13 +97,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginHorizontal: -16,
   },
-  section: { 
+  section: {
     marginBottom: 12,
     paddingVertical: 6,
   },
-  sectionTitle: { 
-    fontSize: 14, 
-    fontWeight: "600", 
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
     marginBottom: 8,
     color: "#666",
     fontFamily: "Pretendard",
@@ -115,14 +115,14 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     paddingVertical: 4,
   },
-  label: { 
-    fontSize: 13, 
+  label: {
+    fontSize: 13,
     color: "#555",
     fontFamily: "Pretendard",
   },
-  value: { 
-    fontSize: 14, 
-    color: "#111", 
+  value: {
+    fontSize: 14,
+    color: "#111",
     fontWeight: "600",
     fontFamily: "Pretendard",
   },

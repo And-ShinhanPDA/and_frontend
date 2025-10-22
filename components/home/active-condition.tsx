@@ -190,7 +190,7 @@ export default function ActivatedConditionCard() {
 
             return (
               <Pressable
-                key={item.id}
+                key={`${item.id}-${index}`}
                 onPress={() => {
                   console.log("🔥 [홈-조건] 조건 클릭:", {
                     id: item.id,

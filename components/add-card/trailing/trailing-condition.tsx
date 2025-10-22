@@ -1,14 +1,14 @@
 import { CONDITION_DESCRIPTIONS } from "@/constants/conditionDescriptions";
 import React, { useEffect, useState } from "react";
 import {
-    LayoutAnimation,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    UIManager,
-    View,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  UIManager,
+  View,
 } from "react-native";
 import AddIcon from "../../../assets/images/add.svg";
 import ChevronDown from "../../../assets/images/ChevronDown.svg";
@@ -16,7 +16,7 @@ import EditIcon from "../../../assets/images/edit.svg";
 import ConditionTooltip from "../../condition/condition-tooltip";
 import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
 import TrailingConditionContent, {
-    TrailingConditionData,
+  TrailingConditionData,
 } from "./trailing-condition-content";
 
 if (
@@ -128,59 +128,70 @@ export default function TrailingConditionCard({
             </View>
           </View>
 
-          {expanded && conditionData && 
-           (conditionData.stopPrice || conditionData.stopPercent || 
-            conditionData.risePrice || conditionData.risePercent) && (
-            <>
-              <View style={styles.divider} />
+          {expanded &&
+            conditionData &&
+            (conditionData.stopPrice ||
+              conditionData.stopPercent ||
+              conditionData.buyPrice ||
+              conditionData.buyPercent) && (
+              <>
+                <View style={styles.divider} />
 
-              {/* 하락 조건 */}
-              {(conditionData.stopPrice || conditionData.stopPercent) && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>추적 손절매 (하락)</Text>
-                  {conditionData.stopPrice && (
-                    <View style={styles.row}>
-                      <Text style={styles.label}>최근 고가 대비 하락 금액</Text>
-                      <Text style={styles.value}>
-                        {conditionData.stopPrice}원
-                      </Text>
-                    </View>
-                  )}
-                  {conditionData.stopPercent && (
-                    <View style={styles.row}>
-                      <Text style={styles.label}>최근 고가 대비 하락 비율</Text>
-                      <Text style={styles.value}>
-                        {conditionData.stopPercent}%
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              )}
+                {/* 하락 조건 */}
+                {(conditionData.stopPrice || conditionData.stopPercent) && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>추적 손절매 (하락)</Text>
+                    {conditionData.stopPrice && (
+                      <View style={styles.row}>
+                        <Text style={styles.label}>
+                          최근 고가 대비 하락 금액
+                        </Text>
+                        <Text style={styles.value}>
+                          {conditionData.stopPrice}원
+                        </Text>
+                      </View>
+                    )}
+                    {conditionData.stopPercent && (
+                      <View style={styles.row}>
+                        <Text style={styles.label}>
+                          최근 고가 대비 하락 비율
+                        </Text>
+                        <Text style={styles.value}>
+                          {conditionData.stopPercent}%
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
 
-              {/* 상승 조건 */}
-              {(conditionData.buyPrice || conditionData.buyPercent) && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>추적 매수 (상승)</Text>
-                  {conditionData.buyPrice && (
-                    <View style={styles.row}>
-                      <Text style={styles.label}>최근 고가 대비 상승 금액</Text>
-                      <Text style={styles.value}>
-                        {conditionData.buyPrice}원
-                      </Text>
-                    </View>
-                  )}
-                  {conditionData.buyPercent && (
-                    <View style={styles.row}>
-                      <Text style={styles.label}>최근 고가 대비 상승 비율</Text>
-                      <Text style={styles.value}>
-                        {conditionData.buyPercent}%
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              )}
-            </>
-          )}
+                {/* 상승 조건 */}
+                {(conditionData.buyPrice || conditionData.buyPercent) && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>추적 매수 (상승)</Text>
+                    {conditionData.buyPrice && (
+                      <View style={styles.row}>
+                        <Text style={styles.label}>
+                          최근 고가 대비 상승 금액
+                        </Text>
+                        <Text style={styles.value}>
+                          {conditionData.buyPrice}원
+                        </Text>
+                      </View>
+                    )}
+                    {conditionData.buyPercent && (
+                      <View style={styles.row}>
+                        <Text style={styles.label}>
+                          최근 고가 대비 상승 비율
+                        </Text>
+                        <Text style={styles.value}>
+                          {conditionData.buyPercent}%
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </>
+            )}
         </View>
       </Pressable>
 
@@ -217,8 +228,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  title: { 
-    fontSize: 17, 
+  title: {
+    fontSize: 17,
     fontWeight: "700",
     color: "#111",
     fontFamily: "Pretendard",
@@ -239,13 +250,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginHorizontal: -16,
   },
-  section: { 
+  section: {
     marginBottom: 12,
     paddingVertical: 6,
   },
-  sectionTitle: { 
-    fontSize: 14, 
-    fontWeight: "600", 
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
     marginBottom: 8,
     color: "#666",
     fontFamily: "Pretendard",
@@ -257,14 +268,14 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     paddingVertical: 4,
   },
-  label: { 
-    fontSize: 13, 
+  label: {
+    fontSize: 13,
     color: "#555",
     fontFamily: "Pretendard",
   },
-  value: { 
-    fontSize: 14, 
-    color: "#111", 
+  value: {
+    fontSize: 14,
+    color: "#111",
     fontWeight: "600",
     fontFamily: "Pretendard",
   },
