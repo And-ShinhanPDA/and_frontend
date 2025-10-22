@@ -235,8 +235,6 @@ export default function ConditionAlertModify() {
         return;
       }
 
-      setSaving(true);
-
       const mergedConditions = Object.values(conditionGetters)
         .map((fn) => fn())
         .flat()
@@ -244,6 +242,18 @@ export default function ConditionAlertModify() {
           (c) =>
             c && c.indicator && (c.threshold === null || !isNaN(c.threshold))
         );
+
+      // 최소 1개 이상의 조건이 설정되었는지 확인
+      if (mergedConditions.length === 0) {
+        showAlert({
+          title: "조건 설정 필요",
+          message: "최소 1개 이상의 알림 조건을 설정해주세요.",
+          buttons: [{ text: "확인" }],
+        });
+        return;
+      }
+
+      setSaving(true);
 
       const payload = {
         stockCode: null, // 조건 검색은 stockCode가 null

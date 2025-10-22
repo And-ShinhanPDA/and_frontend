@@ -200,7 +200,7 @@ export default function PriceConditionContent({
             onAdd={() => {}}
             renderRow={(r) =>
               toggles.limit && (
-                <View key={r.id} style={styles.rowContainer}>
+                <View style={styles.rowContainer}>
                   <Text
                     style={[
                       styles.compareBadge,
@@ -253,7 +253,7 @@ export default function PriceConditionContent({
             onAdd={() => {}}
             renderRow={(r) =>
               toggles.open && (
-                <View key={r.id} style={styles.rowContainer}>
+                <View style={styles.rowContainer}>
                   <Text
                     style={[
                       styles.compareBadgePM,
@@ -308,7 +308,7 @@ export default function PriceConditionContent({
             onAdd={() => {}}
             renderRow={(r) =>
               toggles.current && (
-                <View key={r.id} style={styles.rowContainer}>
+                <View style={styles.rowContainer}>
                   <Text
                     style={[
                       styles.compareBadgePM,

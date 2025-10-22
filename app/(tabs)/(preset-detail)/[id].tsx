@@ -1,13 +1,13 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import BollingerBandConditionReadonly from "@/components/add-card/bollingerband/bollingerband-condition-readonly";
@@ -66,45 +66,55 @@ export default function PresetDetail() {
   const [presetData, setPresetData] = useState<any>(null);
 
   // 프리셋 상세 조회
-  useEffect(() => {
-    const fetchPresetDetail = async () => {
-      if (!accessToken || !id) return;
+  const fetchPresetDetail = useCallback(async () => {
+    if (!accessToken || !id) return;
 
-      try {
-        setLoading(true);
-        // TODO: API 연결 필요
-        // const response = await presetService.getPresetDetail(accessToken, String(id));
+    try {
+      setLoading(true);
+      // TODO: API 연결 필요
+      // const response = await presetService.getPresetDetail(accessToken, String(id));
 
-        // 임시로 프리셋 목록에서 찾기
-        const response = await presetService.getPresetList(accessToken);
-        console.log("프리셋 목록 조회 응답:", response);
+      // 임시로 프리셋 목록에서 찾기
+      const response = await presetService.getPresetList(accessToken);
+      console.log("프리셋 목록 조회 응답:", response);
 
-        if (response?.data) {
-          const preset = response.data.find(
-            (p: any) => p.presetId === Number(id)
-          );
-          if (preset) {
-            setPresetData(preset);
-          } else {
-            showAlert({
-              message: "프리셋을 찾을 수 없습니다.",
-              buttons: [{ text: "확인", onPress: () => router.back() }],
-            });
-          }
+      if (response?.data) {
+        const preset = response.data.find(
+          (p: any) => p.presetId === Number(id)
+        );
+        if (preset) {
+          setPresetData(preset);
+          console.log("✅ [프리셋 상세] 데이터 갱신 완료:", preset.title);
+        } else {
+          showAlert({
+            message: "프리셋을 찾을 수 없습니다.",
+            buttons: [{ text: "확인", onPress: () => router.back() }],
+          });
         }
-      } catch (error) {
-        console.error("프리셋 조회 실패:", error);
-        showAlert({
-          message: "프리셋 정보를 불러오는데 실패했습니다.",
-          buttons: [{ text: "확인", onPress: () => router.back() }],
-        });
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("프리셋 조회 실패:", error);
+      showAlert({
+        message: "프리셋 정보를 불러오는데 실패했습니다.",
+        buttons: [{ text: "확인", onPress: () => router.back() }],
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, id]);
 
+  // 초기 로드
+  useEffect(() => {
     fetchPresetDetail();
-  }, [id, accessToken]);
+  }, [fetchPresetDetail]);
+
+  // 화면이 포커스될 때마다 데이터 다시 불러오기
+  useFocusEffect(
+    useCallback(() => {
+      console.log("🔄 [프리셋 상세] 화면 포커스 - 데이터 새로고침");
+      fetchPresetDetail();
+    }, [fetchPresetDetail])
+  );
 
   // 파싱된 조건 데이터
   const parsedConditions = presetData?.conditions

@@ -1,13 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import BollingerBandCondition from "@/components/add-card/bollingerband/bollingerband-condition";
@@ -250,20 +250,33 @@ export default function PresetModify() {
         category: "custom",
       };
 
-      console.log("[프리셋 수정] payload:", payload);
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("📝 [프리셋 수정] 요청 시작");
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("프리셋 ID:", id);
+      console.log("제목:", payload.title);
+      console.log("조건 수:", payload.conditions.length);
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      
       const res = await presetService.updatePreset(
         accessToken,
         String(id),
         payload
       );
-      console.log("[프리셋 수정 성공]:", res);
+      
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("✅ [프리셋 수정] 성공");
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
       showAlert({
         message: "프리셋이 수정되었습니다.",
         buttons: [
           {
             text: "확인",
-            onPress: () => router.back(),
+            onPress: () => {
+              console.log("🔙 [프리셋 수정] 이전 화면으로 돌아갑니다");
+              router.back();
+            },
           },
         ],
       });

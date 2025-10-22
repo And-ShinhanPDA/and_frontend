@@ -112,19 +112,63 @@ export function useAuthLogic() {
   // 로그아웃
   const signOut = useCallback(async () => {
     try {
+      console.log("╔═══════════════════════════════════════════════╗");
+      console.log("║           로그아웃 프로세스 시작             ║");
+      console.log("╚═══════════════════════════════════════════════╝");
+      
       if (accessToken && refreshTokenId) {
-        // await authService.logout(accessToken, refreshTokenId);
+        // deviceId를 SecureStore에서 가져오기
+        const deviceId = await SecureStore.getItemAsync(DEVICE_ID_KEY);
+        
+        console.log("");
+        console.log("📋 [로그아웃] SecureStore에서 가져온 값:");
+        console.log("┌─────────────────────────────────────────────┐");
+        console.log("│ accessToken 존재:", !!accessToken);
+        console.log("│ accessToken 길이:", accessToken?.length || 0);
+        console.log("│ accessToken 앞부분:", accessToken?.substring(0, 30) + "...");
+        console.log("├─────────────────────────────────────────────┤");
+        console.log("│ refreshTokenId:", refreshTokenId);
+        console.log("│ refreshTokenId 타입:", typeof refreshTokenId);
+        console.log("│ refreshTokenId 길이:", refreshTokenId?.length || 0);
+        console.log("├─────────────────────────────────────────────┤");
+        console.log("│ deviceId:", deviceId);
+        console.log("│ deviceId 타입:", typeof deviceId);
+        console.log("│ deviceId 길이:", deviceId?.length || 0);
+        console.log("└─────────────────────────────────────────────┘");
+        console.log("");
+        
+        if (deviceId) {
+          console.log("✅ deviceId 존재 → authService.logout() 호출");
+          await authService.logout(accessToken, refreshTokenId, deviceId);
+        } else {
+          console.warn("⚠️ [로그아웃] deviceId가 없어서 API 호출을 건너뜁니다.");
+        }
+      } else {
+        console.log("⚠️ accessToken 또는 refreshTokenId가 없습니다.");
+        console.log("  - accessToken:", !!accessToken);
+        console.log("  - refreshTokenId:", !!refreshTokenId);
       }
     } catch (error) {
-      console.error("로그아웃 API 호출 실패:", error);
+      console.error("❌ [로그아웃] API 호출 실패:", error);
     } finally {
+      console.log("");
+      console.log("🧹 [로그아웃] SecureStore 데이터 삭제 중...");
+      
+      // 로컬 저장소 정리
       await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
       await SecureStore.deleteItemAsync(REFRESH_ID_KEY);
       await SecureStore.deleteItemAsync(DEVICE_ID_KEY);
       await SecureStore.deleteItemAsync(USER_KEY);
+      
+      // 상태 초기화
       setUser(null);
       setAccessToken(null);
       setRefreshTokenId(null);
+      
+      console.log("✅ [로그아웃] 로컬 데이터 정리 완료");
+      console.log("╔═══════════════════════════════════════════════╗");
+      console.log("║           로그아웃 프로세스 완료             ║");
+      console.log("╚═══════════════════════════════════════════════╝");
     }
   }, [accessToken, refreshTokenId]);
 

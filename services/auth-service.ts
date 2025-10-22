@@ -129,26 +129,61 @@ export const authService = {
       refreshTokenId,
     };
 
-    console.log("📤 [로그아웃] 요청 데이터:", requestBody);
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+    };
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("📤 [로그아웃 API] 요청 시작");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("🔗 URL:", url);
+    console.log("");
+    console.log("📦 Request Body (JSON):");
+    console.log(JSON.stringify(requestBody, null, 2));
+    console.log("");
+    console.log("🔑 Headers:");
+    console.log("  - Authorization:", `Bearer ${accessToken.substring(0, 30)}...`);
+    console.log("");
+    console.log("📝 전체 요청 정보:");
+    console.log("  - Method: DELETE");
+    console.log("  - deviceId:", deviceId);
+    console.log("  - deviceId 타입:", typeof deviceId);
+    console.log("  - deviceId 길이:", deviceId?.length || 0);
+    console.log("  - refreshTokenId:", refreshTokenId);
+    console.log("  - refreshTokenId 타입:", typeof refreshTokenId);
+    console.log("  - refreshTokenId 길이:", refreshTokenId?.length || 0);
+    console.log("  - accessToken 길이:", accessToken?.length || 0);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     try {
       const res = await axios.delete<AuthResponse<string>>(url, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers,
         data: requestBody,
         timeout: 15000,
         validateStatus: (status) => status >= 200 && status < 500,
       });
 
-      console.log("📥 [로그아웃] 응답 상태:", res.status);
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("📥 [로그아웃 API] 응답 수신");
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("📊 응답 상태:", res.status);
+      console.log("📄 응답 데이터:", JSON.stringify(res.data, null, 2));
 
       if (res.status < 200 || res.status >= 300) {
         throw new Error(res.data?.message || `로그아웃에 실패했습니다.`);
       }
 
-      console.log("✅ [로그아웃] 성공:", res.data.message);
+      console.log("✅ [로그아웃] 성공!");
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     } catch (err: any) {
       const errorMsg = getErrorMessage(err);
-      console.error("❌ [로그아웃] 실패:", errorMsg);
+      console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.error("❌ [로그아웃] 실패");
+      console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.error("에러 메시지:", errorMsg);
+      console.error("에러 상태 코드:", err.response?.status);
+      console.error("에러 응답 데이터:", JSON.stringify(err.response?.data, null, 2));
+      console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       throw new Error(errorMsg);
     }
   },

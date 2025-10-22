@@ -162,7 +162,7 @@ export default function ChangeConditionContent({
             onAdd={() => {}}
             renderRow={(r) =>
               toggles.daily && (
-                <View key={r.id} style={styles.rowContainer}>
+                <View style={styles.rowContainer}>
                   <Text
                     style={[
                       styles.compareBadge,
@@ -217,7 +217,7 @@ export default function ChangeConditionContent({
             onAdd={() => {}}
             renderRow={(r) =>
               toggles.base && (
-                <View key={r.id} style={styles.rowContainer}>
+                <View style={styles.rowContainer}>
                   <Text
                     style={[
                       styles.compareBadge,

@@ -15,7 +15,7 @@ interface ConditionSectionProps<T> {
   renderRow: (row: T, idx: number) => React.ReactNode;
 }
 
-export default function ConditionSection<T>({
+export default function ConditionSection<T extends { id?: number | string }>({
   title,
   description,
   value,
@@ -36,7 +36,7 @@ export default function ConditionSection<T>({
 
       {value &&
         rows.map((r, idx) => (
-          <React.Fragment key={`condition-${idx}-${JSON.stringify(r)}`}>
+          <React.Fragment key={r.id !== undefined ? `condition-${r.id}` : `condition-${idx}`}>
             {renderRow(r, idx)}
             {idx < rows.length - 1 && <ConditionOrSeparator />}
           </React.Fragment>

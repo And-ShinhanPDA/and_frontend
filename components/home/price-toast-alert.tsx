@@ -26,8 +26,7 @@ const getCompanyInfo = (stockCode: string) => {
   const company = COMPANIES.find((comp) => comp.code === stockCode);
   return {
     name: company?.name || "알 수 없는 기업",
-    logo:
-      company?.logo || require("@/assets/images/companies/logo_1_삼성전자.png"),
+    logo: company?.logo || require("@/assets/images/icon.png"),
   };
 };
 

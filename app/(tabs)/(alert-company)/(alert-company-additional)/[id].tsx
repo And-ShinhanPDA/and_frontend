@@ -288,6 +288,67 @@ export default function CompanyAlertDetail() {
     setPresetConditions(parsed);
   };
 
+  // 프리셋 등록 여부를 묻는 함수 (기업 알림용)
+  const showPresetRegistrationAlertForCompany = (conditions: any[]) => {
+    showAlert({
+      title: "프리셋 등록",
+      message: "프리셋으로도 등록하시겠습니까?",
+      buttons: [
+        {
+          text: "아니오",
+          style: "cancel",
+          onPress: () => {
+            // 알림 추가 페이지와 기업 선택 페이지를 닫고 기업 상세 페이지로 이동
+            router.back(); // 알림 추가 페이지 닫기
+            router.back(); // 기업 선택 페이지 닫기
+            router.push({
+              pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+              params: { id: String(id), name: String(name) },
+            });
+          },
+        },
+        {
+          text: "네",
+          onPress: async () => {
+            setLoading(true);
+            try {
+              // 프리셋으로 저장
+              const presetPayload = {
+                title: title || `${name} 조건`,
+                conditions: conditions,
+                category: "custom",
+              };
+
+              console.log("[프리셋 추가] payload:", presetPayload);
+              await presetService.createPreset(accessToken!, presetPayload);
+              console.log("[프리셋 추가 성공]");
+              setLoading(false);
+
+              // 알림 추가 페이지와 기업 선택 페이지를 닫고 기업 상세 페이지로 이동
+              router.back(); // 알림 추가 페이지 닫기
+              router.back(); // 기업 선택 페이지 닫기
+              router.push({
+                pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+                params: { id: String(id), name: String(name) },
+              });
+            } catch (presetError) {
+              console.error("[프리셋 추가 실패]:", presetError);
+              setLoading(false);
+
+              // 에러가 있어도 스택 정리 후 기업 상세 페이지로 이동
+              router.back(); // 알림 추가 페이지 닫기
+              router.back(); // 기업 선택 페이지 닫기
+              router.push({
+                pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
+                params: { id: String(id), name: String(name) },
+              });
+            }
+          },
+        },
+      ],
+    });
+  };
+
   const handleSave = async () => {
     try {
       if (!accessToken) {
@@ -298,8 +359,6 @@ export default function CompanyAlertDetail() {
         return;
       }
 
-      setLoading(true);
-
       const mergedConditions = Object.values(conditionGetters)
         .map((fn) => fn())
         .flat()
@@ -307,6 +366,18 @@ export default function CompanyAlertDetail() {
           (c) =>
             c && c.indicator && (c.threshold === null || !isNaN(c.threshold))
         );
+
+      // 최소 1개 이상의 조건이 설정되었는지 확인
+      if (mergedConditions.length === 0) {
+        showAlert({
+          title: "조건 설정 필요",
+          message: "최소 1개 이상의 알림 조건을 설정해주세요.",
+          buttons: [{ text: "확인" }],
+        });
+        return;
+      }
+
+      setLoading(true);
 
       const payload = {
         stockCode: String(id) || "005930",
@@ -317,69 +388,52 @@ export default function CompanyAlertDetail() {
       };
 
       const res = await alertService.createAlert(payload, accessToken);
-      console.log("알림 등록 성공:", res);
+      console.log("알림 등록 성공 - 전체 응답:", res);
+
+      // AI 피드백 추출 (여러 구조 대응)
+      const aiFeedback = res?.data?.aiFeedback || res?.aiFeedback || null;
+      console.log("🤖 [기업 알림 추가] AI 피드백:", aiFeedback || "(없음)");
+
       setLoading(false);
 
       // 위젯 즉시 새로고침
       refreshWidgetManually();
 
-      // 프리셋 등록 여부 확인
+      // 1단계: 알림 등록 완료 모달
       showAlert({
-        title: "프리셋 등록",
-        message: "프리셋으로도 등록하시겠습니까?",
+        title: "알림 등록 완료",
+        message: "알림 등록이 완료되었습니다!",
         buttons: [
           {
-            text: "아니오",
-            style: "cancel",
+            text: "확인",
             onPress: () => {
-              // 알림 추가 페이지와 기업 선택 페이지를 닫고 기업 상세 페이지로 이동
-              // 스택: 기업 알림 목록 → 기업 상세
-              router.back(); // 알림 추가 페이지 닫기
-              router.back(); // 기업 선택 페이지 닫기
-              router.push({
-                pathname: "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
-                params: { id: String(id), name: String(name) },
-              });
-            },
-          },
-          {
-            text: "네",
-            onPress: async () => {
-              setLoading(true);
-              try {
-                // 프리셋으로 저장
-                const presetPayload = {
-                  title: title || `${name} 조건`,
-                  conditions: mergedConditions,
-                  category: "custom",
-                };
-
-                console.log("[프리셋 추가] payload:", presetPayload);
-                await presetService.createPreset(accessToken, presetPayload);
-                console.log("[프리셋 추가 성공]");
-                setLoading(false);
-
-                // 알림 추가 페이지와 기업 선택 페이지를 닫고 기업 상세 페이지로 이동
-                router.back(); // 알림 추가 페이지 닫기
-                router.back(); // 기업 선택 페이지 닫기
-                router.push({
-                  pathname:
-                    "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
-                  params: { id: String(id), name: String(name) },
-                });
-              } catch (presetError) {
-                console.error("[프리셋 추가 실패]:", presetError);
-                setLoading(false);
-
-                // 에러가 있어도 스택 정리 후 기업 상세 페이지로 이동
-                router.back(); // 알림 추가 페이지 닫기
-                router.back(); // 기업 선택 페이지 닫기
-                router.push({
-                  pathname:
-                    "/(tabs)/(alert-company)/(alert-company-detail)/[id]",
-                  params: { id: String(id), name: String(name) },
-                });
-              }
+              // 모달이 닫히는 시간을 주기 위해 setTimeout 사용
+              setTimeout(() => {
+                // 2단계: AI 피드백이 있으면 먼저 표시
+                if (aiFeedback) {
+                  showAlert({
+                    title: "알림 AI 피드백",
+                    message: aiFeedback,
+                    buttons: [
+                      {
+                        text: "확인",
+                        onPress: () => {
+                          // 모달이 닫히는 시간을 주기 위해 setTimeout 사용
+                          setTimeout(() => {
+                            // 3단계: 프리셋 등록 여부 확인
+                            showPresetRegistrationAlertForCompany(
+                              mergedConditions
+                            );
+                          }, 100);
+                        },
+                      },
+                    ],
+                  });
+                } else {
+                  // AI 피드백이 없으면 바로 프리셋 등록 여부 확인
+                  showPresetRegistrationAlertForCompany(mergedConditions);
+                }
+              }, 100);
             },
           },
         ],
