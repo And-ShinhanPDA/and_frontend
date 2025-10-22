@@ -1,73 +1,38 @@
-import { Redirect, Tabs } from "expo-router";
+// app/(tabs)/_layout.tsx
+import { useAuth } from "@/contexts/AuthContext";
+import { Redirect, Stack } from "expo-router";
 import React from "react";
 
-import { HapticTab } from "@/components/haptic-tab";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
-import { useAuth } from "@/contexts/AuthContext";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const { isReady, isLoggedIn } = useAuth();
+  const { isLoggedIn } = useAuth();
 
   if (!isLoggedIn) {
-    return <Redirect href={"/login"}></Redirect>;
+    return <Redirect href="/login" />;
   }
 
   return (
-    <Tabs
+    <Stack
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
+        animation: "none",
+        animationDuration: 0,
+        gestureEnabled: false,
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "홈",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="alert-manage"
-        options={{
-          title: "알림",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="paperplane.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="alert-additional"
-        options={{
-          title: "추가",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="paperplane.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="chart"
-        options={{
-          title: "증권",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="paperplane.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="alert-history"
-        options={{
-          title: "기록",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="paperplane.fill" color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="(home)/index" />
+      <Stack.Screen name="(alert-condition)" />
+      <Stack.Screen name="(alert-condition-detail)/[id]" />
+      <Stack.Screen name="(alert-condition-modify)/[id]" />
+      <Stack.Screen name="(alert-condition-companyList)/[id]" />
+      <Stack.Screen name="(alert-company)" />
+      <Stack.Screen name="(alert-company-additional)/[id]" />
+      <Stack.Screen name="(alert-company-detail)/[id]" />
+      <Stack.Screen name="(alert-company-alertDetail)/[id]" />
+      <Stack.Screen name="(alert-company-alertModify)/[id]" />
+      <Stack.Screen name="(chart)/index" />
+      <Stack.Screen name="(chart)/[chartId]" />
+      <Stack.Screen name="(alert-history)/index" />
+    </Stack>
   );
 }

@@ -1,0 +1,230 @@
+import { CONDITION_DESCRIPTIONS } from "@/constants/conditionDescriptions";
+import React, { useEffect, useState } from "react";
+import {
+    LayoutAnimation,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    UIManager,
+    View,
+} from "react-native";
+import AddIcon from "../../../assets/images/add.svg";
+import ChevronDown from "../../../assets/images/ChevronDown.svg";
+import EditIcon from "../../../assets/images/edit.svg";
+import ConditionTooltip from "../../condition/condition-tooltip";
+import ConditionBottomSheet from "../../modals/condition-bottom-sheet";
+import RSIConditionContent from "./rsi-condition-content";
+
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+export default function RSIConditionCard({
+  onTempSave,
+  initialValue,
+}: {
+  onTempSave: (id: string, getter: () => any[]) => void;
+  initialValue?: {
+    overbought: boolean;
+    oversold: boolean;
+  };
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [hasCondition, setHasCondition] = useState(false);
+  const [conditionData, setConditionData] = useState<{
+    overbought: boolean;
+    oversold: boolean;
+  } | null>(initialValue || null);
+  const [expanded, setExpanded] = useState(false);
+
+  // initialValue가 있으면 초기 설정
+  useEffect(() => {
+    if (initialValue) {
+      setConditionData(initialValue);
+      setHasCondition(true);
+      setExpanded(true);
+    }
+  }, [initialValue]);
+
+  const handleConfirm = (data: { overbought: boolean; oversold: boolean }) => {
+    console.log("RSI 조건 입력:", data);
+    setConditionData(data);
+    setHasCondition(true);
+    setIsOpen(false);
+
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded(true);
+  };
+
+  useEffect(() => {
+    const getCondition = () => {
+      if (!conditionData) return [];
+
+      const list: any[] = [];
+      if (conditionData.overbought)
+        list.push({
+          indicator: "RSI_OVER",
+          threshold: 70,
+          threshold2: null,
+        });
+      if (conditionData.oversold)
+        list.push({
+          indicator: "RSI_UNDER",
+          threshold: 30,
+          threshold2: null,
+        });
+      return list;
+    };
+    onTempSave("rsi", getCondition);
+  }, [conditionData, onTempSave]);
+
+  const toggleExpand = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded((prev) => !prev);
+  };
+
+  return (
+    <>
+      <Pressable onPress={hasCondition ? toggleExpand : undefined}>
+        <View style={styles.card}>
+          <View style={styles.header}>
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>RSI</Text>
+              <ConditionTooltip description={CONDITION_DESCRIPTIONS.rsi} />
+            </View>
+            <View style={styles.rightButtons}>
+              {hasCondition && (
+                <View
+                  style={[
+                    styles.chevronWrapper,
+                    expanded && { transform: [{ rotate: "180deg" }] },
+                  ]}
+                >
+                  <ChevronDown width={18} height={18} />
+                </View>
+              )}
+              <TouchableOpacity onPress={() => setIsOpen(true)}>
+                {hasCondition ? (
+                  <EditIcon width={18} height={18} />
+                ) : (
+                  <AddIcon width={30} height={30} />
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {expanded && conditionData && 
+           (conditionData.overbought || conditionData.oversold) && (
+            <>
+              <View style={styles.divider} />
+
+              {/* 과매수 */}
+              {conditionData.overbought && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>RSI 과매수 경고</Text>
+                  <Text style={styles.desc}>RSI ≥ 70</Text>
+                </View>
+              )}
+
+              {/* 과매도 */}
+              {conditionData.oversold && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>RSI 과매도 경고</Text>
+                  <Text style={styles.desc}>RSI ≤ 30</Text>
+                </View>
+              )}
+            </>
+          )}
+        </View>
+      </Pressable>
+
+      <ConditionBottomSheet
+        visible={isOpen}
+        onClose={() => setIsOpen(false)}
+        ratio={0.45}
+      >
+        <RSIConditionContent
+          onConfirm={handleConfirm}
+          initialValue={conditionData}
+        />
+      </ConditionBottomSheet>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: "#fff",
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginVertical: 8,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  title: { 
+    fontSize: 17, 
+    fontWeight: "700",
+    color: "#111",
+    fontFamily: "Pretendard",
+  },
+  rightButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 20,
+  },
+  chevronWrapper: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#F0F0F0",
+    marginTop: 12,
+    marginBottom: 10,
+    marginHorizontal: -16,
+  },
+  section: { 
+    marginBottom: 12,
+    paddingVertical: 6,
+  },
+  sectionTitle: { 
+    fontSize: 14, 
+    fontWeight: "600", 
+    marginBottom: 8,
+    color: "#666",
+    fontFamily: "Pretendard",
+  },
+  desc: { 
+    fontSize: 13, 
+    color: "#555",
+    marginLeft: 4,
+    fontFamily: "Pretendard",
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+    paddingVertical: 4,
+  },
+  label: { 
+    fontSize: 13, 
+    color: "#555",
+    fontFamily: "Pretendard",
+  },
+});
