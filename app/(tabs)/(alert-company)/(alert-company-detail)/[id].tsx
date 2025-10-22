@@ -8,16 +8,16 @@ import { alertService } from "@/services/alert-service";
 import { refreshWidgetManually } from "@/services/widgetShare";
 import { getIndicatorCategoriesArray } from "@/utils/parseConditions";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Image,
-  Pressable,
-  StyleSheet,
-  Switch,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Image,
+    Pressable,
+    StyleSheet,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
 
@@ -97,6 +97,7 @@ export default function CompanyAlertDetail() {
   // 고정 "시가/종가 알림" 스위치 상태
   const [priceOpenCloseEnabled, setPriceOpenCloseEnabled] =
     useState<boolean>(false);
+  const priceStatusLoadedRef = useRef(false);
 
   // 프리셋 모달 상태
   const [isPresetOpen, setIsPresetOpen] = useState(false);
@@ -155,15 +156,19 @@ export default function CompanyAlertDetail() {
         console.log(`변환된 알림 수: ${formatted.length}`);
         console.log(`Triggered 알림 수: ${triggeredAlertIds.size}`);
 
-        // 시가/종가 상태 조회 (stockCode 기반)
-        try {
-          const priceStatus = await alertService.getPriceOnOffStatus(
-            accessToken,
-            id
-          );
-          setPriceOpenCloseEnabled(priceStatus);
-        } catch (err) {
-          console.error("[시가/종가 상태 조회 실패]:", err);
+        // 시가/종가 상태 조회 (stockCode 기반) - 처음 한 번만 조회
+        if (!priceStatusLoadedRef.current) {
+          try {
+            const priceStatus = await alertService.getPriceOnOffStatus(
+              accessToken,
+              id
+            );
+            setPriceOpenCloseEnabled(priceStatus);
+            priceStatusLoadedRef.current = true;
+            console.log("[시가/종가 상태] 초기 로드 완료:", priceStatus);
+          } catch (err) {
+            console.error("[시가/종가 상태 조회 실패]:", err);
+          }
         }
       }
     } catch (err) {
