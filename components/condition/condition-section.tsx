@@ -36,7 +36,7 @@ export default function ConditionSection<T>({
 
       {value &&
         rows.map((r, idx) => (
-          <React.Fragment key={idx}>
+          <React.Fragment key={`condition-${idx}-${JSON.stringify(r)}`}>
             {renderRow(r, idx)}
             {idx < rows.length - 1 && <ConditionOrSeparator />}
           </React.Fragment>

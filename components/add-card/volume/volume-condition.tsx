@@ -1,14 +1,14 @@
 import { CONDITION_DESCRIPTIONS } from "@/constants/conditionDescriptions";
 import React, { useEffect, useState } from "react";
 import {
-    LayoutAnimation,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    UIManager,
-    View,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  UIManager,
+  View,
 } from "react-native";
 import AddIcon from "../../../assets/images/add.svg";
 import ChevronDown from "../../../assets/images/ChevronDown.svg";
@@ -134,52 +134,60 @@ export default function VolumeConditionCard({
             </View>
           </View>
 
-          {expanded && conditionData && 
-           (conditionData.avgRise || conditionData.avgDrop || conditionData.spike) && (
-            <>
-              <View style={styles.divider} />
+          {expanded &&
+            conditionData &&
+            (conditionData.avgRise ||
+              conditionData.avgDrop ||
+              conditionData.spike ||
+              conditionData.drop) && (
+              <>
+                <View style={styles.divider} />
 
-              {/* 평균 거래량 대비 상승 */}
-              {conditionData.avgRise && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>평균 거래량 대비 상승</Text>
-                  <Text style={styles.desc}>
-                    평균 대비 +{conditionData.avgRise}% 이상
-                  </Text>
-                </View>
-              )}
+                {/* 평균 거래량 대비 상승 */}
+                {conditionData.avgRise && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>
+                      평균 거래량 대비 상승
+                    </Text>
+                    <Text style={styles.desc}>
+                      평균 대비 +{conditionData.avgRise}% 이상
+                    </Text>
+                  </View>
+                )}
 
-              {/* 평균 거래량 대비 하락 */}
-              {conditionData.avgDrop && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>평균 거래량 대비 하락</Text>
-                  <Text style={styles.desc}>
-                    평균 대비 -{conditionData.avgDrop}% 이하
-                  </Text>
-                </View>
-              )}
+                {/* 평균 거래량 대비 하락 */}
+                {conditionData.avgDrop && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>
+                      평균 거래량 대비 하락
+                    </Text>
+                    <Text style={styles.desc}>
+                      평균 대비 -{conditionData.avgDrop}% 이하
+                    </Text>
+                  </View>
+                )}
 
-              {/* 거래량 급증 경고 */}
-              {conditionData.spike && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>거래량 급증 경고</Text>
-                  <Text style={styles.desc}>
-                    전일 대비 거래량이 20% 이상 증가 시 알림
-                  </Text>
-                </View>
-              )}
+                {/* 거래량 급증 경고 */}
+                {conditionData.spike && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>거래량 급증 경고</Text>
+                    <Text style={styles.desc}>
+                      전일 대비 거래량이 20% 이상 증가 시 알림
+                    </Text>
+                  </View>
+                )}
 
-              {/* 거래량 감소 경고 */}
-              {conditionData.drop && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>거래량 감소 경고</Text>
-                  <Text style={styles.desc}>
-                    전일 대비 거래량이 20% 이상 감소 시 알림
-                  </Text>
-                </View>
-              )}
-            </>
-          )}
+                {/* 거래량 감소 경고 */}
+                {conditionData.drop && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>거래량 감소 경고</Text>
+                    <Text style={styles.desc}>
+                      전일 대비 거래량이 20% 이상 감소 시 알림
+                    </Text>
+                  </View>
+                )}
+              </>
+            )}
         </View>
       </Pressable>
 
@@ -216,8 +224,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  title: { 
-    fontSize: 17, 
+  title: {
+    fontSize: 17,
     fontWeight: "700",
     color: "#111",
     fontFamily: "Pretendard",
@@ -238,19 +246,19 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginHorizontal: -16,
   },
-  section: { 
+  section: {
     marginBottom: 12,
     paddingVertical: 6,
   },
-  sectionTitle: { 
-    fontSize: 14, 
-    fontWeight: "600", 
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
     marginBottom: 8,
     color: "#666",
     fontFamily: "Pretendard",
   },
-  desc: { 
-    fontSize: 13, 
+  desc: {
+    fontSize: 13,
     color: "#555",
     marginLeft: 4,
     fontFamily: "Pretendard",

@@ -2,13 +2,13 @@ import ConditionInput from "@/components/condition/condition-input";
 import ConditionSection from "@/components/condition/condition-section";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    UIManager,
-    View,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  UIManager,
+  View,
 } from "react-native";
 import ConditionMinus from "../../../assets/images/condition-minus.svg";
 
@@ -47,12 +47,30 @@ export default function TrailingConditionContent({
   const inited = useRef(false);
   useEffect(() => {
     if (inited.current) return;
-    if (initialValue) setValues(initialValue);
+    if (initialValue) {
+      setValues(initialValue);
+      // 토글 상태도 초기화
+      setStopSectionOpen(
+        String(initialValue.stopPrice).trim() !== "" ||
+          String(initialValue.stopPercent).trim() !== ""
+      );
+      setBuySectionOpen(
+        String(initialValue.buyPrice).trim() !== "" ||
+          String(initialValue.buyPercent).trim() !== ""
+      );
+    }
     inited.current = true;
   }, [initialValue]);
 
   const handleConfirm = () => {
-    onConfirm(values);
+    // 토글 상태에 따라 필터링된 값만 전달
+    const filteredValues: TrailingConditionData = {
+      stopPrice: stopSectionOpen ? values.stopPrice : "",
+      stopPercent: stopSectionOpen ? values.stopPercent : "",
+      buyPrice: buySectionOpen ? values.buyPrice : "",
+      buyPercent: buySectionOpen ? values.buyPercent : "",
+    };
+    onConfirm(filteredValues);
   };
 
   const handleReset = () => {
@@ -62,6 +80,9 @@ export default function TrailingConditionContent({
       buyPrice: "",
       buyPercent: "",
     });
+    // 토글 상태도 초기화
+    setStopSectionOpen(false);
+    setBuySectionOpen(false);
   };
 
   const handleChange = (key: keyof TrailingConditionData, val: string) =>
@@ -76,7 +97,7 @@ export default function TrailingConditionContent({
         </Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollContent}
         showsVerticalScrollIndicator={true}
         bounces={true}
@@ -86,112 +107,115 @@ export default function TrailingConditionContent({
         contentContainerStyle={styles.scrollContentContainer}
       >
         <View style={styles.container}>
+          {/* 추적 손절매 */}
+          <ConditionSection
+            title="추적 손절매 (하락)"
+            description="최근 고가 대비 일정 하락 금액 또는 비율 시 알림"
+            value={stopSectionOpen}
+            onAdd={() => {}}
+            onToggle={() => setStopSectionOpen(!stopSectionOpen)}
+            rows={[{ id: 1 }]}
+            hasFilled={
+              String(values.stopPrice).trim() !== "" ||
+              String(values.stopPercent).trim() !== ""
+            }
+            renderRow={() => (
+              <View>
+                <View style={styles.rowContainer}>
+                  <Text style={[styles.compareBadge, styles.minusBadge]}>
+                    -
+                  </Text>
+                  <ConditionInput
+                    value={values.stopPrice}
+                    placeholder="하락 금액"
+                    unit="원"
+                    onChange={(v) => handleChange("stopPrice", v)}
+                  />
+                  {String(values.stopPrice).trim() !== "" && (
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => handleChange("stopPrice", "")}
+                    >
+                      <ConditionMinus width={18} height={18} />
+                    </TouchableOpacity>
+                  )}
+                </View>
 
-        {/* 추적 손절매 */}
-        <ConditionSection
-          title="추적 손절매 (하락)"
-          description="최근 고가 대비 일정 하락 금액 또는 비율 시 알림"
-          value={stopSectionOpen}
-          onAdd={() => {}}
-          onToggle={() => setStopSectionOpen(!stopSectionOpen)}
-          rows={[{ id: 1 }]}
-          hasFilled={
-            String(values.stopPrice).trim() !== "" ||
-            String(values.stopPercent).trim() !== ""
-          }
-          renderRow={() => (
-            <View>
-              <View style={styles.rowContainer}>
-                <Text style={[styles.compareBadge, styles.minusBadge]}>-</Text>
-                <ConditionInput
-                  value={values.stopPrice}
-                  placeholder="하락 금액"
-                  unit="원"
-                  onChange={(v) => handleChange("stopPrice", v)}
-                />
-                {String(values.stopPrice).trim() !== "" && (
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => handleChange("stopPrice", "")}
-                  >
-                    <ConditionMinus width={18} height={18} />
-                  </TouchableOpacity>
-                )}
+                <View style={styles.rowContainer}>
+                  <Text style={[styles.compareBadge, styles.minusBadge]}>
+                    -
+                  </Text>
+                  <ConditionInput
+                    value={values.stopPercent}
+                    placeholder="하락 비율"
+                    unit="%"
+                    onChange={(v) => handleChange("stopPercent", v)}
+                  />
+                  {String(values.stopPercent).trim() !== "" && (
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => handleChange("stopPercent", "")}
+                    >
+                      <ConditionMinus width={18} height={18} />
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
+            )}
+          />
 
-              <View style={styles.rowContainer}>
-                <Text style={[styles.compareBadge, styles.minusBadge]}>-</Text>
-                <ConditionInput
-                  value={values.stopPercent}
-                  placeholder="하락 비율"
-                  unit="%"
-                  onChange={(v) => handleChange("stopPercent", v)}
-                />
-                {String(values.stopPercent).trim() !== "" && (
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => handleChange("stopPercent", "")}
-                  >
-                    <ConditionMinus width={18} height={18} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          )}
-        />
+          {/* 추적 매수 */}
+          <ConditionSection
+            title="추적 매수 (상승)"
+            description="최근 고가 대비 일정 상승 금액 또는 비율 시 알림"
+            value={buySectionOpen}
+            onAdd={() => {}}
+            onToggle={() => setBuySectionOpen(!buySectionOpen)}
+            rows={[{ id: 1 }]}
+            hasFilled={
+              String(values.buyPrice).trim() !== "" ||
+              String(values.buyPercent).trim() !== ""
+            }
+            renderRow={() => (
+              <View>
+                <View style={styles.rowContainer}>
+                  <Text style={[styles.compareBadge, styles.plusBadge]}>+</Text>
+                  <ConditionInput
+                    value={values.buyPrice}
+                    placeholder="상승 금액"
+                    unit="원"
+                    onChange={(v) => handleChange("buyPrice", v)}
+                  />
+                  {String(values.buyPrice).trim() !== "" && (
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => handleChange("buyPrice", "")}
+                    >
+                      <ConditionMinus width={18} height={18} />
+                    </TouchableOpacity>
+                  )}
+                </View>
 
-        {/* 추적 매수 */}
-        <ConditionSection
-          title="추적 매수 (상승)"
-          description="최근 고가 대비 일정 상승 금액 또는 비율 시 알림"
-          value={buySectionOpen}
-          onAdd={() => {}}
-          onToggle={() => setBuySectionOpen(!buySectionOpen)}
-          rows={[{ id: 1 }]}
-          hasFilled={
-            String(values.buyPrice).trim() !== "" ||
-            String(values.buyPercent).trim() !== ""
-          }
-          renderRow={() => (
-            <View>
-              <View style={styles.rowContainer}>
-                <Text style={[styles.compareBadge, styles.plusBadge]}>+</Text>
-                <ConditionInput
-                  value={values.buyPrice}
-                  placeholder="상승 금액"
-                  unit="원"
-                  onChange={(v) => handleChange("buyPrice", v)}
-                />
-                {String(values.buyPrice).trim() !== "" && (
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => handleChange("buyPrice", "")}
-                  >
-                    <ConditionMinus width={18} height={18} />
-                  </TouchableOpacity>
-                )}
+                <View style={styles.rowContainer}>
+                  <Text style={[styles.compareBadge, styles.plusBadge]}>+</Text>
+                  <ConditionInput
+                    value={values.buyPercent}
+                    placeholder="상승 비율"
+                    unit="%"
+                    onChange={(v) => handleChange("buyPercent", v)}
+                  />
+                  {String(values.buyPercent).trim() !== "" && (
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => handleChange("buyPercent", "")}
+                    >
+                      <ConditionMinus width={18} height={18} />
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
-
-              <View style={styles.rowContainer}>
-                <Text style={[styles.compareBadge, styles.plusBadge]}>+</Text>
-                <ConditionInput
-                  value={values.buyPercent}
-                  placeholder="상승 비율"
-                  unit="%"
-                  onChange={(v) => handleChange("buyPercent", v)}
-                />
-                {String(values.buyPercent).trim() !== "" && (
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => handleChange("buyPercent", "")}
-                  >
-                    <ConditionMinus width={18} height={18} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          )}
-        />
+            )}
+          />
         </View>
       </ScrollView>
 
@@ -209,8 +233,8 @@ export default function TrailingConditionContent({
 }
 
 const styles = StyleSheet.create({
-  wrapper: { 
-    flex: 1, 
+  wrapper: {
+    flex: 1,
     backgroundColor: "#fff",
   },
   header: {
@@ -221,9 +245,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F0F0F0",
     backgroundColor: "#FAFAFA",
   },
-  sectionTitle: { 
-    fontSize: 18, 
-    fontWeight: "700", 
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
     color: "#111",
     marginBottom: 6,
     fontFamily: "Pretendard",
@@ -240,8 +264,8 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     paddingBottom: 20,
   },
-  container: { 
-    paddingHorizontal: 20, 
+  container: {
+    paddingHorizontal: 20,
     paddingVertical: 16,
   },
   rowContainer: {
@@ -271,7 +295,7 @@ const styles = StyleSheet.create({
     borderColor: "#FF3B30",
     backgroundColor: "#FEF2F2",
   },
-  removeButton: { 
+  removeButton: {
     marginLeft: 10,
     padding: 4,
   },
@@ -295,9 +319,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
     backgroundColor: "#FAFAFA",
   },
-  resetText: { 
-    fontSize: 15, 
-    color: "#333", 
+  resetText: {
+    fontSize: 15,
+    color: "#333",
     fontWeight: "600",
     fontFamily: "Pretendard",
   },
@@ -309,9 +333,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginLeft: 8,
   },
-  confirmText: { 
-    fontSize: 15, 
-    color: "#fff", 
+  confirmText: {
+    fontSize: 15,
+    color: "#fff",
     fontWeight: "700",
     fontFamily: "Pretendard",
   },
